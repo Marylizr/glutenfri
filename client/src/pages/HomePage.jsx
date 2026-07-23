@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import MapView from '../components/MapView';
 import RestaurantCard from '../components/RestaurantCard';
 import Filters from '../components/Filters';
+import ErrorState from '../components/ErrorState';
 import { getEstablishments } from '../services/establishments';
 import { useUserLocation } from '../hooks/useUserLocation';
 
@@ -11,13 +12,21 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
   const [establishments, setEstablishments] = useState([]);
   const [filters, setFilters] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { position } = useUserLocation();
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     getEstablishments()
       .then(setEstablishments)
+      .catch(() => setError('No pudimos cargar los establecimientos. Intenta de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = useMemo(() => {
     return establishments.filter((e) => {
@@ -29,6 +38,8 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
   }, [establishments, filters]);
 
   if (loading) return <div style={{ padding: 24 }}>Cargando establecimientos…</div>;
+
+  if (error) return <ErrorState message={error} onRetry={load} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Badge } from '../components/RestaurantCard';
 import PhotoPlaceholder from '../components/PhotoPlaceholder';
 import ScoreBadge from '../components/ScoreBadge';
 import SaveButton from '../components/SaveButton';
 import GoogleAttribution, { isGoogleSourced } from '../components/GoogleAttribution';
 import SafetyReviewFlow from '../components/SafetyReviewFlow';
+import ErrorState from '../components/ErrorState';
 import { getReviews } from '../services/establishments';
 
 const STAFF_LABELS = {
-  poor: 'Poor',
-  okay: 'Okay',
-  excellent: 'Excellent',
+  poor: 'Malo',
+  okay: 'Regular',
+  excellent: 'Excelente',
 };
 
 const RISK_LABELS = {
@@ -55,7 +56,7 @@ function SafetyProtocols({ establishment }) {
 
   return (
     <>
-      <h2 style={{ fontSize: '16px', marginBottom: '4px' }}>Celiac Safety Protocols</h2>
+      <h2 style={{ fontSize: '16px', marginBottom: '4px' }}>Protocolos de seguridad celíaca</h2>
       <div style={{ marginBottom: '20px' }}>
         <ProtocolRow icon="🍳" label="Cocina dedicada" active={establishment.dedicatedKitchen} />
         <ProtocolRow icon="📋" label="Menú 100% sin gluten" active={establishment.dedicatedGlutenFreeMenu} />
@@ -174,19 +175,21 @@ function ActionButton({ children, onClick, primary }) {
 export default function EstablishmentDetailPage({ establishment, onBack, saved, onToggleSaved }) {
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const [reviewsError, setReviewsError] = useState(null);
   const [showReview, setShowReview] = useState(false);
 
-  const loadReviews = () => {
+  const loadReviews = useCallback(() => {
     setLoadingReviews(true);
+    setReviewsError(null);
     getReviews(establishment._id)
       .then(setReviews)
+      .catch(() => setReviewsError('No pudimos cargar las reseñas. Intenta de nuevo.'))
       .finally(() => setLoadingReviews(false));
-  };
+  }, [establishment._id]);
 
   useEffect(() => {
     loadReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [establishment._id]);
+  }, [loadReviews]);
 
   if (showReview) {
     return (
@@ -286,7 +289,10 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
 
           <h2 style={{ fontSize: '16px', marginBottom: '10px' }}>Reseñas de la comunidad</h2>
           {loadingReviews && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
-          {!loadingReviews && reviews.length === 0 && (
+          {!loadingReviews && reviewsError && (
+            <ErrorState message={reviewsError} onRetry={loadReviews} />
+          )}
+          {!loadingReviews && !reviewsError && reviews.length === 0 && (
             <div style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
               Todavía no hay reseñas. ¡Sé la primera en dejar una!
             </div>

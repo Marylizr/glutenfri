@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ExplorePage from './pages/ExplorePage';
 import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
 import EstablishmentDetailPage from './pages/EstablishmentDetailPage';
@@ -48,6 +48,17 @@ function App() {
     }
     saved.toggle(establishmentId);
   };
+
+  // Si el JWT venció, useAuth ya limpió la sesión (evento
+  // 'gf:session-expired' desde services/api.js) — acá solo sacamos al
+  // usuario de donde estaba (detalle, review a medio llenar, etc.) y lo
+  // mandamos a la pantalla de login con el mensaje que muestra ProfilePage.
+  useEffect(() => {
+    if (auth.sessionExpired) {
+      setSelected(null);
+      setTab('profile');
+    }
+  }, [auth.sessionExpired]);
 
   return (
     <div

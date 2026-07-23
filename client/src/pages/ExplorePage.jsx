@@ -1,22 +1,31 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import SearchBar from '../components/SearchBar';
 import CategoryChips from '../components/CategoryChips';
 import RestaurantCard from '../components/RestaurantCard';
+import ErrorState from '../components/ErrorState';
 import { getEstablishments } from '../services/establishments';
 import { useUserLocation } from '../hooks/useUserLocation';
 
 export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleSaved }) {
   const [establishments, setEstablishments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [query, setQuery] = useState('');
   const [type, setType] = useState(undefined);
   const { position } = useUserLocation();
 
-  useEffect(() => {
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
     getEstablishments()
       .then(setEstablishments)
+      .catch(() => setError('No pudimos cargar los establecimientos. Intenta de nuevo.'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const filtered = useMemo(() => {
     return establishments.filter((e) => {
@@ -58,7 +67,9 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
       >
         {loading && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
 
-        {!loading && filtered.length === 0 && (
+        {!loading && error && <ErrorState message={error} onRetry={load} />}
+
+        {!loading && !error && filtered.length === 0 && (
           <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
             No encontramos sitios con esos filtros.
           </div>

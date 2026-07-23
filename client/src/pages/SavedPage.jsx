@@ -1,4 +1,5 @@
 import RestaurantCard from '../components/RestaurantCard';
+import ErrorState from '../components/ErrorState';
 import { useUserLocation } from '../hooks/useUserLocation';
 
 export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToProfile }) {
@@ -46,7 +47,7 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
         <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '2px' }}>
           📍 Braga, Portugal
         </div>
-        <h1 style={{ fontSize: '22px' }}>Your Safe Spots</h1>
+        <h1 style={{ fontSize: '22px' }}>Tus lugares seguros</h1>
       </header>
 
       <main
@@ -61,7 +62,9 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
       >
         {saved.loading && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
 
-        {!saved.loading && saved.establishments.length === 0 && (
+        {!saved.loading && saved.error && <ErrorState message={saved.error} onRetry={saved.reload} />}
+
+        {!saved.loading && !saved.error && saved.establishments.length === 0 && (
           <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
             Todavía no guardaste ningún lugar. Tocá el ♡ en una card para agregarla acá.
           </div>

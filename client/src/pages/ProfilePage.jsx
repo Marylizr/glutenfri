@@ -60,6 +60,21 @@ export default function ProfilePage({ auth }) {
 
   return (
     <div style={{ padding: '24px 16px' }}>
+      {auth.sessionExpired && (
+        <div
+          style={{
+            background: 'var(--color-warn-soft)',
+            color: 'var(--color-warn)',
+            fontSize: '13px',
+            padding: '10px 14px',
+            borderRadius: 'var(--radius-input)',
+            marginBottom: '16px',
+          }}
+        >
+          Tu sesión expiró. Iniciá sesión de nuevo.
+        </div>
+      )}
+
       <h1 style={{ fontSize: '22px', marginBottom: '20px' }}>
         {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
       </h1>

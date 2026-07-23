@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Mismas keys que el interceptor de services/api.js.
 const TOKEN_KEY = 'gf_auth_token';
@@ -11,11 +11,13 @@ function readStoredUser() {
 
 export function useAuth() {
   const [user, setUser] = useState(readStoredUser);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const setSession = useCallback(({ token, user }) => {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     setUser(user);
+    setSessionExpired(false);
   }, []);
 
   const logout = useCallback(() => {
@@ -24,5 +26,19 @@ export function useAuth() {
     setUser(null);
   }, []);
 
-  return { user, setSession, logout };
+  // services/api.js dispara este evento cuando un 401 llega con un token
+  // guardado — significa que el JWT venció (o quedó inválido), no que el
+  // usuario nunca inició sesión.
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      setSessionExpired(true);
+    };
+    window.addEventListener('gf:session-expired', handleExpired);
+    return () => window.removeEventListener('gf:session-expired', handleExpired);
+  }, []);
+
+  const clearSessionExpired = useCallback(() => setSessionExpired(false), []);
+
+  return { user, setSession, logout, sessionExpired, clearSessionExpired };
 }

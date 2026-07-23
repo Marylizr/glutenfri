@@ -143,16 +143,16 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
         onBack={goBack}
       >
         <ChoiceButton active={staffUnderstanding === 'poor'} onClick={() => handleStaffAnswer('poor')}>
-          Poor — no entendieron o ignoraron el pedido
+          Malo — no entendieron o ignoraron el pedido
         </ChoiceButton>
         <ChoiceButton active={staffUnderstanding === 'okay'} onClick={() => handleStaffAnswer('okay')}>
-          Okay — entendieron, pero con dudas
+          Regular — entendieron, pero con dudas
         </ChoiceButton>
         <ChoiceButton
           active={staffUnderstanding === 'excellent'}
           onClick={() => handleStaffAnswer('excellent')}
         >
-          Excellent — muy claros y seguros
+          Excelente — muy claros y seguros
         </ChoiceButton>
       </StepShell>
     );

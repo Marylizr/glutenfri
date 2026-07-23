@@ -1,4 +1,10 @@
-const TYPES = ['restaurant', 'store', 'pharmacy', 'bakery', 'supermarket'];
+const TYPES = [
+  { value: 'restaurant', label: 'Restaurante' },
+  { value: 'bakery', label: 'Pastelería' },
+  { value: 'store', label: 'Tienda' },
+  { value: 'pharmacy', label: 'Farmacia' },
+  { value: 'supermarket', label: 'Supermercado' },
+];
 
 export default function Filters({ filters, onChange }) {
   return (
@@ -9,8 +15,8 @@ export default function Filters({ filters, onChange }) {
       >
         <option value="">Todos los tipos</option>
         {TYPES.map((t) => (
-          <option key={t} value={t}>
-            {t}
+          <option key={t.value} value={t.value}>
+            {t.label}
           </option>
         ))}
       </select>
