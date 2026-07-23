@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
-const { parsePagination, toFeedItem } = require('./reviewsController');
+const { parsePagination, toPublicReview } = require('../utils/reviewFormatting');
 
 async function listSaved(req, res) {
   const user = await User.findById(req.user.id).populate('savedEstablishments').lean();
@@ -95,7 +95,7 @@ async function listMyReviews(req, res) {
   ]);
 
   res.json({
-    data: data.map(toFeedItem),
+    data: data.map(toPublicReview),
     page,
     limit,
     total,

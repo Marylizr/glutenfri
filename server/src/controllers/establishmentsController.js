@@ -1,5 +1,6 @@
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
+const { toPublicReview } = require('../utils/reviewFormatting');
 
 async function listEstablishments(req, res) {
   const { type, certifiedOnly } = req.query;
@@ -34,7 +35,7 @@ async function listReviews(req, res) {
     .populate('user', 'name')
     .sort('-createdAt')
     .lean();
-  res.json(reviews);
+  res.json(reviews.map(toPublicReview));
 }
 
 async function createReview(req, res) {

@@ -205,7 +205,7 @@ Reemplaza el placeholder "próximamente". `ReviewsPage.jsx` con toggle
 **Backend**:
 - `GET /api/reviews/recent` (público) — reseñas de todos los establecimientos, `createdAt` descendente, paginado (`?page`/`?limit`, default 20, máx 50, mismo shape `{ data, page, limit, total, totalPages }` que `/establishments`). Cada item trae `establishment: { _id, name, type }` y `user: { _id, name }` poblados.
 - `GET /api/users/me/reviews` (protegido) — mismo shape, filtrado a las reseñas del usuario autenticado.
-- **Privacidad**: en ambos endpoints, el nombre del usuario se recorta al primer nombre únicamente (`"Edit Flow Test"` → `"Edit"`) antes de salir del servidor — nunca se expone el apellido completo ni el email en este feed público. *(Nota: los endpoints existentes de reseñas por establecimiento, `GET /establishments/:id/reviews`, siguen devolviendo el nombre completo — no los toqué porque no fue parte de lo pedido, pero es una inconsistencia de criterio entre ambos endpoints que vale la pena resolver en algún momento.)*
+- **Privacidad, criterio unificado**: el nombre del usuario se recorta al primer nombre únicamente (`"Maria Fernandez"` → `"Maria"`) antes de salir del servidor, en **los tres** endpoints que devuelven reseñas — `/api/reviews/recent`, `/api/users/me/reviews`, y también `GET /establishments/:id/reviews` (el del detalle de cada lugar, que antes devolvía el nombre completo). La lógica vive en un solo lugar, `server/src/utils/reviewFormatting.js` (`toPublicReview` + `parsePagination`), importado por los tres controllers — si el criterio de privacidad cambia el día de mañana, se cambia una sola vez. `GET /users/me/export` (portabilidad GDPR) sigue devolviendo las reseñas del usuario **sin truncar** a propósito — es su propio export completo, no una vista pública.
 
 **Frontend**:
 - Cada card: ícono + nombre del establecimiento (clickeable → trae el establecimiento completo vía `getEstablishmentById` y abre su detalle), nombre del usuario, rating, comentario recortado a 2 líneas (`-webkit-line-clamp`), badge de nivel de riesgo si la reseña lo incluyó, tiempo relativo.
@@ -217,6 +217,8 @@ Reemplaza el placeholder "próximamente". `ReviewsPage.jsx` con toggle
   - Mis reseñas sin sesión: mismo componente `LoginRequiredState` que ya usaba `SavedPage.jsx` — se extrajo de ahí a un componente compartido en vez de duplicar el bloque, como pediste.
 
 **Antes de probar el estado vacío real** encontré 9 reseñas de prueba residuales de la sesión anterior (rate-limiting, cuentas "Upsert Test" y "Edit Flow Test") que no se habían limpiado. Confirmé con vos antes de borrarlas — usé el mismo `DELETE /api/users/me` (borrado en cascada + recálculo de `avgRating`) para las 2 cuentas. Con eso, probé el feed real: vacío primero (screenshot con el mensaje invitador), después con una reseña real de un usuario nuevo ("Maria Fernandez" → se muestra "Maria"), confirmando nombre truncado, tiempo relativo, comentario recortado, badge de riesgo, y que tocar el nombre del establecimiento abre su detalle completo.
+
+**Unificación posterior**: confirmé con `curl` que `GET /establishments/:id/reviews` devuelve `"Maria"` en vez de `"Maria Fernandez"` tras el cambio, y volví a abrir el detalle de "Pastelaria Soul" en el navegador para confirmar visualmente que la sección "Reseñas de la comunidad" se sigue viendo igual (nombre, estrellas, comentario, badges de personal/menú/cocina/riesgo) — el único cambio es el nombre truncado.
 
 ## Notas técnicas
 
