@@ -69,7 +69,7 @@ npm run dev                 # http://localhost:5173
 - [x] **Paginación** en `GET /api/establishments` (`?page`/`?limit`, default `limit=100`, máx `200`) — responde `{ data, page, limit, total, totalPages }`. El frontend (`services/establishments.js`) desenvuelve `.data` así que no cambió nada visible con el dataset actual (72 entra en una sola página)
 - [x] **Índices de Mongo revisados**: se agregó `{ certified: 1 }` en `Establishment` (usado por el filtro `certifiedOnly`). Los campos de Celiac Safety Protocols no tienen índice porque hoy nada los usa como filtro — agregar si en algún momento sumamos algo tipo `?riskLevel=low`. `savedEstablishments` del `User` no necesita índice propio (son lookups por `_id`, ya indexado por default)
 - [x] **Atribución "Google Maps"** agregada en las 3 vistas que muestran establecimientos con `source: "Google"` o `"APC+Google"` (componente `GoogleAttribution`): debajo de la card en la lista, en la detail page, y en el pie del mapa (junto a la atribución de OpenStreetMap) + dentro de cada popup de pin
-- [ ] **Política de caché de datos de Google Places — BLOQUEANTE, no resuelto.** Ver sección dedicada abajo.
+- [ ] **Política de caché de datos de Google Places — riesgo de compliance conocido, aceptado para MVP, sin resolver.** No lanzar públicamente sin volver a este punto. Ver sección dedicada abajo.
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ⚠️ Google Places: hallazgo de compliance sobre caché de datos
@@ -104,11 +104,14 @@ mecanismo de refresco, desde que se armó el dataset semilla.
 **No implementé un `lastRefreshedAt` cosmético porque no resolvería el
 problema real.** Esto necesita una decisión de producto/infraestructura:
 tener una API key de Google Maps Platform con billing habilitado y un
-proceso que re-consulte por `place_id`. Como hoy no tenemos ni el
-`place_id` ni la key, no puedo cerrar este punto sin tu decisión sobre
-cómo seguir.
+proceso que re-consulte por `place_id`.
 
-## Notas técnicas
+**Decisión (2026-07-23):** por ahora seguimos en modo MVP — se documenta
+el riesgo acá y no se bloquea el resto del checklist de producción. Es un
+riesgo de compliance asumido conscientemente, no resuelto. **No lanzar
+públicamente sin volver a este punto** — conseguir la API key de Google
+Maps Platform, re-popular los 46 registros con su `place_id`, y armar el
+job de refresco antes de un lanzamiento real.
 
 ## Notas técnicas
 
