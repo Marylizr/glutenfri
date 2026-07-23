@@ -1,0 +1,23 @@
+:root {
+  /* Paleta — leída del mockup de Google Stitch */
+  --color-bg: #f6f2e9;           /* fondo crema cálido */
+  --color-surface: #ffffff;      /* cards */
+  --color-surface-alt: #efe9db;  /* chips no activos, inputs */
+  --color-text: #2b2620;         /* texto principal */
+  --color-text-muted: #8a8578;   /* texto secundario, metadata */
+  --color-border: #e6dfcf;
+
+  --color-accent: #3d5a45;       /* verde salvia — "Verified", "100% Gluten-Free", nav activo */
+  --color-accent-soft: #e3ead9;  /* fondo de badge verde */
+  --color-warn: #c1502e;         /* terracota — badges de riesgo/alerta */
+  --color-warn-soft: #f5ddd2;
+
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --radius-input: 12px;
+
+  --shadow-card: 0 1px 3px rgba(43, 38, 32, 0.08), 0 1px 2px rgba(43, 38, 32, 0.06);
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
