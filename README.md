@@ -63,6 +63,9 @@ npm run dev                 # http://localhost:5173
   - `CORS_ORIGINS` ahora es **obligatorio** — el servidor no arranca sin él (antes tenía default `'*'`). `.env.example` trae un placeholder de producción (`https://gluten-free-app.netlify.app`) que hay que reemplazar por el dominio real antes de deployar
   - Error handler centralizado (`middleware/errorHandler.js`) — nunca expone stack traces ni errores crudos de Mongo al cliente
   - `/api/health` ahora chequea la conexión real a Mongo (antes devolvía `200` fijo)
+- [x] **Base de datos en MongoDB Atlas** — `server/.env` ya apunta al cluster real (`gluten-free-app.nexxyse.mongodb.net`), seed corrido ahí (72 establecimientos), confirmado `seed` + `npm run dev` levantando sin error contra la nube. `.env` sigue sin commitear.
+- [x] **Logging** (`morgan`) — a stdout (lo que espera Heroku): formato `combined` en producción, `dev` en desarrollo
+- [x] **Error handler verificado con Express 5**: confirmado en vivo que un error async sin try/catch en un controller SÍ llega al `errorHandler` (Express 5 reenvía promesas rechazadas automáticamente) y el cliente solo ve `{"error":"Error interno del servidor"}`, nunca el mensaje real ni el stack trace
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## Notas técnicas

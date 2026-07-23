@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const morgan = require('morgan');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const establishmentsRoutes = require('./routes/establishments');
@@ -13,6 +14,11 @@ const { errorHandler } = require('./middleware/errorHandler');
 const app = express();
 
 app.use(helmet());
+
+// Logs de requests a stdout — es lo que Heroku espera para sus propios
+// logs. 'combined' en producción (formato estándar Apache, útil para
+// parsear después); 'dev' en desarrollo (conciso, coloreado, con tiempos).
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // CORS: restringido a los orígenes reales. CORS_ORIGINS es obligatorio y
 // sin default a '*' — si no está seteado, más vale que arranque roto en
