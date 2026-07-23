@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { postReview } from '../services/establishments';
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 5;
 
 function ProgressDots({ step }) {
   return (
@@ -78,6 +78,8 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
   const [step, setStep] = useState(1);
   const [staffUnderstanding, setStaffUnderstanding] = useState(null);
   const [hasDedicatedMenu, setHasDedicatedMenu] = useState(null);
+  const [dedicatedKitchen, setDedicatedKitchen] = useState(null);
+  const [riskLevel, setRiskLevel] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +100,16 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
     setStep(3);
   };
 
+  const handleKitchenAnswer = (value) => {
+    setDedicatedKitchen(value);
+    setStep(4);
+  };
+
+  const handleRiskAnswer = (value) => {
+    setRiskLevel(value);
+    setStep(5);
+  };
+
   const handleSubmit = async () => {
     setError(null);
     setSubmitting(true);
@@ -107,6 +119,8 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
         comment,
         staffUnderstanding,
         hasDedicatedMenu,
+        dedicatedKitchen,
+        riskLevel,
       });
       onComplete();
     } catch (err) {
@@ -162,9 +176,51 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
     );
   }
 
+  if (step === 3) {
+    return (
+      <StepShell
+        step={3}
+        title="¿Había un área de cocina dedicada sin gluten?"
+        subtitle="Zona o utensilios separados para evitar contaminación cruzada."
+        onBack={goBack}
+      >
+        <ChoiceButton active={dedicatedKitchen === true} onClick={() => handleKitchenAnswer(true)}>
+          Sí
+        </ChoiceButton>
+        <ChoiceButton active={dedicatedKitchen === false} onClick={() => handleKitchenAnswer(false)}>
+          No
+        </ChoiceButton>
+      </StepShell>
+    );
+  }
+
+  if (step === 4) {
+    return (
+      <StepShell
+        step={4}
+        title="¿Cómo calificarías el riesgo de contaminación cruzada?"
+        subtitle="Pensá en la preparación, el manejo y la separación de ingredientes."
+        onBack={goBack}
+      >
+        <ChoiceButton active={riskLevel === 'none'} onClick={() => handleRiskAnswer('none')}>
+          Ninguno
+        </ChoiceButton>
+        <ChoiceButton active={riskLevel === 'low'} onClick={() => handleRiskAnswer('low')}>
+          Bajo
+        </ChoiceButton>
+        <ChoiceButton active={riskLevel === 'moderate'} onClick={() => handleRiskAnswer('moderate')}>
+          Moderado
+        </ChoiceButton>
+        <ChoiceButton active={riskLevel === 'high'} onClick={() => handleRiskAnswer('high')}>
+          Alto
+        </ChoiceButton>
+      </StepShell>
+    );
+  }
+
   return (
     <StepShell
-      step={3}
+      step={5}
       title="Para cerrar, ¿cómo calificás la experiencia?"
       onBack={goBack}
     >

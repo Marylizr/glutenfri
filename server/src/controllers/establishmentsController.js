@@ -26,7 +26,15 @@ async function listReviews(req, res) {
 }
 
 async function createReview(req, res) {
-  const { rating, comment, photos, staffUnderstanding, hasDedicatedMenu } = req.body;
+  const {
+    rating,
+    comment,
+    photos,
+    staffUnderstanding,
+    hasDedicatedMenu,
+    dedicatedKitchen,
+    riskLevel,
+  } = req.body;
   const review = await Review.create({
     establishment: req.params.id,
     user: req.user.id, // viene del middleware de auth
@@ -35,6 +43,8 @@ async function createReview(req, res) {
     photos,
     staffUnderstanding,
     hasDedicatedMenu,
+    dedicatedKitchen,
+    riskLevel,
   });
 
   // Recalcular avgRating del establecimiento
@@ -42,11 +52,18 @@ async function createReview(req, res) {
     { $match: { establishment: review.establishment } },
     { $group: { _id: '$establishment', avg: { $avg: '$rating' } } },
   ]);
-  if (agg.length) {
-    await Establishment.findByIdAndUpdate(review.establishment, {
-      avgRating: Math.round(agg[0].avg * 10) / 10,
-    });
-  }
+
+  // Celiac Safety Protocols: la reseña más reciente sobrescribe los campos
+  // del establecimiento (decisión de producto — no se promedia entre reseñas).
+  // staffTrained se deriva de staffUnderstanding: solo "excellent" cuenta como
+  // personal capacitado.
+  await Establishment.findByIdAndUpdate(review.establishment, {
+    ...(agg.length ? { avgRating: Math.round(agg[0].avg * 10) / 10 } : {}),
+    dedicatedGlutenFreeMenu: hasDedicatedMenu,
+    dedicatedKitchen,
+    staffTrained: staffUnderstanding === 'excellent',
+    riskLevel,
+  });
 
   res.status(201).json(review);
 }

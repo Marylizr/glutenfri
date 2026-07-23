@@ -123,6 +123,28 @@ function ReviewItem({ review }) {
         >
           Menú dedicado: {review.hasDedicatedMenu ? 'Sí' : 'No'}
         </span>
+        <span
+          style={{
+            fontSize: '11px',
+            background: 'var(--color-surface-alt)',
+            color: 'var(--color-text-muted)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-pill)',
+          }}
+        >
+          Cocina dedicada: {review.dedicatedKitchen ? 'Sí' : 'No'}
+        </span>
+        <span
+          style={{
+            fontSize: '11px',
+            background: 'var(--color-warn-soft)',
+            color: 'var(--color-warn)',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-pill)',
+          }}
+        >
+          Riesgo: {RISK_LABELS[review.riskLevel] || '—'}
+        </span>
       </div>
     </div>
   );

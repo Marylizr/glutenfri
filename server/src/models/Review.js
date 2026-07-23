@@ -12,8 +12,12 @@ const reviewSchema = new mongoose.Schema(
     comment: { type: String, maxlength: 1000 },
     photos: [{ type: String }],
     // Safety Review — diferenciador de producto, más allá de las estrellas.
+    // Estas respuestas alimentan los Celiac Safety Protocols del Establishment
+    // correspondiente (ver establishmentsController.createReview).
     staffUnderstanding: { type: String, enum: ['poor', 'okay', 'excellent'], required: true },
     hasDedicatedMenu: { type: Boolean, required: true },
+    dedicatedKitchen: { type: Boolean, required: true },
+    riskLevel: { type: String, enum: ['none', 'low', 'moderate', 'high'], required: true },
   },
   { timestamps: true }
 );
