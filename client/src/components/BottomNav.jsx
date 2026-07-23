@@ -1,9 +1,9 @@
 const TABS = [
-  { key: 'home', label: 'Home', icon: '⌂' },
-  { key: 'map', label: 'Map', icon: '⚲' },
-  { key: 'saved', label: 'Saved', icon: '♡' },
-  { key: 'reviews', label: 'Reviews', icon: '✎' },
-  { key: 'profile', label: 'Profile', icon: '◍' },
+  { key: 'home', label: 'Inicio', icon: '⌂' },
+  { key: 'map', label: 'Mapa', icon: '⚲' },
+  { key: 'saved', label: 'Guardados', icon: '♡' },
+  { key: 'reviews', label: 'Reseñas', icon: '✎' },
+  { key: 'profile', label: 'Perfil', icon: '◍' },
 ];
 
 export default function BottomNav({ active, onChange }) {
