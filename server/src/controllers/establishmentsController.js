@@ -31,7 +31,7 @@ async function getEstablishment(req, res) {
 
 async function listReviews(req, res) {
   const reviews = await Review.find({ establishment: req.params.id })
-    .populate('user', 'name avatar')
+    .populate('user', 'name')
     .sort('-createdAt')
     .lean();
   res.json(reviews);

@@ -8,7 +8,9 @@ async function register(req, res) {
   if (existing) return res.status(409).json({ error: 'Email ya registrado' });
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, passwordHash });
+  // privacyAccepted ya lo validó el validator de la ruta (rechaza si no es
+  // exactamente `true`) — acá solo queda registrar cuándo lo aceptó.
+  const user = await User.create({ name, email, passwordHash, privacyAcceptedAt: new Date() });
   // Sin refresh token todavía — expiresIn corto acota la ventana de un
   // token comprometido. Deuda técnica: si la app escala, agregar refresh
   // tokens y volver a subir expiresIn para no forzar logins frecuentes.

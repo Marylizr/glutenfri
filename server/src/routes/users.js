@@ -7,9 +7,13 @@ const {
   listSaved,
   saveEstablishment,
   unsaveEstablishment,
+  deleteAccount,
+  exportData,
 } = require('../controllers/usersController');
 
 router.get('/me/saved', requireAuth, listSaved);
+router.get('/me/export', requireAuth, exportData);
+router.delete('/me', requireAuth, deleteAccount);
 
 router.post(
   '/me/saved/:id',

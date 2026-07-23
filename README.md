@@ -76,6 +76,7 @@ npm run dev                 # http://localhost:5173
   - **Bug real encontrado y corregido**: `useSaved.toggle()` no tenía `try/catch` — si el token vencía mientras alguien tocaba el corazón de guardar, la promesa quedaba rechazada sin manejar (unhandled rejection silenciosa). Ahora atrapa el error y deja que el interceptor global maneje el 401
   - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca"; bottom nav Home/Map/Saved/Reviews/Profile → Inicio/Mapa/Guardados/Reseñas/Perfil
 - [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
+- [x] **Requisitos técnicos de GDPR** — ver sección dedicada abajo. Falta publicar la política de privacidad real (la estás armando con tu abogado) y decidir el representante UE si aplica
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ⚠️ Google Places: hallazgo de compliance sobre caché de datos
@@ -146,6 +147,31 @@ job de refresco antes de un lanzamiento real.
 4. **Netlify → Site settings → Environment variables**: cargar `VITE_API_URL` apuntando a la URL real que te dé Heroku (ej. `https://tu-app.herokuapp.com/api`)
 5. Una vez que Netlify te dé el dominio final, **volver a Heroku y actualizar `CORS_ORIGINS`** con ese dominio real (reemplazando el placeholder)
 6. Después de todo eso, probar el flujo completo en producción antes de anunciarlo — especialmente registro/login (rate limiting agresivo real) y el flujo de Safety Review completo
+
+## GDPR: requisitos técnicos implementados
+
+### Auditoría previa (confirmada antes de tocar código)
+
+- **Geolocalización**: `useUserLocation.js` nunca sale del navegador — se usa solo para centrar el mapa y calcular distancias client-side (`utils/distance.js`, matemática pura). Ningún `services/*.js` la manda al backend.
+- **Campos del `User`**: `name`, `email`, `passwordHash` (hash bcrypt, nunca el password crudo), `savedEstablishments`, `privacyAcceptedAt` (nuevo), `createdAt`/`updatedAt`. El campo `avatar` estaba muerto (nadie lo completaba ni lo mostraba) — **se eliminó del schema** en este mismo cambio.
+- **Logging de password**: confirmado que ningún `console.log`/`console.error` ni el formato de `morgan` loguean `req.body` o el password. Los errores de validación de `express-validator` solo devuelven `.msg`, nunca `.value`.
+- **Región de los datos**: Atlas confirmado en AWS `eu-central-1` (Frankfurt) vía DNS de los tres shards del cluster. Heroku y Netlify todavía no están desplegados — Heroku crea apps en US por defecto salvo que se pase `--region eu` explícitamente al crearla. **Recordatorio para cuando crees la app de Heroku: usar `--region eu`.**
+
+### Implementado
+
+- **Derecho al olvido** — `DELETE /api/users/me` (protegido): borra el `User`, todas sus `Review` en cascada, y recalcula `avgRating` de cada establecimiento afectado (agregación sobre las reseñas restantes; `null` si no queda ninguna). `savedEstablishments` vive solo en el propio `User`, así que se limpia solo al borrar el documento.
+  - **Bug encontrado y corregido en el camino**: `requireAuth` solo verificaba la firma/vencimiento del JWT, no si el usuario seguía existiendo. Un token emitido antes del borrado seguía "válido" hasta sus 7 días de expiración aunque la cuenta ya no existiera — lo que rompía con un 500 crudo (o peor, permitiría crear reseñas con un `user` inexistente). Ahora `requireAuth` confirma que el usuario exista en la base en cada request autenticada; si no existe, devuelve 401 (lo que además dispara el flujo de "sesión expirada" que ya existía en el frontend).
+  - Frontend: botón "Eliminar mi cuenta" en `ProfilePage.jsx` con un modal de confirmación real (`ConfirmModal.jsx`, no `window.confirm()`) — "¿Eliminar tu cuenta? Se borra tu perfil y todas tus reseñas de forma permanente. Esta acción no se puede deshacer."
+- **Portabilidad** — `GET /api/users/me/export` (protegido): devuelve `{ exportedAt, user (sin passwordHash), reviews, savedEstablishments (documentos completos, no solo ids) }`. Frontend: botón "Descargar mis datos" que dispara la descarga de un `.json`.
+- **Consentimiento explícito** — checkbox obligatorio "Acepto la política de privacidad y los términos de uso" en el formulario de registro (`ProfilePage.jsx`), con `required` nativo del navegador (bloquea el submit sin marcarlo). El backend **no confía en eso**: `express-validator` rechaza el registro con 400 si `privacyAccepted` no llega como `true` exactamente, y `User.privacyAcceptedAt` (`required` a nivel de schema) guarda cuándo lo aceptó. Si el día de mañana cambia la política, comparar esa fecha contra la fecha de la nueva política para saber a quién re-pedirle consentimiento.
+
+Todo probado en vivo: registro sin checkbox (bloqueado en el navegador y rechazado por el backend si se salta esa validación), export con `passwordHash` confirmado ausente, borrado en cascada con una reseña real (`avgRating` volvió a `null` tras el borrado), y el caso del token "zombie" post-borrado devolviendo 401 limpio.
+
+### Pendiente de tu lado
+
+- Publicar la política de privacidad real una vez que el abogado la revise (hoy el checkbox del registro no linkea a ninguna página porque todavía no existe la política publicada — cuando la tengas, avisame y agrego el link)
+- Decidir si necesitás un representante UE (Art. 27 GDPR) — depende de dónde esté constituida la empresa
+- Cuando crees la app de Heroku: `heroku create --region eu` (no lo puedo hacer yo, es un paso manual tuyo)
 
 ## Notas técnicas
 
