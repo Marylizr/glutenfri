@@ -74,7 +74,8 @@ npm run dev                 # http://localhost:5173
   - Componente `ErrorState` reutilizable (mensaje + botón "Reintentar"), conectado en `ExplorePage`, `HomePage`, `SavedPage` y la lista de reseñas de `EstablishmentDetailPage` — si el backend/Atlas no responde, el usuario ve un mensaje claro y puede reintentar, en vez de una lista vacía engañosa o un spinner colgado. Probado matando el backend a propósito y confirmando la recuperación con "Reintentar"
   - **Sesión expirada manejada globalmente**: interceptor de respuesta en `services/api.js` detecta un 401 cuando SÍ había un token guardado (JWT vencido/inválido, no un anónimo), limpia la sesión y dispara un evento que `useAuth` escucha; `App.jsx` redirige a la pantalla de login con el mensaje "Tu sesión expiró. Iniciá sesión de nuevo." Probado corrompiendo el token manualmente y confirmando la redirección — sin quedar colgado, sin error crudo en consola
   - **Bug real encontrado y corregido**: `useSaved.toggle()` no tenía `try/catch` — si el token vencía mientras alguien tocaba el corazón de guardar, la promesa quedaba rechazada sin manejar (unhandled rejection silenciosa). Ahora atrapa el error y deja que el interceptor global maneje el 401
-  - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca". Los labels del bottom nav (Home/Map/Saved/Reviews/Profile) se dejaron en inglés a propósito — así están en el mockup de Stitch original; avisar si se prefiere traducirlos también
+  - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca"; bottom nav Home/Map/Saved/Reviews/Profile → Inicio/Mapa/Guardados/Reseñas/Perfil
+- [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ⚠️ Google Places: hallazgo de compliance sobre caché de datos
@@ -117,6 +118,34 @@ riesgo de compliance asumido conscientemente, no resuelto. **No lanzar
 públicamente sin volver a este punto** — conseguir la API key de Google
 Maps Platform, re-popular los 46 registros con su `place_id`, y armar el
 job de refresco antes de un lanzamiento real.
+
+## Deploy: checklist de producción (preparado, no ejecutado)
+
+### Ya está listo en el código
+
+- **`server/Procfile`**: `web: node src/server.js`
+- **`server/package.json`**: agregado `"engines": { "node": "20.x" }` — coincide con la versión local (`node --version` → v20.20.2)
+- **`netlify.toml`** (raíz del repo): `base = "client"`, `command = "npm run build"`, `publish = "dist"`, más el redirect `/* → /index.html` (200) para que el SPA no dé 404 al refrescar una ruta. Nota: hoy la app no usa rutas de URL reales (`react-router-dom` está en `package.json` pero no se usa en ningún componente — toda la navegación es estado en memoria dentro de `App.jsx`), así que el redirect no tiene efecto práctico todavía, pero es lo correcto para cuando se agregue routing real
+- Confirmado `npm run build` en `client/` — compila sin errores (`dist/` generado, ~131 KB gzipped)
+
+### Variables de entorno para producción
+
+| Variable | Estado | Detalle |
+|---|---|---|
+| `MONGODB_URI` | ✅ Listo | Ya tenés el cluster de Atlas funcionando |
+| `JWT_SECRET` | ✅ El valor actual de tu `.env` local es suficientemente fuerte | Es un hex de 64 caracteres (256 bits) generado con `openssl rand -hex 32` — cumple el mínimo recomendado para HS256. **Igual generá uno *distinto* para producción** (no reuses el de dev): si en algún momento se filtra el `.env` local, no querés que ese mismo secreto firme también los tokens de producción. Ejemplo de uno nuevo, generado ahora: `ea8e39b04042355bdcdcbb74d947a8889465454b9163e31dab61ff60a1276460` — usalo o generá el tuyo con `openssl rand -hex 32` |
+| `JWT_EXPIRES_IN` | ✅ Opcional | Default ya es `7d` en el código; solo hace falta setearlo si querés otro valor |
+| `CORS_ORIGINS` | ⏳ Pendiente de vos | Hoy tiene el placeholder `https://gluten-free-app.netlify.app` en `.env.example`. Actualizalo con el dominio real que te dé Netlify antes de que el frontend pueda hablarle al backend en producción |
+| `PORT` | ✅ No hace falta setearlo | Heroku lo inyecta automáticamente |
+
+### Lo que te falta a VOS (no lo puedo hacer yo)
+
+1. **Heroku**: crear cuenta si no tenés, crear la app, conectarla al repo de GitHub (`Marylizr/glutenfri`) o configurar el remoto de `git push heroku main`. Elegí que el deploy sea desde la carpeta `server/` (Heroku necesita que el `Procfile` esté en la raíz del repo que le apuntes — si conectás el monorepo completo, puede que necesites un buildpack tipo `heroku-buildpack-subdir` o desplegar `server/` como su propio repo/submódulo; decime cómo preferís organizarlo y lo ajusto)
+2. **Heroku → Settings → Config Vars**: cargar `MONGODB_URI`, `JWT_SECRET` (el nuevo, no el de dev), `CORS_ORIGINS` (placeholder por ahora, lo actualizás después)
+3. **Netlify**: crear cuenta si no tenés, conectar el repo — Netlify debería detectar `netlify.toml` solo
+4. **Netlify → Site settings → Environment variables**: cargar `VITE_API_URL` apuntando a la URL real que te dé Heroku (ej. `https://tu-app.herokuapp.com/api`)
+5. Una vez que Netlify te dé el dominio final, **volver a Heroku y actualizar `CORS_ORIGINS`** con ese dominio real (reemplazando el placeholder)
+6. Después de todo eso, probar el flujo completo en producción antes de anunciarlo — especialmente registro/login (rate limiting agresivo real) y el flujo de Safety Review completo
 
 ## Notas técnicas
 

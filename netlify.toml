@@ -1,0 +1,12 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# SPA: sin esto, refrescar cualquier ruta que no sea "/" da 404 en
+# Netlify porque no hay archivos físicos para esas rutas — todo el
+# routing lo maneja React en el cliente.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
