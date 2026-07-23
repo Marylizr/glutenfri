@@ -47,19 +47,28 @@ async function createReview(req, res) {
     dedicatedKitchen,
     riskLevel,
   } = req.body;
-  const review = await Review.create({
-    establishment: req.params.id,
-    user: req.user.id, // viene del middleware de auth
-    rating,
-    comment,
-    photos,
-    staffUnderstanding,
-    hasDedicatedMenu,
-    dedicatedKitchen,
-    riskLevel,
-  });
 
-  // Recalcular avgRating del establecimiento
+  // Una reseña por usuario por establecimiento (índice único en Review):
+  // si ya tenía una, la actualiza en vez de rechazar — la gente cambia de
+  // opinión sobre un lugar, no tiene sentido bloquearla.
+  const existing = await Review.findOne({ establishment: req.params.id, user: req.user.id });
+
+  const review = await Review.findOneAndUpdate(
+    { establishment: req.params.id, user: req.user.id },
+    {
+      rating,
+      comment,
+      photos,
+      staffUnderstanding,
+      hasDedicatedMenu,
+      dedicatedKitchen,
+      riskLevel,
+    },
+    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  );
+
+  // Recalcular avgRating del establecimiento — corre igual al crear, editar
+  // o (en deleteAccount) borrar una reseña, siempre sobre lo que quedó.
   const agg = await Review.aggregate([
     { $match: { establishment: review.establishment } },
     { $group: { _id: '$establishment', avg: { $avg: '$rating' } } },
@@ -77,7 +86,7 @@ async function createReview(req, res) {
     riskLevel,
   });
 
-  res.status(201).json(review);
+  res.status(existing ? 200 : 201).json(review);
 }
 
 module.exports = { listEstablishments, getEstablishment, listReviews, createReview };

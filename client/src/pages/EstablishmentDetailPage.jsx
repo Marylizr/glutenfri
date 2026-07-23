@@ -172,7 +172,7 @@ function ActionButton({ children, onClick, primary }) {
   );
 }
 
-export default function EstablishmentDetailPage({ establishment, onBack, saved, onToggleSaved }) {
+export default function EstablishmentDetailPage({ establishment, onBack, saved, onToggleSaved, auth }) {
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [reviewsError, setReviewsError] = useState(null);
@@ -191,10 +191,18 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
     loadReviews();
   }, [loadReviews]);
 
+  // Una reseña por usuario por establecimiento (el backend hace upsert) —
+  // si ya dejó una, el Safety Review se abre precargado para editarla en
+  // vez de arrancar en blanco.
+  const myReview = auth?.user
+    ? reviews.find((r) => r.user?._id === auth.user.id)
+    : null;
+
   if (showReview) {
     return (
       <SafetyReviewFlow
         establishmentId={establishment._id}
+        existingReview={myReview}
         onCancel={() => setShowReview(false)}
         onComplete={() => {
           setShowReview(false);
@@ -284,7 +292,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
               marginBottom: '20px',
             }}
           >
-            Dejar reseña (Safety Review)
+            {myReview ? 'Editar mi reseña' : 'Dejar reseña (Safety Review)'}
           </button>
 
           <h2 style={{ fontSize: '16px', marginBottom: '10px' }}>Reseñas de la comunidad</h2>

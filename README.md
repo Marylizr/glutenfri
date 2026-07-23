@@ -173,6 +173,30 @@ Todo probado en vivo: registro sin checkbox (bloqueado en el navegador y rechaza
 - Decidir si necesitás un representante UE (Art. 27 GDPR) — depende de dónde esté constituida la empresa
 - Cuando crees la app de Heroku: `heroku create --region eu` (no lo puedo hacer yo, es un paso manual tuyo)
 
+## Piloto cerrado: puntos rojos de seguridad/usabilidad
+
+### 0. Investigación previa
+
+- Tab "Reviews" del bottom nav: confirmado que sigue siendo el placeholder original (`<ComingSoon label="Reseñas" />`) — nadie lo construyó en ninguna sesión.
+- Servicio de email: nada configurado en este proyecto (sin `SENDGRID_API_KEY`/`RESEND_API_KEY`, sin `nodemailer`/`resend` en ningún `package.json`). Encontrado en `SweatMateApp-migrate` un servicio de email con **Resend** ya en producción (llamado por HTTP directo, sin SDK — `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_REPLY_TO`) y un flujo completo de forgot/reset password ya probado ahí, reutilizable como referencia de diseño.
+
+### 1. "Olvidé mi contraseña" — **pausado**
+
+A la espera de que consigas un dominio para verificar en Resend. Se retoma cuando lo tengas — avisame y seguimos desde ahí con el mismo patrón ya validado en SweatMate.
+
+### 2. Una reseña por usuario por establecimiento — hecho
+
+- Antes de tocar nada: revisé Atlas por reseñas de prueba duplicadas de sesiones anteriores — **la colección `reviews` estaba en cero** (las reseñas de prueba anteriores se habían borrado en cascada al eliminar las cuentas de prueba con el flujo de GDPR). No hubo nada que limpiar.
+- Índice único compuesto `{ establishment: 1, user: 1 }` en `Review` — confirmado creado en Atlas (`db.reviews.getIndexes()`).
+- **Decisión de producto aplicada**: reenviar el Safety Review **actualiza** la reseña existente (upsert vía `findOneAndUpdate`) en vez de rechazar con 409 — devuelve `200` si actualizó, `201` si creó.
+- `avgRating` se recalcula igual en los tres casos (crear, editar, borrar) — probado explícitamente: reseña con rating 2 → `avgRating: 2` → misma reseña editada a rating 5 → `avgRating: 5` (no promedia 2 y 5, refleja el estado actual).
+- Frontend: `EstablishmentDetailPage` detecta si el usuario logueado ya tiene una reseña propia (comparando `auth.user.id` contra `reviews[].user._id`) y cambia el botón a "Editar mi reseña"; `SafetyReviewFlow` recibe esa reseña como `existingReview` y precarga las 4 respuestas + rating + comentario, con el botón final como "Actualizar reseña". Probado en vivo el flujo completo: crear reseña (2★, botón "Enviar reseña") → volver a la card (botón ya dice "Editar mi reseña") → reabrir y confirmar que las 4 respuestas y el rating vienen precargados → cambiar a 5★ y confirmar ("Actualizar reseña") → la card de reseña sigue siendo una sola, actualizada.
+
+### 3. Rate limiting en reseñas — hecho
+
+- `POST /establishments/:id/reviews`: 10 reseñas por hora **por usuario autenticado** (no por IP — `keyGenerator` usa `req.user.id`, que ya está disponible porque `requireAuth` corre antes en la cadena de middlewares).
+- Probado enviando 15 requests seguidos con el mismo usuario: los primeros 10 pasaron (200/201), del 11° en adelante `429` — límite exacto confirmado.
+
 ## Notas técnicas
 
 - **API URL centralizada** en `client/src/services/apiConfig.js` — mismo patrón que SweatMate, para que la migración a Capacitor no requiera tocar cada componente.

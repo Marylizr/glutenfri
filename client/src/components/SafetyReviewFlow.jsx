@@ -74,14 +74,15 @@ function StepShell({ step, title, subtitle, onBack, children }) {
   );
 }
 
-export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete }) {
+export default function SafetyReviewFlow({ establishmentId, existingReview, onCancel, onComplete }) {
+  const isEditing = !!existingReview;
   const [step, setStep] = useState(1);
-  const [staffUnderstanding, setStaffUnderstanding] = useState(null);
-  const [hasDedicatedMenu, setHasDedicatedMenu] = useState(null);
-  const [dedicatedKitchen, setDedicatedKitchen] = useState(null);
-  const [riskLevel, setRiskLevel] = useState(null);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
+  const [staffUnderstanding, setStaffUnderstanding] = useState(existingReview?.staffUnderstanding ?? null);
+  const [hasDedicatedMenu, setHasDedicatedMenu] = useState(existingReview?.hasDedicatedMenu ?? null);
+  const [dedicatedKitchen, setDedicatedKitchen] = useState(existingReview?.dedicatedKitchen ?? null);
+  const [riskLevel, setRiskLevel] = useState(existingReview?.riskLevel ?? null);
+  const [rating, setRating] = useState(existingReview?.rating ?? 0);
+  const [comment, setComment] = useState(existingReview?.comment ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -281,7 +282,7 @@ export default function SafetyReviewFlow({ establishmentId, onCancel, onComplete
           fontWeight: 600,
         }}
       >
-        {submitting ? 'Enviando…' : 'Enviar reseña'}
+        {submitting ? 'Enviando…' : isEditing ? 'Actualizar reseña' : 'Enviar reseña'}
       </button>
     </StepShell>
   );

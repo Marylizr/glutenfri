@@ -87,6 +87,7 @@ function App() {
             onBack={() => setSelected(null)}
             saved={saved.savedIds.has(selected._id)}
             onToggleSaved={handleToggleSaved}
+            auth={auth}
           />
         ) : (
           <>

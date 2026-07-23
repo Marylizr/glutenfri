@@ -23,5 +23,9 @@ const reviewSchema = new mongoose.Schema(
 );
 
 reviewSchema.index({ establishment: 1 });
+// Una reseña por usuario por establecimiento — reenviar el Safety Review
+// actualiza la reseña existente en vez de crear una duplicada (ver
+// establishmentsController.createReview, que hace upsert por esta combinación).
+reviewSchema.index({ establishment: 1, user: 1 }, { unique: true });
 
 module.exports = mongoose.model('Review', reviewSchema);

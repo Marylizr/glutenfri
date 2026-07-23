@@ -9,6 +9,7 @@ const {
 } = require('../controllers/establishmentsController');
 const { requireAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const { reviewLimiter } = require('../middleware/rateLimiters');
 
 const ESTABLISHMENT_TYPES = ['restaurant', 'store', 'pharmacy', 'bakery', 'supermarket'];
 const STAFF_UNDERSTANDING_VALUES = ['poor', 'okay', 'excellent'];
@@ -43,6 +44,7 @@ router.get(
 router.post(
   '/:id/reviews',
   requireAuth,
+  reviewLimiter,
   [
     param('id').isMongoId().withMessage('id inválido'),
     body('rating').isInt({ min: 1, max: 5 }).withMessage('rating debe ser un entero entre 1 y 5'),

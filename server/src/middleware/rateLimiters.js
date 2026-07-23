@@ -19,4 +19,16 @@ const authLimiter = rateLimit({
   message: { error: 'Demasiados intentos. Espera unos minutos e intenta de nuevo.' },
 });
 
-module.exports = { apiLimiter, authLimiter };
+// Reseñas — por usuario autenticado, no por IP (la ruta ya exige login
+// vía requireAuth, que corre antes que este limiter en la cadena de
+// middlewares, así que req.user.id ya está disponible acá).
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user.id,
+  message: { error: 'Alcanzaste el límite de reseñas por hora. Intenta más tarde.' },
+});
+
+module.exports = { apiLimiter, authLimiter, reviewLimiter };
