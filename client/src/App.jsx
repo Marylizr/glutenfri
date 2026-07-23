@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
 import EstablishmentDetailPage from './pages/EstablishmentDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import SavedPage from './pages/SavedPage';
+import ReviewsPage from './pages/ReviewsPage';
 import OnboardingScreen from './pages/OnboardingScreen';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
@@ -11,23 +12,6 @@ import { useSaved } from './hooks/useSaved';
 import './index.css';
 
 const ONBOARDED_KEY = 'gf_onboarded';
-
-// Placeholder simple para tabs que aún no tienen pantalla propia.
-function ComingSoon({ label }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        color: 'var(--color-text-muted)',
-      }}
-    >
-      {label} — próximamente
-    </div>
-  );
-}
 
 function App() {
   const [tab, setTab] = useState('home');
@@ -113,7 +97,14 @@ function App() {
                 onGoToProfile={() => setTab('profile')}
               />
             )}
-            {tab === 'reviews' && <ComingSoon label="Reseñas" />}
+            {tab === 'reviews' && (
+              <ReviewsPage
+                auth={auth}
+                onSelectEstablishment={setSelected}
+                onGoToProfile={() => setTab('profile')}
+                onGoToExplore={() => setTab('home')}
+              />
+            )}
             {tab === 'profile' && <ProfilePage auth={auth} />}
           </>
         )}

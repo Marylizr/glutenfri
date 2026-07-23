@@ -197,6 +197,27 @@ A la espera de que consigas un dominio para verificar en Resend. Se retoma cuand
 - `POST /establishments/:id/reviews`: 10 reseñas por hora **por usuario autenticado** (no por IP — `keyGenerator` usa `req.user.id`, que ya está disponible porque `requireAuth` corre antes en la cadena de middlewares).
 - Probado enviando 15 requests seguidos con el mismo usuario: los primeros 10 pasaron (200/201), del 11° en adelante `429` — límite exacto confirmado.
 
+## Tab "Reviews": feed de actividad de la comunidad
+
+Reemplaza el placeholder "próximamente". `ReviewsPage.jsx` con toggle
+**Comunidad** (default) / **Mis reseñas**, mismo feed, filtro distinto.
+
+**Backend**:
+- `GET /api/reviews/recent` (público) — reseñas de todos los establecimientos, `createdAt` descendente, paginado (`?page`/`?limit`, default 20, máx 50, mismo shape `{ data, page, limit, total, totalPages }` que `/establishments`). Cada item trae `establishment: { _id, name, type }` y `user: { _id, name }` poblados.
+- `GET /api/users/me/reviews` (protegido) — mismo shape, filtrado a las reseñas del usuario autenticado.
+- **Privacidad**: en ambos endpoints, el nombre del usuario se recorta al primer nombre únicamente (`"Edit Flow Test"` → `"Edit"`) antes de salir del servidor — nunca se expone el apellido completo ni el email en este feed público. *(Nota: los endpoints existentes de reseñas por establecimiento, `GET /establishments/:id/reviews`, siguen devolviendo el nombre completo — no los toqué porque no fue parte de lo pedido, pero es una inconsistencia de criterio entre ambos endpoints que vale la pena resolver en algún momento.)*
+
+**Frontend**:
+- Cada card: ícono + nombre del establecimiento (clickeable → trae el establecimiento completo vía `getEstablishmentById` y abre su detalle), nombre del usuario, rating, comentario recortado a 2 líneas (`-webkit-line-clamp`), badge de nivel de riesgo si la reseña lo incluyó, tiempo relativo.
+- Tiempo relativo: no había ninguna librería de fechas instalada (ni date-fns ni similar) — se armó `utils/time.js`, una función simple, para no sumar una dependencia por esto.
+- Paginación: botón "Cargar más" (no scroll infinito) — es lo que menos código nuevo pedía dado que el proyecto no tenía ningún patrón de scroll infinito para reutilizar.
+- **Estados vacíos** (el foco del diseño, no un afterthought):
+  - Comunidad vacía: "Sé la primera en dejar una reseña esta semana" + botón "Explorar lugares" → tab Inicio.
+  - Mis reseñas vacío (con sesión): "Todavía no dejaste ninguna reseña" + mismo botón.
+  - Mis reseñas sin sesión: mismo componente `LoginRequiredState` que ya usaba `SavedPage.jsx` — se extrajo de ahí a un componente compartido en vez de duplicar el bloque, como pediste.
+
+**Antes de probar el estado vacío real** encontré 9 reseñas de prueba residuales de la sesión anterior (rate-limiting, cuentas "Upsert Test" y "Edit Flow Test") que no se habían limpiado. Confirmé con vos antes de borrarlas — usé el mismo `DELETE /api/users/me` (borrado en cascada + recálculo de `avgRating`) para las 2 cuentas. Con eso, probé el feed real: vacío primero (screenshot con el mensaje invitador), después con una reseña real de un usuario nuevo ("Maria Fernandez" → se muestra "Maria"), confirmando nombre truncado, tiempo relativo, comentario recortado, badge de riesgo, y que tocar el nombre del establecimiento abre su detalle completo.
+
 ## Notas técnicas
 
 - **API URL centralizada** en `client/src/services/apiConfig.js` — mismo patrón que SweatMate, para que la migración a Capacitor no requiera tocar cada componente.

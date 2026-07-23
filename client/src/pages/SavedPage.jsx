@@ -1,5 +1,6 @@
 import RestaurantCard from '../components/RestaurantCard';
 import ErrorState from '../components/ErrorState';
+import LoginRequiredState from '../components/LoginRequiredState';
 import { useUserLocation } from '../hooks/useUserLocation';
 
 export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToProfile }) {
@@ -7,37 +8,12 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
 
   if (!auth.user) {
     return (
-      <div
-        style={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>♡</div>
-        <h1 style={{ fontSize: '18px', marginBottom: '8px' }}>Guardá tus lugares seguros</h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
-          Iniciá sesión para guardar restaurantes, tiendas y farmacias gluten-free.
-        </p>
-        <button
-          onClick={onGoToProfile}
-          style={{
-            padding: '12px 24px',
-            borderRadius: 'var(--radius-input)',
-            border: 'none',
-            background: 'var(--color-accent)',
-            color: '#fff',
-            fontSize: '15px',
-            fontWeight: 600,
-          }}
-        >
-          Iniciar sesión
-        </button>
-      </div>
+      <LoginRequiredState
+        icon="♡"
+        title="Guardá tus lugares seguros"
+        message="Iniciá sesión para guardar restaurantes, tiendas y farmacias gluten-free."
+        onGoToProfile={onGoToProfile}
+      />
     );
   }
 

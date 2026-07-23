@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
+const { parsePagination, toFeedItem } = require('./reviewsController');
 
 async function listSaved(req, res) {
   const user = await User.findById(req.user.id).populate('savedEstablishments').lean();
@@ -75,10 +76,38 @@ async function exportData(req, res) {
   });
 }
 
+// Reseñas del usuario autenticado, en todos los establecimientos donde
+// escribió — mismo shape que /api/reviews/recent (tab "Mis reseñas" del
+// feed usa el mismo componente de card en el frontend).
+async function listMyReviews(req, res) {
+  const { page, limit, skip } = parsePagination(req);
+  const query = { user: req.user.id };
+
+  const [data, total] = await Promise.all([
+    Review.find(query)
+      .sort('-createdAt')
+      .skip(skip)
+      .limit(limit)
+      .populate('establishment', 'name type')
+      .populate('user', 'name')
+      .lean(),
+    Review.countDocuments(query),
+  ]);
+
+  res.json({
+    data: data.map(toFeedItem),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  });
+}
+
 module.exports = {
   listSaved,
   saveEstablishment,
   unsaveEstablishment,
   deleteAccount,
   exportData,
+  listMyReviews,
 };
