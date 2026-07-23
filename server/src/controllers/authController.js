@@ -9,8 +9,11 @@ async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({ name, email, passwordHash });
+  // Sin refresh token todavía — expiresIn corto acota la ventana de un
+  // token comprometido. Deuda técnica: si la app escala, agregar refresh
+  // tokens y volver a subir expiresIn para no forzar logins frecuentes.
   const token = jwt.sign({ id: user._id, name: user.name }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
   res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
 }
@@ -23,8 +26,11 @@ async function login(req, res) {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: 'Credenciales inválidas' });
 
+  // Sin refresh token todavía — expiresIn corto acota la ventana de un
+  // token comprometido. Deuda técnica: si la app escala, agregar refresh
+  // tokens y volver a subir expiresIn para no forzar logins frecuentes.
   const token = jwt.sign({ id: user._id, name: user.name }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
   res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
 }
