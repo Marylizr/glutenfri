@@ -19,6 +19,8 @@ router.get(
   [
     query('type').optional().isIn(ESTABLISHMENT_TYPES).withMessage('type inválido'),
     query('certifiedOnly').optional().isBoolean().withMessage('certifiedOnly debe ser boolean'),
+    query('page').optional().isInt({ min: 1 }).withMessage('page debe ser un entero >= 1'),
+    query('limit').optional().isInt({ min: 1, max: 200 }).withMessage('limit debe ser un entero entre 1 y 200'),
   ],
   validate,
   listEstablishments

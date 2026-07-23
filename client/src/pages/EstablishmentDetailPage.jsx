@@ -3,6 +3,7 @@ import { Badge } from '../components/RestaurantCard';
 import PhotoPlaceholder from '../components/PhotoPlaceholder';
 import ScoreBadge from '../components/ScoreBadge';
 import SaveButton from '../components/SaveButton';
+import GoogleAttribution, { isGoogleSourced } from '../components/GoogleAttribution';
 import SafetyReviewFlow from '../components/SafetyReviewFlow';
 import { getReviews } from '../services/establishments';
 
@@ -254,9 +255,14 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             </p>
           )}
           {establishment.discount && (
-            <p style={{ color: 'var(--color-accent)', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
+            <p style={{ color: 'var(--color-accent)', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>
               {establishment.discount}
             </p>
+          )}
+          {isGoogleSourced(establishment) && (
+            <div style={{ marginBottom: '16px' }}>
+              <GoogleAttribution />
+            </div>
           )}
 
           <SafetyProtocols establishment={establishment} />

@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { divIcon } from 'leaflet';
+import { isGoogleSourced } from './GoogleAttribution';
 import 'leaflet/dist/leaflet.css';
 
 // Pin custom en verde salvia (certificado) o terracota (sin verificar),
@@ -20,6 +21,14 @@ function pinIcon(certified) {
 
 export default function MapView({ establishments, center }) {
   const withCoords = establishments.filter((e) => e.lat && e.lng);
+  const hasGoogleData = withCoords.some(isGoogleSourced);
+
+  // Atribución de Leaflet (siempre visible, no escondida en un popup) —
+  // sumamos el crédito a Google Maps cuando alguno de los pines visibles
+  // trae datos de ubicación de la Places API.
+  const attribution = hasGoogleData
+    ? '&copy; OpenStreetMap contributors | Datos de ubicación: Google Maps'
+    : '&copy; OpenStreetMap contributors';
 
   return (
     <MapContainer
@@ -29,7 +38,7 @@ export default function MapView({ establishments, center }) {
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap contributors'
+        attribution={attribution}
       />
       {withCoords.map((e) => (
         <Marker key={e._id || e.name} position={[e.lat, e.lng]} icon={pinIcon(e.certified)}>
@@ -43,6 +52,12 @@ export default function MapView({ establishments, center }) {
               <>
                 <br />
                 <em>{e.discount}</em>
+              </>
+            )}
+            {isGoogleSourced(e) && (
+              <>
+                <br />
+                <span style={{ fontSize: '10px', color: '#8a8578' }}>Datos de ubicación: Google Maps</span>
               </>
             )}
           </Popup>

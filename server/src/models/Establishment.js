@@ -41,5 +41,13 @@ const establishmentSchema = new mongoose.Schema(
 
 establishmentSchema.index({ lat: 1, lng: 1 });
 establishmentSchema.index({ type: 1 });
+// listEstablishments filtra por certifiedOnly=true — el único filtro nuevo
+// de las sesiones recientes que corre sobre un campo no indexado.
+establishmentSchema.index({ certified: 1 });
+
+// dedicatedKitchen/dedicatedGlutenFreeMenu/staffTrained/riskLevel NO tienen
+// índice: hoy solo se leen (detail page), nada los usa como filtro de
+// query. Agregar índice si en algún momento sumamos un filtro tipo
+// "?riskLevel=low" en listEstablishments.
 
 module.exports = mongoose.model('Establishment', establishmentSchema);

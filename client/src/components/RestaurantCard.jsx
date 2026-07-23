@@ -1,6 +1,7 @@
 import PhotoPlaceholder from './PhotoPlaceholder';
 import ScoreBadge from './ScoreBadge';
 import SaveButton from './SaveButton';
+import GoogleAttribution, { isGoogleSourced } from './GoogleAttribution';
 import { distanceKm, formatDistance } from '../utils/distance';
 
 export function Badge({ establishment }) {
@@ -106,6 +107,12 @@ export default function RestaurantCard({
             </>
           )}
         </div>
+
+        {isGoogleSourced(establishment) && (
+          <div style={{ marginTop: '4px' }}>
+            <GoogleAttribution compact />
+          </div>
+        )}
       </div>
     </div>
   );

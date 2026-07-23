@@ -7,8 +7,20 @@ async function listEstablishments(req, res) {
   if (type) query.type = type;
   if (certifiedOnly === 'true') query.certified = true;
 
-  const establishments = await Establishment.find(query).lean();
-  res.json(establishments);
+  // Paginación preparada para cuando el dataset crezca más allá de un
+  // puñado de cientos de registros. Default limit=100 cubre el dataset
+  // actual (72) en una sola página, así que no cambia el comportamiento
+  // para clientes que todavía no mandan page/limit.
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 200);
+  const skip = (page - 1) * limit;
+
+  const [data, total] = await Promise.all([
+    Establishment.find(query).skip(skip).limit(limit).lean(),
+    Establishment.countDocuments(query),
+  ]);
+
+  res.json({ data, page, limit, total, totalPages: Math.ceil(total / limit) });
 }
 
 async function getEstablishment(req, res) {
