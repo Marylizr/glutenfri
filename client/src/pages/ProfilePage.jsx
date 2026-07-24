@@ -29,7 +29,7 @@ function AccountPanel({ auth }) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `mis-datos-gluten-free-app-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `mis-datos-glutenfri-${new Date().toISOString().slice(0, 10)}.json`;
       link.click();
       URL.revokeObjectURL(url);
     } catch {

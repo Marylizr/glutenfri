@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { APP_NAME, REGION_CITIES } from '../config/brand';
 
 const sectionStyle = { marginBottom: '24px' };
 const paragraphStyle = { margin: '8px 0', lineHeight: 1.65, fontSize: '14px' };
@@ -23,8 +24,8 @@ export default function PrivacyPage() {
         <section style={sectionStyle}>
           <h2 style={{ fontSize: '18px' }}>1. Responsable del tratamiento</h2>
           <p style={paragraphStyle}>
-            Gluten Free Porto/Famalicão es gestionada por Mary Marquez. Para consultas o para
-            ejercer tus derechos de protección de datos, escribe a{' '}
+            {APP_NAME} es una guía de establecimientos en {REGION_CITIES} gestionada por Mary
+            Marquez. Para consultas o para ejercer tus derechos de protección de datos, escribe a{' '}
             <a href="mailto:marylizr@gmail.com">marylizr@gmail.com</a>.
           </p>
         </section>

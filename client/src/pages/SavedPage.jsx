@@ -2,6 +2,7 @@ import RestaurantCard from '../components/RestaurantCard';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
 import { useUserLocation } from '../hooks/useUserLocation';
+import { APP_NAME, REGION_NAME } from '../config/brand';
 
 export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToProfile }) {
   const { position } = useUserLocation();
@@ -21,7 +22,7 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <header style={{ padding: '16px 16px 8px' }}>
         <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '2px' }}>
-          📍 Braga, Portugal
+          {APP_NAME} · 📍 {REGION_NAME}
         </div>
         <h1 style={{ fontSize: '22px' }}>Tus lugares seguros</h1>
       </header>

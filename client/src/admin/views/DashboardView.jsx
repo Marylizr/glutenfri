@@ -90,7 +90,7 @@ export default function DashboardView({ auth, navigate }) {
       <div className="admin-page-header">
         <div>
           <h1>Buenos días, {auth.user.name.split(' ')[0]}</h1>
-          <p>Resumen operativo de Gluten Free Porto</p>
+          <p>Resumen operativo de glutenfri</p>
         </div>
         <button
           className="admin-primary-button"

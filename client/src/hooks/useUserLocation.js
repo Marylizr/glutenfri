@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
-// Coordenadas por defecto: centro aproximado de Porto, para no dejar el mapa
-// vacío mientras se resuelve el permiso de geolocalización.
-const DEFAULT_POSITION = { lat: 41.1496, lng: -8.6109 };
+// Centro aproximado del corredor Braga–Porto. Así, sin permiso de ubicación,
+// el mapa representa la cobertura regional en vez de una sola ciudad.
+const DEFAULT_POSITION = { lat: 41.32, lng: -8.55 };
 
 export function useUserLocation() {
   const [position, setPosition] = useState(DEFAULT_POSITION);

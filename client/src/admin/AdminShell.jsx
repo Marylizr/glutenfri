@@ -17,6 +17,7 @@ import ModerationView from './views/ModerationView';
 import UsersView from './views/UsersView';
 import AuditView from './views/AuditView';
 import SystemView from './views/SystemView';
+import { APP_NAME } from '../config/brand';
 import './admin.css';
 
 const NAV_ITEMS = [
@@ -62,8 +63,8 @@ export default function AdminShell({ auth }) {
     <div className="admin-app">
       <aside className="admin-sidebar">
         <button className="admin-brand" type="button" onClick={() => navigate('/admin')}>
-          <span className="admin-brand-kicker">Gluten Free</span>
-          <strong>PORTO</strong>
+          <span className="admin-brand-kicker">{APP_NAME}</span>
+          <strong>NORTE</strong>
           <span className="admin-brand-admin">ADMIN</span>
         </button>
 

@@ -1,3 +1,5 @@
+import { APP_NAME, REGION_CITIES } from '../config/brand';
+
 const FEATURES = [
   { icon: '✓', text: 'Lugares sin gluten verificados' },
   { icon: '★', text: 'Reseñas de la comunidad celíaca' },
@@ -29,15 +31,15 @@ export default function OnboardingScreen({ onStart, onLogin }) {
           marginTop: '40px',
         }}
       >
-        🌿 100% sin gluten
+        🌿 {APP_NAME}
       </div>
 
       <h1 style={{ fontSize: '30px', lineHeight: 1.2, marginBottom: '12px' }}>
-        Encuentra lugares seguros sin gluten en Braga
+        Tu guía sin gluten en el norte de Portugal
       </h1>
       <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', marginBottom: '20px' }}>
-        Descubre restaurantes, tiendas y farmacias sin gluten en el norte de Portugal, con reseñas
-        reales de la comunidad celíaca.
+        Explora {REGION_CITIES}: restaurantes, tiendas y farmacias con reseñas reales de la
+        comunidad celíaca.
       </p>
 
       <div style={{ marginBottom: '28px' }}>

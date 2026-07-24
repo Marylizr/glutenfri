@@ -33,7 +33,7 @@ export default function MapView({ establishments, center }) {
   return (
     <MapContainer
       center={[center.lat, center.lng]}
-      zoom={12}
+      zoom={10}
       style={{ height: '100%', width: '100%' }}
     >
       <TileLayer

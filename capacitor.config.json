@@ -1,6 +1,6 @@
 {
   "appId": "pt.pixeltrendstudio.glutenfreeapp",
-  "appName": "Gluten Free Porto",
+  "appName": "glutenfri",
   "webDir": "client/dist",
   "bundledWebRuntime": false,
   "server": {

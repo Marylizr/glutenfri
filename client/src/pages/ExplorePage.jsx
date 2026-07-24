@@ -5,6 +5,7 @@ import RestaurantCard from '../components/RestaurantCard';
 import ErrorState from '../components/ErrorState';
 import { getEstablishments } from '../services/establishments';
 import { useUserLocation } from '../hooks/useUserLocation';
+import { APP_NAME, REGION_NAME } from '../config/brand';
 
 export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleSaved }) {
   const [establishments, setEstablishments] = useState([]);
@@ -30,7 +31,10 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
   const filtered = useMemo(() => {
     return establishments.filter((e) => {
       if (type && e.type !== type) return false;
-      if (query && !e.name.toLowerCase().includes(query.toLowerCase())) return false;
+      if (query) {
+        const searchText = `${e.name} ${e.address || ''}`.toLocaleLowerCase('es');
+        if (!searchText.includes(query.toLocaleLowerCase('es'))) return false;
+      }
       return true;
     });
   }, [establishments, type, query]);
@@ -45,10 +49,14 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
             marginBottom: '2px',
           }}
         >
-          📍 Braga, Portugal
+          {APP_NAME} · 📍 {REGION_NAME}
         </div>
         <h1 style={{ fontSize: '22px', marginBottom: '14px' }}>Explora sin gluten</h1>
-        <SearchBar value={query} onChange={setQuery} />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Buscar lugar o ciudad…"
+        />
       </header>
 
       <div style={{ padding: '0 16px' }}>

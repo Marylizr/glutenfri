@@ -1,7 +1,7 @@
-# Gluten Free Porto/Famalicão
+# glutenfri
 
-Aplicación para unificar información de lugares sin gluten (restaurantes, tiendas,
-farmacias, pastelerías) en el Norte de Portugal, con reseñas de usuarios.
+Guía comunitaria de lugares sin gluten —restaurantes, tiendas, farmacias y
+pastelerías— en Braga, Porto, Maia, Matosinhos y el norte de Portugal.
 
 ## Estructura
 

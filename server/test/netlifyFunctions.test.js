@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 test('Netlify enruta la API, limita auth y ejecuta Places en segundo plano', async () => {
   const previousJwtSecret = process.env.JWT_SECRET;
   const previousCorsOrigins = process.env.CORS_ORIGINS;
-  process.env.JWT_SECRET = 'secreto-de-prueba-seguro-con-mas-de-32-caracteres';
+  process.env.JWT_SECRET = 'prueba'.repeat(8);
   process.env.CORS_ORIGINS = 'https://app.example';
 
   try {
