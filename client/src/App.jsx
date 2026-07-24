@@ -13,13 +13,12 @@ import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
 import './index.css';
 
-const ONBOARDED_KEY = 'gf_onboarded';
 const AdminShell = lazy(() => import('./admin/AdminShell'));
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [onboarded, setOnboarded] = useState(() => localStorage.getItem(ONBOARDED_KEY) === 'true');
+  const [onboarded, setOnboarded] = useState(false);
   const auth = useAuth();
   const saved = useSaved(auth.user);
 
@@ -45,7 +44,6 @@ function App() {
   };
 
   const finishOnboarding = () => {
-    localStorage.setItem(ONBOARDED_KEY, 'true');
     setOnboarded(true);
   };
 
@@ -59,7 +57,13 @@ function App() {
     }
   }, [auth.sessionExpired, navigate]);
 
-  if (!onboarded && location.pathname !== '/privacidad' && !location.pathname.startsWith('/admin')) {
+  // La portada es la entrada de cada carga nueva de la app pública y solo
+  // avanza cuando la persona pulsa uno de sus CTA. No se persiste el estado
+  // "visto"; /admin y /privacidad permanecen accesibles por URL directa.
+  const isPublicEntry =
+    !location.pathname.startsWith('/admin') && location.pathname !== '/privacidad';
+
+  if (!onboarded && isPublicEntry) {
     return (
       <div
         style={{

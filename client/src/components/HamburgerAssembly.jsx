@@ -9,30 +9,44 @@ const IMAGES = {
   plato: '/images/plato.png',
 };
 
+// Orden de pintura original, desde el plato hacia arriba. En SVG, lo que
+// aparece después queda por encima: invertir este orden hace que la base
+// tape la carne, el tomate o el pan superior.
 const LAYERS = [
-  { key: 'pan', src: IMAGES.pan, x: 10.25, y: 0, width: 432, height: 185.5, delay: 0.6, duration: 0.62 },
-  { key: 'rucula', src: IMAGES.rucula, x: 9.5, y: 81, width: 432, height: 131.5, delay: 0.5, duration: 0.6 },
-  { key: 'tomate', src: IMAGES.tomate, x: 8.75, y: 96, width: 431, height: 140.5, delay: 0.4, duration: 0.6 },
-  { key: 'queso', src: IMAGES.queso, x: 12, y: 118, width: 432, height: 127, delay: 0.3, duration: 0.6 },
-  { key: 'carne', src: IMAGES.carne, x: 10, y: 151, width: 432, height: 103, delay: 0.2, duration: 0.58 },
-  { key: 'salsa', src: IMAGES.salsa, x: 11.25, y: 172, width: 430, height: 97, delay: 0.1, duration: 0.58 },
   { key: 'panBottom', src: IMAGES.panBottom, x: 13, y: 180, width: 431, height: 95, delay: 0, duration: 0.58 },
+  { key: 'salsa', src: IMAGES.salsa, x: 11.25, y: 172, width: 430, height: 97, delay: 0.1, duration: 0.58 },
+  { key: 'carne', src: IMAGES.carne, x: 10, y: 151, width: 432, height: 103, delay: 0.2, duration: 0.58 },
+  { key: 'queso', src: IMAGES.queso, x: 12, y: 118, width: 432, height: 127, delay: 0.3, duration: 0.6 },
+  { key: 'tomate', src: IMAGES.tomate, x: 8.75, y: 96, width: 431, height: 140.5, delay: 0.4, duration: 0.6 },
+  { key: 'rucula', src: IMAGES.rucula, x: 9.5, y: 81, width: 432, height: 131.5, delay: 0.5, duration: 0.6 },
+  { key: 'pan', src: IMAGES.pan, x: 10.25, y: 0, width: 432, height: 185.5, delay: 0.6, duration: 0.62 },
 ];
 
-export default function HamburgerAssembly() {
+export default function HamburgerAssembly({ badge = '100% sin gluten' }) {
   return (
     <div className="gf-hamburger-animation">
       <style>{CSS}</style>
       <svg
         className="gf-hamburger-stage"
-        viewBox="0 0 700 560"
+        viewBox="0 0 460 326"
         role="img"
         aria-label="Hamburguesa sin gluten montándose capa a capa"
       >
-        <circle cx="350" cy="280" r="230" fill="#dfeadd" />
-        <circle cx="265" cy="365" r="100" fill="#f3e1d8" opacity="0.72" />
+        <circle cx="230" cy="158" r="145" fill="#dfeadd" />
+        <circle cx="175" cy="218" r="62" fill="#f3e1d8" opacity="0.72" />
 
-        <g transform="translate(350 280) scale(2.1) translate(-230 -190)">
+        <g>
+          <image
+            className="gf-burger-plate"
+            href={IMAGES.plato}
+            x="16.25"
+            y="214"
+            width="429"
+            height="111.5"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          />
+
           {LAYERS.map((layer) => (
             <image
               key={layer.key}
@@ -50,23 +64,12 @@ export default function HamburgerAssembly() {
               }}
             />
           ))}
-
-          <image
-            className="gf-burger-plate"
-            href={IMAGES.plato}
-            x="16.25"
-            y="214"
-            width="429"
-            height="111.5"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          />
         </g>
       </svg>
 
       <div className="gf-burger-badge" aria-hidden="true">
         <span>✓</span>
-        100% sin gluten
+        {badge}
       </div>
     </div>
   );
