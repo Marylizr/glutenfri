@@ -1,10 +1,9 @@
-import { APP_NAME, REGION_CITIES } from '../config/brand';
 import HamburgerAssembly from '../components/HamburgerAssembly';
 
 const FEATURES = [
-  { icon: '✓', text: 'Lugares sin gluten verificados' },
-  { icon: '★', text: 'Reseñas de la comunidad celíaca' },
-  { icon: '⚲', text: 'Filtros pensados para celíacos' },
+  'Lugares sin gluten verificados',
+  'Reseñas de seguridad de la comunidad',
+  'Filtros pensados para personas celíacas',
 ];
 
 export default function OnboardingScreen({ onStart, onLogin }) {
@@ -14,58 +13,80 @@ export default function OnboardingScreen({ onStart, onLogin }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, #e9dfc9 0%, var(--color-bg) 55%)',
-        padding: '24px',
+        background: '#fffbed',
+        padding: '10px 30px 24px',
         overflowY: 'auto',
       }}
     >
-      <div
-        style={{
-          alignSelf: 'flex-start',
-          background: 'var(--color-accent-soft)',
-          color: 'var(--color-accent)',
-          fontSize: '12px',
-          fontWeight: 700,
-          padding: '6px 12px',
-          borderRadius: 'var(--radius-pill)',
-          marginBottom: '4px',
-        }}
-      >
-        🌿 {APP_NAME}
-      </div>
-
       <HamburgerAssembly />
 
-      <h1 style={{ fontSize: '30px', lineHeight: 1.2, marginBottom: '12px' }}>
-        Tu guía sin gluten en el norte de Portugal
+      <h1
+        style={{
+          fontSize: '30px',
+          lineHeight: 1.16,
+          margin: '4px 0 14px',
+          textAlign: 'center',
+          letterSpacing: '-0.025em',
+        }}
+      >
+        Encuentra lugares seguros
+        <span style={{ display: 'block', color: '#a8462f' }}>sin gluten en el norte</span>
       </h1>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', marginBottom: '20px' }}>
-        Explora {REGION_CITIES}: restaurantes, tiendas y farmacias con reseñas reales de la
-        comunidad celíaca.
+      <p
+        style={{
+          color: '#65504a',
+          fontSize: '15px',
+          lineHeight: 1.5,
+          margin: '0 auto 20px',
+          maxWidth: '360px',
+          textAlign: 'center',
+        }}
+      >
+        Descubre restaurantes, cafeterías, tiendas y pastelerías de Braga, Porto, Maia,
+        Matosinhos y alrededores.
       </p>
 
-      <div style={{ marginBottom: '28px' }}>
-        {FEATURES.map((f) => (
-          <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+      <div style={{ width: '100%', maxWidth: '330px', margin: '0 auto 18px' }}>
+        {FEATURES.map((feature) => (
+          <div
+            key={feature}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px' }}
+          >
             <span
               style={{
-                width: 24,
-                height: 24,
+                width: 22,
+                height: 22,
                 borderRadius: '50%',
-                background: 'var(--color-accent-soft)',
                 color: 'var(--color-accent)',
+                border: '1.5px solid var(--color-accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '13px',
+                fontSize: '12px',
+                fontWeight: 700,
                 flexShrink: 0,
               }}
             >
-              {f.icon}
+              ✓
             </span>
-            <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>{f.text}</span>
+            <span style={{ fontSize: '14px', color: '#65504a' }}>{feature}</span>
           </div>
         ))}
+      </div>
+
+      <div
+        aria-hidden="true"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '18px',
+        }}
+      >
+        <span style={{ width: 44, height: 8, borderRadius: 999, background: '#a8462f' }} />
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#d9b9b0' }} />
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#d9b9b0' }} />
       </div>
 
       <button
@@ -73,16 +94,17 @@ export default function OnboardingScreen({ onStart, onLogin }) {
         style={{
           width: '100%',
           padding: '16px',
-          borderRadius: 'var(--radius-input)',
+          borderRadius: '999px',
           border: 'none',
-          background: 'var(--color-accent)',
+          background: '#a8462f',
           color: '#fff',
           fontSize: '16px',
-          fontWeight: 600,
+          fontWeight: 700,
           marginBottom: '12px',
+          boxShadow: '0 10px 22px rgba(168, 70, 47, 0.22)',
         }}
       >
-        Empezar a explorar →
+        Empezar a explorar&nbsp;&nbsp; →
       </button>
 
       <button
@@ -92,8 +114,9 @@ export default function OnboardingScreen({ onStart, onLogin }) {
           padding: '8px',
           background: 'none',
           border: 'none',
-          color: 'var(--color-text-muted)',
+          color: '#65504a',
           fontSize: '14px',
+          fontWeight: 600,
         }}
       >
         ¿Ya tienes cuenta? Inicia sesión

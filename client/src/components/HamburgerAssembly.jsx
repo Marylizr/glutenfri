@@ -66,7 +66,7 @@ export default function HamburgerAssembly() {
 
       <div className="gf-burger-badge" aria-hidden="true">
         <span>✓</span>
-        Sin gluten
+        100% sin gluten
       </div>
     </div>
   );
@@ -75,9 +75,9 @@ export default function HamburgerAssembly() {
 const CSS = `
 .gf-hamburger-animation {
   position: relative;
-  width: calc(100% + 24px);
-  height: clamp(190px, 30dvh, 270px);
-  margin: 2px -12px 4px;
+  width: calc(100% + 20px);
+  height: clamp(240px, 34dvh, 320px);
+  margin: 0 -10px 2px;
   flex: 0 1 auto;
   overflow: hidden;
 }
@@ -103,17 +103,17 @@ const CSS = `
 .gf-burger-badge {
   position: absolute;
   z-index: 2;
-  top: 27%;
-  right: 12%;
+  bottom: 13%;
+  left: 7%;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
   color: #fff;
   background: #3d5a45;
   box-shadow: 0 6px 16px rgba(38, 65, 46, 0.28);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   opacity: 0;
