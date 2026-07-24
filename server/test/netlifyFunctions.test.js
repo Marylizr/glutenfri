@@ -2,6 +2,33 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const express = require('express');
+const { createServerlessHandler } = require('../netlify/serverlessAdapter');
+
+test('las imágenes de Functions se codifican como base64 sin corromper sus bytes', async () => {
+  const imageBytes = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+  const app = express();
+  app.get('/photo', (_req, res) => {
+    res.type('image/jpeg').send(imageBytes);
+  });
+
+  const handler = createServerlessHandler(app);
+  const response = await handler(
+    {
+      httpMethod: 'GET',
+      path: '/photo',
+      headers: { host: 'localhost' },
+      multiValueHeaders: {},
+      requestContext: { identity: { sourceIp: '127.0.0.1' } },
+    },
+    {}
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.isBase64Encoded, true);
+  assert.equal(response.headers['content-type'], 'image/jpeg');
+  assert.deepEqual(Buffer.from(response.body, 'base64'), imageBytes);
+});
 
 test('Netlify enruta la API, limita auth y ejecuta Places en segundo plano', async () => {
   const previousJwtSecret = process.env.JWT_SECRET;
