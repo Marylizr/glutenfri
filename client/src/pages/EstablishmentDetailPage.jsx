@@ -6,6 +6,7 @@ import SaveButton from '../components/SaveButton';
 import GoogleAttribution, { isGoogleSourced } from '../components/GoogleAttribution';
 import SafetyReviewFlow from '../components/SafetyReviewFlow';
 import ErrorState from '../components/ErrorState';
+import ReportButton from '../components/ReportButton';
 import { getReviews } from '../services/establishments';
 
 const STAFF_LABELS = {
@@ -75,7 +76,7 @@ function SafetyProtocols({ establishment }) {
   );
 }
 
-function ReviewItem({ review }) {
+function ReviewItem({ review, auth }) {
   return (
     <div
       style={{
@@ -147,6 +148,9 @@ function ReviewItem({ review }) {
         >
           Riesgo: {RISK_LABELS[review.riskLevel] || '—'}
         </span>
+      </div>
+      <div style={{ marginTop: '10px', textAlign: 'right' }}>
+        <ReportButton reviewId={review._id} auth={auth} />
       </div>
     </div>
   );
@@ -311,7 +315,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             </div>
           )}
           {reviews.map((r) => (
-            <ReviewItem key={r._id} review={r} />
+            <ReviewItem key={r._id} review={r} auth={auth} />
           ))}
         </div>
       </div>

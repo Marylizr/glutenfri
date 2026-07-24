@@ -18,6 +18,11 @@ const reviewSchema = new mongoose.Schema(
     hasDedicatedMenu: { type: Boolean, required: true },
     dedicatedKitchen: { type: Boolean, required: true },
     riskLevel: { type: String, enum: ['none', 'low', 'moderate', 'high'], required: true },
+    // Moderación básica: reportedBy evita que la misma persona reporte la
+    // misma reseña más de una vez (ver reportReview). hidden la saca de los
+    // feeds públicos sin borrarla — el autor la sigue viendo/editando.
+    hidden: { type: Boolean, default: false },
+    reportedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

@@ -10,6 +10,9 @@ const userSchema = new mongoose.Schema(
     // en el futuro, comparar contra la fecha de esta política para saber a
     // quién hay que volver a pedirle consentimiento.
     privacyAcceptedAt: { type: Date, required: true },
+    // Moderación: sin UI de asignación todavía — se marca a mano en Mongo
+    // Atlas para cuentas de confianza (ver README, sección de moderación).
+    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -20,4 +20,13 @@ function toPublicReview(review) {
   };
 }
 
-module.exports = { parsePagination, toPublicReview };
+// Moderación básica: las reseñas con hidden:true se sacan de cualquier
+// feed público, EXCEPTO para su propio autor (sigue viendo/editando la
+// suya aunque esté oculta para el resto). userId viene de optionalAuth —
+// puede no haber sesión, en cuyo caso solo se ven las no ocultas.
+function visibilityFilter(baseQuery, userId) {
+  if (!userId) return { ...baseQuery, hidden: false };
+  return { ...baseQuery, $or: [{ hidden: false }, { user: userId }] };
+}
+
+module.exports = { parsePagination, toPublicReview, visibilityFilter };

@@ -78,6 +78,7 @@ npm run dev                 # http://localhost:5173
 - [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
 - [x] **Requisitos técnicos de GDPR** — ver sección dedicada abajo. Falta publicar la política de privacidad real (la estás armando con tu abogado) y decidir el representante UE si aplica
 - [x] **`react-router-dom` activado con rutas reales** (antes estaba instalado pero sin usar) — ver sección dedicada abajo
+- [x] **Moderación básica de reseñas** (reportar + ocultar/restaurar por admin, sin pantalla de admin todavía) — ver sección dedicada abajo
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ✅ Google Places: compliance de caché — RESUELTO (2026-07-24)
@@ -416,6 +417,153 @@ historial una pantalla que ya no se puede usar con la sesión vencida.
   Iniciá sesión de nuevo."
 - `BottomNav` confirmado oculto mientras se ve `/lugar/:id`, tanto en el
   caso overlay como en el de carga directa.
+
+## Moderación básica de reseñas (2026-07-24)
+
+Diseñado para andar igual en un piloto chico de confianza que en uno más
+abierto — reportar nunca oculta nada automáticamente, así que no hace
+falta decidir de antemano cuánto se confía en la comunidad.
+
+### Modelo
+
+`Review` suma dos campos: `hidden` (Boolean, default `false`) y
+`reportedBy` (array de `ObjectId` de `User`) — quién ya reportó esta
+reseña, para que la misma persona no pueda reportarla dos veces.
+`User` suma `isAdmin` (Boolean, default `false`) — sin UI para
+asignarlo, se marca a mano en Mongo Atlas (ver más abajo).
+
+### Reportar — `POST /api/reviews/:id/report` (autenticado)
+
+Agrega el `userId` a `reportedBy` si no estaba ya ahí. Si la misma
+persona intenta reportar la misma reseña de nuevo, **no es
+silenciosamente idempotente** — rechaza con `409` y
+`{"error":"Ya reportaste esta reseña"}`, para que el frontend pueda
+distinguir "primera vez" de "ya la habías reportado" y reflejarlo en la
+UI (botón "Reportado" deshabilitado).
+
+### Ocultar de los feeds públicos, visible para el autor
+
+`GET /reviews/recent`, `GET /establishments/:id/reviews` y
+`GET /users/me/reviews` son los tres endpoints que devuelven reseñas.
+Los primeros dos ahora corren `optionalAuth` (nuevo middleware en
+`middleware/auth.js`: intenta decodificar el token si viene, pero nunca
+corta la request si no hay uno o es inválido — quedan públicos para
+anónimos) y filtran `hidden: true` **excepto** cuando el usuario
+autenticado es el autor de esa reseña puntual (`visibilityFilter` en
+`utils/reviewFormatting.js`: `{ hidden: false }` si no hay sesión,
+`{ $or: [{ hidden: false }, { user: userId }] }` si la hay). Así, si tu
+propia reseña queda oculta para el resto, vos la seguís viendo en el
+feed de comunidad y en el detalle del establecimiento.
+
+`GET /users/me/reviews` ("Mis reseñas") **no filtra por `hidden` en
+absoluto** — a propósito: ahí todas las reseñas son siempre del propio
+usuario, así que no hay nada que esconderle a nadie; el autor tiene que
+poder seguir viendo (y editando) su reseña oculta desde ahí también.
+
+### Rol de admin y sus endpoints
+
+`requireAdmin` (en `middleware/auth.js`) es `[requireAuth, checkIsAdmin]`
+— reutiliza `requireAuth` y agrega una verificación de `isAdmin` **contra
+la base**, no contra el JWT: el payload del token no lleva `isAdmin`
+(se firma en login/registro, antes de que exista el flag), así que si
+marcás a alguien como admin en Atlas, el cambio aplica en su próxima
+request sin necesidad de que vuelva a loguearse.
+
+- `GET /api/admin/reviews/reported` — reseñas con al menos 1 reporte,
+  más reportadas primero (agregación con `$lookup` a `establishment` y
+  `user` — a diferencia de los feeds públicos, acá se expone el nombre
+  completo y el email de quien escribió, porque quien modera necesita
+  identificar a la persona, no la versión recortada que ve el público).
+- `PATCH /api/admin/reviews/:id/hide` — marca `hidden: true`.
+- `PATCH /api/admin/reviews/:id/unhide` — revierte.
+
+**Bug encontrado y corregido en el camino**: la agregación de
+`reported` usaba `{ $size: '$reportedBy' }` para contar reportes, que
+rompe con `"must be an array, but was of type: missing"` en cualquier
+`Review` creada antes de agregar el campo al schema (no se
+retroalimenta a documentos existentes). Cambiado a
+`{ $size: { $ifNull: ['$reportedBy', []] } }`.
+
+### Cómo usar los endpoints de admin (sin pantalla de admin todavía)
+
+No se construyó UI de admin — es más trabajo del que vale para un
+piloto sin fecha de audiencia decidida. Por ahora, curl/Postman con tu
+propio JWT:
+
+**1. Marcarte `isAdmin` en Mongo Atlas** (una vez, a mano):
+
+Desde Atlas → tu cluster → Browse Collections → `users` → buscá tu
+documento por email → Edit → agregá el campo `isAdmin` con valor
+`true` (tipo Boolean) → Update. O por `mongosh` si tenés la connection
+string a mano:
+
+```bash
+mongosh "$MONGODB_URI" --eval 'db.users.updateOne({email:"tu-email@ejemplo.com"}, {$set:{isAdmin:true}})'
+```
+
+**2. Conseguir tu JWT**: iniciá sesión normal en la app (`/perfil`) y
+copiá el token de `localStorage.getItem('gf_auth_token')` desde la
+consola del navegador, o hacé login por curl:
+
+```bash
+curl -s -X POST http://localhost:4000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"tu-email@ejemplo.com","password":"tu-password"}'
+```
+
+**3. Listar reseñas reportadas**:
+
+```bash
+curl -s http://localhost:4000/api/admin/reviews/reported \
+  -H "Authorization: Bearer TU_JWT" | python3 -m json.tool
+```
+
+**4. Ocultar una reseña** (usá el `_id` que te devolvió el paso anterior):
+
+```bash
+curl -s -X PATCH http://localhost:4000/api/admin/reviews/REVIEW_ID/hide \
+  -H "Authorization: Bearer TU_JWT"
+```
+
+**5. Restaurarla**:
+
+```bash
+curl -s -X PATCH http://localhost:4000/api/admin/reviews/REVIEW_ID/unhide \
+  -H "Authorization: Bearer TU_JWT"
+```
+
+### Frontend
+
+`ReportButton.jsx` (componente compartido) — solo se renderiza si hay
+sesión iniciada (`auth.user`); reportar sin cuenta no tiene sentido
+porque no hay a quién atribuirle el reporte. Al tocarlo, confirma con
+`ConfirmModal` (mismo patrón que "Eliminar mi cuenta" — nada de
+`window.confirm()`), llama a `reportReview(reviewId)`
+(`services/reviews.js`), y cambia a un estado "Reportado" deshabilitado.
+Un `409` del backend (ya lo habías reportado, ej. en otra pestaña) se
+trata igual que un éxito visualmente — el estado final que le importa
+al usuario es el mismo. El estado "Reportado" vive en memoria del
+componente, no se persiste — es válido para esta sesión del navegador,
+consistente con lo pedido.
+
+Conectado en los dos lugares donde aparece una reseña: `ReviewItem` en
+`EstablishmentDetailPage.jsx` (detalle de establecimiento) y
+`ReviewFeedCard` en `ReviewsPage.jsx` (feed de Reviews).
+
+### Probado end-to-end (vía curl, documentado arriba en detalle)
+
+Reportar una reseña de prueba → confirmar que un segundo reporte del
+mismo usuario da `409` → aparece en `GET /admin/reviews/reported` con
+`reportsCount: 1` → ocultarla → confirmado que desaparece de
+`GET /establishments/:id/reviews` y `GET /reviews/recent` para un
+usuario anónimo o distinto del autor, pero el autor la sigue viendo en
+ambos endpoints (por ser el autor) y en `GET /users/me/reviews` — →
+restaurarla → reaparece en los feeds públicos y sigue apareciendo en
+`reported` (el historial de reportes no se borra al restaurar). Probado
+también en el navegador: botón "⚑ Reportar" → confirmación → estado
+"Reportado" deshabilitado, sin poder reportar dos veces desde la misma
+sesión. Cuentas y reseñas de prueba borradas al terminar (mismo
+`DELETE /api/users/me` de siempre).
 
 ## Notas técnicas
 

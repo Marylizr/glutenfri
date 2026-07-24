@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
+import ReportButton from '../components/ReportButton';
 import { getEstablishmentById } from '../services/establishments';
 import { getMyReviews, getRecentReviews } from '../services/reviews';
 import { formatRelativeTime } from '../utils/time';
@@ -40,7 +41,7 @@ function RiskBadge({ level }) {
   );
 }
 
-function ReviewFeedCard({ review, onOpenEstablishment }) {
+function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
   const est = review.establishment;
   return (
     <div
@@ -108,7 +109,10 @@ function ReviewFeedCard({ review, onOpenEstablishment }) {
         </p>
       )}
 
-      <RiskBadge level={review.riskLevel} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <RiskBadge level={review.riskLevel} />
+        <ReportButton reviewId={review._id} auth={auth} />
+      </div>
     </div>
   );
 }
@@ -228,7 +232,12 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
             {!loading &&
               !error &&
               reviews.map((r) => (
-                <ReviewFeedCard key={r._id} review={r} onOpenEstablishment={handleOpenEstablishment} />
+                <ReviewFeedCard
+                  key={r._id}
+                  review={r}
+                  onOpenEstablishment={handleOpenEstablishment}
+                  auth={auth}
+                />
               ))}
 
             {!loading && !error && reviews.length > 0 && page < totalPages && (

@@ -9,6 +9,7 @@ const establishmentsRoutes = require('./routes/establishments');
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const reviewsRoutes = require('./routes/reviews');
+const adminRoutes = require('./routes/admin');
 const { apiLimiter } = require('./middleware/rateLimiters');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -41,6 +42,7 @@ app.use('/api/establishments', establishmentsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   const mongoConnected = mongoose.connection.readyState === 1;

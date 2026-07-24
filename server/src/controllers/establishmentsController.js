@@ -1,6 +1,6 @@
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
-const { toPublicReview } = require('../utils/reviewFormatting');
+const { toPublicReview, visibilityFilter } = require('../utils/reviewFormatting');
 const { getPlacePhotoName, fetchPlacePhotoMedia } = require('../services/googlePlaces');
 
 // Cache en memoria de proceso (nunca en Mongo) del nombre de recurso de la
@@ -39,7 +39,8 @@ async function getEstablishment(req, res) {
 }
 
 async function listReviews(req, res) {
-  const reviews = await Review.find({ establishment: req.params.id })
+  const query = visibilityFilter({ establishment: req.params.id }, req.user?.id);
+  const reviews = await Review.find(query)
     .populate('user', 'name')
     .sort('-createdAt')
     .lean();

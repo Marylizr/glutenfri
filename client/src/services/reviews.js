@@ -5,3 +5,6 @@ export const getRecentReviews = (params = {}) =>
 
 export const getMyReviews = (params = {}) =>
   api.get('/users/me/reviews', { params }).then((res) => res.data);
+
+export const reportReview = (reviewId) =>
+  api.post(`/reviews/${reviewId}/report`).then((res) => res.data);

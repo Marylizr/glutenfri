@@ -8,7 +8,7 @@ const {
   createReview,
   getEstablishmentPhoto,
 } = require('../controllers/establishmentsController');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { reviewLimiter } = require('../middleware/rateLimiters');
 
@@ -37,6 +37,7 @@ router.get(
 
 router.get(
   '/:id/reviews',
+  optionalAuth,
   [param('id').isMongoId().withMessage('id inválido')],
   validate,
   listReviews
