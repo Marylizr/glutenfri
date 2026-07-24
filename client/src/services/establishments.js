@@ -24,5 +24,9 @@ export const postReview = (establishmentId, review) =>
 
 // El backend resuelve la foto en vivo contra Google (nunca la guarda) —
 // esto es solo la URL, no una llamada; <img> la pide cuando renderiza.
+// La versión invalida respuestas antiguas que el navegador/CDN pudiera
+// haber guardado antes de habilitar la codificación binaria en Functions.
+const PHOTO_CACHE_VERSION = 2;
+
 export const getEstablishmentPhotoUrl = (id, width = 800) =>
-  `${API_URL}/establishments/${id}/photo?w=${width}`;
+  `${API_URL}/establishments/${id}/photo?w=${width}&v=${PHOTO_CACHE_VERSION}`;
