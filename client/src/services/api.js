@@ -27,10 +27,17 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     const hadToken = !!localStorage.getItem(TOKEN_KEY);
-    if (error.response?.status === 401 && hadToken) {
+    const suspended = error.response?.status === 403 && error.response?.data?.error === 'Cuenta suspendida';
+    if ((error.response?.status === 401 || suspended) && hadToken) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
-      window.dispatchEvent(new Event('gf:session-expired'));
+      window.dispatchEvent(
+        new CustomEvent('gf:session-expired', {
+          detail: suspended
+            ? error.response?.data?.reason || 'Tu cuenta fue suspendida.'
+            : 'Tu sesión ha expirado. Inicia sesión de nuevo.',
+        })
+      );
     }
     return Promise.reject(error);
   }

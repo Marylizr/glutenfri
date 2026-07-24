@@ -200,7 +200,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
           <LoginRequiredState
             icon="✎"
             title="Tus reseñas en un solo lugar"
-            message="Iniciá sesión para ver las reseñas que dejaste."
+            message="Inicia sesión para ver las reseñas que has publicado."
             onGoToProfile={onGoToProfile}
           />
         ) : (
@@ -213,7 +213,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
               <EmptyState
                 icon="✎"
                 title="Sé la primera en dejar una reseña esta semana"
-                message="Todavía no hay reseñas de la comunidad. Explorá un lugar y contá cómo te fue."
+                message="Todavía no hay reseñas de la comunidad. Explora un lugar y cuéntanos cómo fue tu experiencia."
                 actionLabel="Explorar lugares"
                 onAction={onGoToExplore}
               />
@@ -222,8 +222,8 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
             {!loading && !error && reviews.length === 0 && mode === 'mine' && (
               <EmptyState
                 icon="✎"
-                title="Todavía no dejaste ninguna reseña"
-                message="Explorá un lugar y contá tu experiencia — ayuda a otros celíacos a elegir con confianza."
+                title="Todavía no has publicado ninguna reseña"
+                message="Explora un lugar y comparte tu experiencia; ayudarás a otras personas celíacas a elegir con confianza."
                 actionLabel="Explorar lugares"
                 onAction={onGoToExplore}
               />

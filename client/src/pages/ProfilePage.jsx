@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/auth';
 import { deleteMyAccount, exportMyData } from '../services/users';
 import ConfirmModal from '../components/ConfirmModal';
@@ -74,6 +75,25 @@ function AccountPanel({ auth }) {
         Cerrar sesión
       </button>
 
+      {auth.user.isAdmin && (
+        <Link
+          to="/admin"
+          style={{
+            display: 'block',
+            padding: '12px 20px',
+            borderRadius: 'var(--radius-input)',
+            background: 'var(--color-accent-soft)',
+            color: 'var(--color-accent)',
+            fontSize: '14px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            margin: '-20px 0 24px',
+          }}
+        >
+          Abrir panel de moderación
+        </Link>
+      )}
+
       <h2 style={{ fontSize: '15px', marginBottom: '10px' }}>Tus datos</h2>
 
       <button
@@ -140,6 +160,7 @@ export default function ProfilePage({ auth }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -180,7 +201,7 @@ export default function ProfilePage({ auth }) {
             marginBottom: '16px',
           }}
         >
-          Tu sesión expiró. Iniciá sesión de nuevo.
+          {auth.sessionMessage || 'Tu sesión ha expirado. Inicia sesión de nuevo.'}
         </div>
       )}
 
@@ -206,14 +227,37 @@ export default function ProfilePage({ auth }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <input
-          style={inputStyle}
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div style={{ position: 'relative', marginBottom: '10px' }}>
+          <input
+            style={{ ...inputStyle, marginBottom: 0, paddingRight: '92px' }}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((visible) => !visible)}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={showPassword}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              right: '12px',
+              transform: 'translateY(-50%)',
+              border: 'none',
+              background: 'none',
+              color: 'var(--color-accent)',
+              fontSize: '13px',
+              fontWeight: 600,
+              padding: '6px',
+              cursor: 'pointer',
+            }}
+          >
+            {showPassword ? 'Ocultar' : 'Mostrar'}
+          </button>
+        </div>
 
         {mode === 'register' && (
           <label
@@ -234,7 +278,12 @@ export default function ProfilePage({ auth }) {
               required
               style={{ marginTop: '2px', flexShrink: 0 }}
             />
-            <span>Acepto la política de privacidad y los términos de uso</span>
+            <span>
+              He leído y acepto la{' '}
+              <Link to="/privacidad" style={{ color: 'var(--color-accent)' }}>
+                política de privacidad
+              </Link>
+            </span>
           </label>
         )}
 
@@ -272,8 +321,14 @@ export default function ProfilePage({ auth }) {
           fontSize: '14px',
         }}
       >
-        {mode === 'login' ? '¿No tenés cuenta? Creá una' : '¿Ya tenés cuenta? Iniciá sesión'}
+        {mode === 'login' ? '¿No tienes cuenta? Crea una' : '¿Ya tienes cuenta? Inicia sesión'}
       </button>
+
+      <div style={{ marginTop: '24px' }}>
+        <Link to="/privacidad" style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
+          Política de privacidad
+        </Link>
+      </div>
     </div>
   );
 }

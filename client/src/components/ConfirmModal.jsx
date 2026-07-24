@@ -1,4 +1,13 @@
-export default function ConfirmModal({ title, message, confirmLabel, onConfirm, onCancel, danger, confirming }) {
+export default function ConfirmModal({
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+  danger,
+  confirming,
+  children,
+}) {
   return (
     <div
       style={{
@@ -26,6 +35,7 @@ export default function ConfirmModal({ title, message, confirmLabel, onConfirm, 
         <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
           {message}
         </p>
+        {children}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             onClick={onCancel}

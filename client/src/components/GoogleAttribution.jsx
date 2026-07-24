@@ -2,9 +2,6 @@
 // muestre contenido derivado de la Places API debe atribuirlo a "Google
 // Maps" (no alcanza con "Google" solo). Se muestra solo cuando el
 // establishment.source indica datos de Google ('Google' o 'APC+Google').
-export function isGoogleSourced(establishment) {
-  return establishment?.source === 'Google' || establishment?.source === 'APC+Google';
-}
 
 export default function GoogleAttribution({ compact = false }) {
   return (

@@ -18,7 +18,7 @@ export default function SearchBar({ value, onChange, placeholder }) {
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'Buscar restaurantes sem glúten…'}
+        placeholder={placeholder || 'Buscar restaurantes sin gluten…'}
         style={{
           border: 'none',
           outline: 'none',

@@ -47,7 +47,7 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
         >
           📍 Braga, Portugal
         </div>
-        <h1 style={{ fontSize: '22px', marginBottom: '14px' }}>Explora sem glúten</h1>
+        <h1 style={{ fontSize: '22px', marginBottom: '14px' }}>Explora sin gluten</h1>
         <SearchBar value={query} onChange={setQuery} />
       </header>
 

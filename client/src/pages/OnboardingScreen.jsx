@@ -1,5 +1,5 @@
 const FEATURES = [
-  { icon: '✓', text: 'Sitios gluten-free verificados' },
+  { icon: '✓', text: 'Lugares sin gluten verificados' },
   { icon: '★', text: 'Reseñas de la comunidad celíaca' },
   { icon: '⚲', text: 'Filtros pensados para celíacos' },
 ];
@@ -29,14 +29,14 @@ export default function OnboardingScreen({ onStart, onLogin }) {
           marginTop: '40px',
         }}
       >
-        🌿 100% Gluten-Free
+        🌿 100% sin gluten
       </div>
 
       <h1 style={{ fontSize: '30px', lineHeight: 1.2, marginBottom: '12px' }}>
-        Encontrá lugares seguros sem glúten en Braga
+        Encuentra lugares seguros sin gluten en Braga
       </h1>
       <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', marginBottom: '20px' }}>
-        Descubrí restaurantes, tiendas y farmacias gluten-free en el Norte de Portugal, con reseñas
+        Descubre restaurantes, tiendas y farmacias sin gluten en el norte de Portugal, con reseñas
         reales de la comunidad celíaca.
       </p>
 
@@ -92,7 +92,7 @@ export default function OnboardingScreen({ onStart, onLogin }) {
           fontSize: '14px',
         }}
       >
-        ¿Ya tenés cuenta? Iniciá sesión
+        ¿Ya tienes cuenta? Inicia sesión
       </button>
     </div>
   );

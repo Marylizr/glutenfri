@@ -1,7 +1,8 @@
 import PhotoPlaceholder from './PhotoPlaceholder';
 import ScoreBadge from './ScoreBadge';
 import SaveButton from './SaveButton';
-import GoogleAttribution, { isGoogleSourced } from './GoogleAttribution';
+import GoogleAttribution from './GoogleAttribution';
+import { isGoogleSourced } from '../utils/googlePlaces';
 import { distanceKm, formatDistance } from '../utils/distance';
 
 export function Badge({ establishment }) {
@@ -59,6 +60,7 @@ export default function RestaurantCard({
         boxShadow: 'var(--shadow-card)',
         overflow: 'hidden',
         cursor: 'pointer',
+        flexShrink: 0,
       }}
     >
       <div style={{ position: 'relative' }}>

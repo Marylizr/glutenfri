@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ExplorePage from './pages/ExplorePage';
 import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
@@ -7,12 +7,14 @@ import ProfilePage from './pages/ProfilePage';
 import SavedPage from './pages/SavedPage';
 import ReviewsPage from './pages/ReviewsPage';
 import OnboardingScreen from './pages/OnboardingScreen';
+import PrivacyPage from './pages/PrivacyPage';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
 import './index.css';
 
 const ONBOARDED_KEY = 'gf_onboarded';
+const AdminShell = lazy(() => import('./admin/AdminShell'));
 
 function App() {
   const location = useLocation();
@@ -57,7 +59,7 @@ function App() {
     }
   }, [auth.sessionExpired, navigate]);
 
-  if (!onboarded) {
+  if (!onboarded && location.pathname !== '/privacidad' && !location.pathname.startsWith('/admin')) {
     return (
       <div
         style={{
@@ -85,12 +87,13 @@ function App() {
   }
 
   const isDetailRoute = location.pathname.startsWith('/lugar/');
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div
       style={{
-        maxWidth: '480px',
-        margin: '0 auto',
+        maxWidth: isAdminRoute ? 'none' : '480px',
+        margin: isAdminRoute ? 0 : '0 auto',
         height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
@@ -143,6 +146,19 @@ function App() {
             }
           />
           <Route path="/perfil" element={<ProfilePage auth={auth} />} />
+          <Route path="/privacidad" element={<PrivacyPage />} />
+          <Route
+            path="/admin/*"
+            element={
+              auth.user?.isAdmin ? (
+                <Suspense fallback={<div style={{ padding: '32px' }}>Cargando backoffice…</div>}>
+                  <AdminShell auth={auth} />
+                </Suspense>
+              ) : (
+                <Navigate to="/perfil" replace />
+              )
+            }
+          />
           <Route
             path="/lugar/:id"
             element={
@@ -173,7 +189,9 @@ function App() {
           </div>
         )}
       </div>
-      {!isDetailRoute && <BottomNav />}
+      {!isDetailRoute &&
+        !isAdminRoute &&
+        location.pathname !== '/privacidad' && <BottomNav />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # Gluten Free Porto/Famalicão
 
-App para unificar información de sitios gluten-free (restaurantes, tiendas,
+Aplicación para unificar información de lugares sin gluten (restaurantes, tiendas,
 farmacias, pastelerías) en el Norte de Portugal, con reseñas de usuarios.
 
 ## Estructura
@@ -13,7 +13,7 @@ gluten-free-app/
 └── capacitor.config.json   (placeholder — Fase 4 del roadmap)
 ```
 
-## Levantar en local
+## Ejecutar en local
 
 ### Backend
 ```bash
@@ -60,25 +60,27 @@ npm run dev                 # http://localhost:5173
   - `express-rate-limit`: límite general (200 req/15min) + límite agresivo compartido en `/api/auth/register` y `/api/auth/login` (10 req/15min por IP)
   - `express-validator` en todas las rutas: emails válidos, password mínimo 8 chars, rating 1-5, enums de `type`/`staffUnderstanding`/`riskLevel`, `:id` como Mongo ObjectId válido, etc. — nada confía en que el frontend ya validó
   - `JWT_EXPIRES_IN` bajado de 30d a **7d** (configurable por env). Deuda técnica documentada en `authController.js`: sin refresh token, revisar si la app escala
-  - `CORS_ORIGINS` ahora es **obligatorio** — el servidor no arranca sin él (antes tenía default `'*'`). `.env.example` trae un placeholder de producción (`https://gluten-free-app.netlify.app`) que hay que reemplazar por el dominio real antes de deployar
+  - `CORS_ORIGINS` ahora es **obligatorio**: el servidor no arranca sin él (antes tenía `'*'` como valor predeterminado). `.env.example` incluye un dominio de ejemplo (`https://gluten-free-app.netlify.app`) que debe sustituirse por el dominio real antes de desplegar
   - Error handler centralizado (`middleware/errorHandler.js`) — nunca expone stack traces ni errores crudos de Mongo al cliente
   - `/api/health` ahora chequea la conexión real a Mongo (antes devolvía `200` fijo)
-- [x] **Base de datos en MongoDB Atlas** — `server/.env` ya apunta al cluster real (`gluten-free-app.nexxyse.mongodb.net`), seed corrido ahí (72 establecimientos), confirmado `seed` + `npm run dev` levantando sin error contra la nube. `.env` sigue sin commitear.
-- [x] **Logging** (`morgan`) — a stdout (lo que espera Heroku): formato `combined` en producción, `dev` en desarrollo
+- [x] **Base de datos en MongoDB Atlas**: `server/.env` ya apunta al clúster real (`gluten-free-app.nexxyse.mongodb.net`), con 72 establecimientos cargados. Se verificaron `seed` y `npm run dev` contra la base de datos remota. `.env` permanece fuera del repositorio.
+- [x] **Logging con minimización de datos** (`morgan`) — stdout sin IP ni User-Agent en producción; formato `dev` en desarrollo
 - [x] **Error handler verificado con Express 5**: confirmado en vivo que un error async sin try/catch en un controller SÍ llega al `errorHandler` (Express 5 reenvía promesas rechazadas automáticamente) y el cliente solo ve `{"error":"Error interno del servidor"}`, nunca el mensaje real ni el stack trace
 - [x] **Paginación** en `GET /api/establishments` (`?page`/`?limit`, default `limit=100`, máx `200`) — responde `{ data, page, limit, total, totalPages }`. El frontend (`services/establishments.js`) desenvuelve `.data` así que no cambió nada visible con el dataset actual (72 entra en una sola página)
 - [x] **Índices de Mongo revisados**: se agregó `{ certified: 1 }` en `Establishment` (usado por el filtro `certifiedOnly`). Los campos de Celiac Safety Protocols no tienen índice porque hoy nada los usa como filtro — agregar si en algún momento sumamos algo tipo `?riskLevel=low`. `savedEstablishments` del `User` no necesita índice propio (son lookups por `_id`, ya indexado por default)
 - [x] **Atribución "Google Maps"** agregada en las 3 vistas que muestran establecimientos con `source: "Google"` o `"APC+Google"` (componente `GoogleAttribution`): debajo de la card en la lista, en la detail page, y en el pie del mapa (junto a la atribución de OpenStreetMap) + dentro de cada popup de pin
-- [ ] **Política de caché de datos de Google Places — riesgo de compliance conocido, aceptado para MVP, sin resolver.** No lanzar públicamente sin volver a este punto. Ver sección dedicada abajo.
+- [x] **Compliance de Google Places resuelto** — se persiste `place_id`, las fotos se resuelven en vivo y las coordenadas se refrescan automáticamente con margen antes de 30 días. El hallazgo original se conserva abajo como referencia histórica.
 - [x] **Estados de error y robustez del frontend**:
   - Componente `ErrorState` reutilizable (mensaje + botón "Reintentar"), conectado en `ExplorePage`, `HomePage`, `SavedPage` y la lista de reseñas de `EstablishmentDetailPage` — si el backend/Atlas no responde, el usuario ve un mensaje claro y puede reintentar, en vez de una lista vacía engañosa o un spinner colgado. Probado matando el backend a propósito y confirmando la recuperación con "Reintentar"
-  - **Sesión expirada manejada globalmente**: interceptor de respuesta en `services/api.js` detecta un 401 cuando SÍ había un token guardado (JWT vencido/inválido, no un anónimo), limpia la sesión y dispara un evento que `useAuth` escucha; `App.jsx` redirige a la pantalla de login con el mensaje "Tu sesión expiró. Iniciá sesión de nuevo." Probado corrompiendo el token manualmente y confirmando la redirección — sin quedar colgado, sin error crudo en consola
+  - **Sesión expirada manejada globalmente**: interceptor de respuesta en `services/api.js` detecta un 401 cuando SÍ había un token guardado (JWT vencido/inválido, no un anónimo), limpia la sesión y dispara un evento que `useAuth` escucha; `App.jsx` redirige a la pantalla de acceso con el mensaje "Tu sesión ha expirado. Inicia sesión de nuevo." Probado corrompiendo el token manualmente y confirmando la redirección — sin quedar bloqueado ni mostrar un error técnico en la consola
   - **Bug real encontrado y corregido**: `useSaved.toggle()` no tenía `try/catch` — si el token vencía mientras alguien tocaba el corazón de guardar, la promesa quedaba rechazada sin manejar (unhandled rejection silenciosa). Ahora atrapa el error y deja que el interceptor global maneje el 401
   - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca"; bottom nav Home/Map/Saved/Reviews/Profile → Inicio/Mapa/Guardados/Reseñas/Perfil
 - [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
-- [x] **Requisitos técnicos de GDPR** — ver sección dedicada abajo. Falta publicar la política de privacidad real (la estás armando con tu abogado) y decidir el representante UE si aplica
+- [x] **Requisitos técnicos de GDPR + política publicada** — `/privacidad`, enlazada desde registro y perfil; ver sección dedicada abajo. Se recomienda revisión jurídica antes del lanzamiento público.
 - [x] **`react-router-dom` activado con rutas reales** (antes estaba instalado pero sin usar) — ver sección dedicada abajo
-- [x] **Moderación básica de reseñas** (reportar + ocultar/restaurar por admin, sin pantalla de admin todavía) — ver sección dedicada abajo
+- [x] **Moderación y administración** — panel `/admin` para revisar reportes, ocultar/restaurar reseñas y gestionar roles; ver sección dedicada abajo
+- [x] **Backoffice de escritorio** — dashboard operativo, CRUD de establecimientos, buscador y filtros, motivos de reporte, suspensión de usuarios, auditoría de acciones y estado/refresco de API, Atlas y Google Places
+- [x] **Pruebas automatizadas** — `npm test` en `server/`: seguridad de proxy, CORS, health, validación de rutas, privacidad y visibilidad de reseñas
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ✅ Google Places: compliance de caché — RESUELTO (2026-07-24)
@@ -125,12 +127,10 @@ problema real.** Esto necesita una decisión de producto/infraestructura:
 tener una API key de Google Maps Platform con billing habilitado y un
 proceso que re-consulte por `place_id`.
 
-**Decisión (2026-07-23):** por ahora seguimos en modo MVP — se documenta
-el riesgo acá y no se bloquea el resto del checklist de producción. Es un
-riesgo de compliance asumido conscientemente, no resuelto. **No lanzar
-públicamente sin volver a este punto** — conseguir la API key de Google
-Maps Platform, re-popular los 46 registros con su `place_id`, y armar el
-job de refresco antes de un lanzamiento real.
+**Decisión histórica (2026-07-23):** en ese momento se continuó en modo
+MVP con el riesgo documentado. Al día siguiente se consiguió la API key,
+se poblaron los 46 `place_id` y se implementó el refresco; este bloqueo ya
+no está vigente.
 
 ## Google Places: fotos reales + place_id (2026-07-24)
 
@@ -168,11 +168,25 @@ reseed futuro hubiera borrado todos los `place_id` conseguidos hoy.
 **Probado primero con `--limit=3`** antes de correr contra el resto, como
 pediste: los 3 matches salieron perfectos (dirección idéntica en los 3
 casos). Encontré en el camino que la key no tenía "Places API (New)"
-habilitada en Google Cloud — lo resolviste vos, no era algo que yo
-pudiera arreglar. Con la API habilitada, corrí contra los 43 restantes:
+habilitada en Google Cloud; se resolvió desde la configuración del proyecto.
+Con la API habilitada, el proceso se ejecutó contra los 43 restantes:
 **43/43 guardados, 0 falsos positivos marcados, 0 sin resultados, 0
 errores.** Los 46 establecimientos Google/APC+Google del dataset
 completo tienen `place_id` y `hasPhoto` ahora.
+
+Los registros que vienen únicamente de APC se procesan de forma explícita
+con `npm run fetch-place-ids -- --include-apc`. Como varios no tienen
+dirección, el script solicita hasta cinco resultados y puntúa el nombre,
+la sucursal incluida después del guion y la dirección devuelta por Google.
+Solo guarda una coincidencia cuando supera el umbral y se diferencia
+claramente de la segunda opción; los resultados ambiguos se imprimen como
+`REVISAR` y no modifican Mongo. Para una primera comprobación acotada:
+`npm run fetch-place-ids -- --include-apc --limit=3`.
+
+Cuando un registro APC se vincula correctamente, su origen pasa a
+`APC+Google`. El script persiste `placeId` y `hasPhoto` tanto en Mongo
+como en `merged_dataset.json`, para que un `npm run seed` posterior no
+elimine la asociación.
 
 ### `GET /api/establishments/:id/photo`
 
@@ -201,20 +215,21 @@ detalle (fachada de "Com Cuore" con su cartel visible), y confirmado que
 los establecimientos sin `place_id` siguen mostrando el ícono genérico
 sin errores.
 
-### `server/src/scripts/refreshGooglePlacesData.js` — preparado, no corriendo
+### `server/src/scripts/refreshGooglePlacesData.js` — automatizado
 
 Re-consulta `lat`/`lng` (única excepción de caché además de `place_id`)
-para establecimientos con `googlePlaceRefreshedAt` de más de 30 días o
-sin refrescar nunca. **No está programado** — no hay cron ni Heroku
-Scheduler configurado todavía. Correr a mano con
-`npm run refresh-google-places`, o `--force` para ignorar el corte de 30
-días. Programarlo (ej. Heroku Scheduler semanal) es un paso pendiente de
-cuando el proyecto esté desplegado.
+para establecimientos con `googlePlaceRefreshedAt` de más de 23 días o
+sin refrescar nunca. `.github/workflows/refresh-google-places.yml` se
+ejecuta semanalmente, dejando margen ante retrasos del scheduler para no
+superar 30 días. También puede dispararse manualmente desde GitHub Actions.
+Requiere los secrets del repositorio `MONGODB_URI` y
+`GOOGLE_PLACES_API_KEY`. A mano: `npm run refresh-google-places`, o
+`--force` para ignorar el corte.
 
 ### Variable de entorno nueva
 
 `GOOGLE_PLACES_API_KEY` en `server/.env` (no en `.env.example`, mismo
-patrón que `MONGODB_URI`). Agregala también a las Config Vars de Heroku
+patrón que `MONGODB_URI`). Agregala también a los secretos del proveedor
 cuando deployes — sin ella, el script de matching y el endpoint de fotos
 fallan (pero el resto de la app sigue funcionando normal, con el ícono
 genérico como fallback).
@@ -232,21 +247,23 @@ genérico como fallback).
 
 | Variable | Estado | Detalle |
 |---|---|---|
-| `MONGODB_URI` | ✅ Listo | Ya tenés el cluster de Atlas funcionando |
-| `JWT_SECRET` | ✅ El valor actual de tu `.env` local es suficientemente fuerte | Es un hex de 64 caracteres (256 bits) generado con `openssl rand -hex 32` — cumple el mínimo recomendado para HS256. **Igual generá uno *distinto* para producción** (no reuses el de dev): si en algún momento se filtra el `.env` local, no querés que ese mismo secreto firme también los tokens de producción. Ejemplo de uno nuevo, generado ahora: `ea8e39b04042355bdcdcbb74d947a8889465454b9163e31dab61ff60a1276460` — usalo o generá el tuyo con `openssl rand -hex 32` |
-| `JWT_EXPIRES_IN` | ✅ Opcional | Default ya es `7d` en el código; solo hace falta setearlo si querés otro valor |
-| `CORS_ORIGINS` | ⏳ Pendiente de vos | Hoy tiene el placeholder `https://gluten-free-app.netlify.app` en `.env.example`. Actualizalo con el dominio real que te dé Netlify antes de que el frontend pueda hablarle al backend en producción |
-| `PORT` | ✅ No hace falta setearlo | Heroku lo inyecta automáticamente |
-| `GOOGLE_PLACES_API_KEY` | ✅ Listo | Ya tenés la key con billing habilitado. Sin ella, el script de matching y `/establishments/:id/photo` fallan, pero el resto de la app sigue funcionando (ícono genérico como fallback) |
+| `MONGODB_URI` | ✅ Listo | El clúster de Atlas ya está funcionando |
+| `JWT_SECRET` | ⏳ Crear al desplegar | Generar un valor exclusivo con `openssl rand -hex 32`. Nunca documentarlo, commitearlo ni reutilizar el de desarrollo. El servidor rechaza secretos ausentes, cortos o con valores de ejemplo. |
+| `JWT_EXPIRES_IN` | ✅ Opcional | El valor predeterminado es `7d`; solo debes configurarlo si necesitas otro periodo |
+| `CORS_ORIGINS` | ⏳ Pendiente | Actualmente contiene `https://gluten-free-app.netlify.app` como ejemplo en `.env.example`. Actualízalo con el dominio real asignado por Netlify antes de conectar el frontend con el backend en producción |
+| `TRUST_PROXY_HOPS` | ✅ Preparado | `1` para Koyeb/Render; permite que el rate limiter use la IP original detrás del reverse proxy |
+| `PORT` | ✅ No hace falta setearlo | La plataforma de hosting lo inyecta automáticamente |
+| `GOOGLE_PLACES_API_KEY` | ✅ Listo | La clave ya tiene la facturación habilitada. Sin ella, el script de asociación y `/establishments/:id/photo` fallan, pero el resto de la aplicación sigue funcionando con un icono genérico como alternativa |
 
-### Lo que te falta a VOS (no lo puedo hacer yo)
+### Pasos externos para desplegar la beta
 
-1. **Heroku**: crear cuenta si no tenés, crear la app, conectarla al repo de GitHub (`Marylizr/glutenfri`) o configurar el remoto de `git push heroku main`. Elegí que el deploy sea desde la carpeta `server/` (Heroku necesita que el `Procfile` esté en la raíz del repo que le apuntes — si conectás el monorepo completo, puede que necesites un buildpack tipo `heroku-buildpack-subdir` o desplegar `server/` como su propio repo/submódulo; decime cómo preferís organizarlo y lo ajusto)
-2. **Heroku → Settings → Config Vars**: cargar `MONGODB_URI`, `JWT_SECRET` (el nuevo, no el de dev), `CORS_ORIGINS` (placeholder por ahora, lo actualizás después)
-3. **Netlify**: crear cuenta si no tenés, conectar el repo — Netlify debería detectar `netlify.toml` solo
-4. **Netlify → Site settings → Environment variables**: cargar `VITE_API_URL` apuntando a la URL real que te dé Heroku (ej. `https://tu-app.herokuapp.com/api`)
-5. Una vez que Netlify te dé el dominio final, **volver a Heroku y actualizar `CORS_ORIGINS`** con ese dominio real (reemplazando el placeholder)
-6. Después de todo eso, probar el flujo completo en producción antes de anunciarlo — especialmente registro/login (rate limiting agresivo real) y el flujo de Safety Review completo
+1. **Koyeb**: crear un Web Service conectado a `Marylizr/glutenfri`, rama `main`, Buildpack, work directory `server`, comando `npm start`, instancia Free y región Frankfurt.
+2. Cargar `MONGODB_URI`, un `JWT_SECRET` nuevo, `CORS_ORIGINS`, `TRUST_PROXY_HOPS=1`, `NODE_ENV=production` y `GOOGLE_PLACES_API_KEY`.
+3. Configurar el health check como `/api/health`.
+4. **Netlify**: conectar el repo; `netlify.toml` configura el build. Cargar `VITE_API_URL=https://TU-SERVICIO.koyeb.app/api`.
+5. Actualizar `CORS_ORIGINS` con el dominio final de Netlify.
+6. **GitHub → Settings → Secrets and variables → Actions**: agregar `MONGODB_URI` y `GOOGLE_PLACES_API_KEY` para el refresco programado.
+7. Probar registro/login, guardados, Safety Review, moderación, exportación y borrado de cuenta.
 
 ## GDPR: requisitos técnicos implementados
 
@@ -255,7 +272,7 @@ genérico como fallback).
 - **Geolocalización**: `useUserLocation.js` nunca sale del navegador — se usa solo para centrar el mapa y calcular distancias client-side (`utils/distance.js`, matemática pura). Ningún `services/*.js` la manda al backend.
 - **Campos del `User`**: `name`, `email`, `passwordHash` (hash bcrypt, nunca el password crudo), `savedEstablishments`, `privacyAcceptedAt` (nuevo), `createdAt`/`updatedAt`. El campo `avatar` estaba muerto (nadie lo completaba ni lo mostraba) — **se eliminó del schema** en este mismo cambio.
 - **Logging de password**: confirmado que ningún `console.log`/`console.error` ni el formato de `morgan` loguean `req.body` o el password. Los errores de validación de `express-validator` solo devuelven `.msg`, nunca `.value`.
-- **Región de los datos**: Atlas confirmado en AWS `eu-central-1` (Frankfurt) vía DNS de los tres shards del cluster. Heroku y Netlify todavía no están desplegados — Heroku crea apps en US por defecto salvo que se pase `--region eu` explícitamente al crearla. **Recordatorio para cuando crees la app de Heroku: usar `--region eu`.**
+- **Región de los datos**: Atlas confirmado en AWS `eu-central-1` (Frankfurt). Para la beta, el backend está preparado para una instancia Koyeb en Frankfurt y el frontend para Netlify.
 
 ### Implementado
 
@@ -263,15 +280,19 @@ genérico como fallback).
   - **Bug encontrado y corregido en el camino**: `requireAuth` solo verificaba la firma/vencimiento del JWT, no si el usuario seguía existiendo. Un token emitido antes del borrado seguía "válido" hasta sus 7 días de expiración aunque la cuenta ya no existiera — lo que rompía con un 500 crudo (o peor, permitiría crear reseñas con un `user` inexistente). Ahora `requireAuth` confirma que el usuario exista en la base en cada request autenticada; si no existe, devuelve 401 (lo que además dispara el flujo de "sesión expirada" que ya existía en el frontend).
   - Frontend: botón "Eliminar mi cuenta" en `ProfilePage.jsx` con un modal de confirmación real (`ConfirmModal.jsx`, no `window.confirm()`) — "¿Eliminar tu cuenta? Se borra tu perfil y todas tus reseñas de forma permanente. Esta acción no se puede deshacer."
 - **Portabilidad** — `GET /api/users/me/export` (protegido): devuelve `{ exportedAt, user (sin passwordHash), reviews, savedEstablishments (documentos completos, no solo ids) }`. Frontend: botón "Descargar mis datos" que dispara la descarga de un `.json`.
-- **Consentimiento explícito** — checkbox obligatorio "Acepto la política de privacidad y los términos de uso" en el formulario de registro (`ProfilePage.jsx`), con `required` nativo del navegador (bloquea el submit sin marcarlo). El backend **no confía en eso**: `express-validator` rechaza el registro con 400 si `privacyAccepted` no llega como `true` exactamente, y `User.privacyAcceptedAt` (`required` a nivel de schema) guarda cuándo lo aceptó. Si el día de mañana cambia la política, comparar esa fecha contra la fecha de la nueva política para saber a quién re-pedirle consentimiento.
+- **Información y aceptación** — checkbox obligatorio enlazado a `/privacidad` en el formulario de registro, con `required` nativo del navegador. El backend **no confía en eso**: `express-validator` rechaza el registro con 400 si `privacyAccepted` no llega como `true` exactamente, y `User.privacyAcceptedAt` (`required` a nivel de schema) guarda cuándo se aceptó la versión informada. Si cambia materialmente la política, comparar esa fecha contra la vigencia de la nueva versión para saber a quién volver a informar.
 
 Todo probado en vivo: registro sin checkbox (bloqueado en el navegador y rechazado por el backend si se salta esa validación), export con `passwordHash` confirmado ausente, borrado en cascada con una reseña real (`avgRating` volvió a `null` tras el borrado), y el caso del token "zombie" post-borrado devolviendo 401 limpio.
 
-### Pendiente de tu lado
+### Política y revisión jurídica
 
-- Publicar la política de privacidad real una vez que el abogado la revise (hoy el checkbox del registro no linkea a ninguna página porque todavía no existe la política publicada — cuando la tengas, avisame y agrego el link)
-- Decidir si necesitás un representante UE (Art. 27 GDPR) — depende de dónde esté constituida la empresa
-- Cuando crees la app de Heroku: `heroku create --region eu` (no lo puedo hacer yo, es un paso manual tuyo)
+- La política está publicada en `/privacidad`, con responsable, contacto,
+  datos, finalidades, bases jurídicas, proveedores, conservación, derechos
+  y enlace de reclamación ante la CNPD. El registro enlaza directamente a
+  esta versión.
+- Antes de un lanzamiento público, una revisión jurídica debe confirmar la
+  identidad formal del responsable, transferencias de cada proveedor y si
+  aplica representante UE (Art. 27 GDPR).
 
 ## Piloto cerrado: puntos rojos de seguridad/usabilidad
 
@@ -316,7 +337,7 @@ Reemplaza el placeholder "próximamente". `ReviewsPage.jsx` con toggle
   - Mis reseñas vacío (con sesión): "Todavía no dejaste ninguna reseña" + mismo botón.
   - Mis reseñas sin sesión: mismo componente `LoginRequiredState` que ya usaba `SavedPage.jsx` — se extrajo de ahí a un componente compartido en vez de duplicar el bloque, como pediste.
 
-**Antes de probar el estado vacío real** encontré 9 reseñas de prueba residuales de la sesión anterior (rate-limiting, cuentas "Upsert Test" y "Edit Flow Test") que no se habían limpiado. Confirmé con vos antes de borrarlas — usé el mismo `DELETE /api/users/me` (borrado en cascada + recálculo de `avgRating`) para las 2 cuentas. Con eso, probé el feed real: vacío primero (screenshot con el mensaje invitador), después con una reseña real de un usuario nuevo ("Maria Fernandez" → se muestra "Maria"), confirmando nombre truncado, tiempo relativo, comentario recortado, badge de riesgo, y que tocar el nombre del establecimiento abre su detalle completo.
+**Antes de probar el estado vacío real** se encontraron 9 reseñas de prueba residuales de la sesión anterior (limitación de solicitudes, cuentas "Upsert Test" y "Edit Flow Test") que no se habían limpiado. Se solicitó confirmación antes de eliminarlas y se utilizó el mismo `DELETE /api/users/me` (borrado en cascada y recálculo de `avgRating`) para las 2 cuentas. Con ello se probó el feed real: primero vacío y después con una reseña real de un usuario nuevo ("Maria Fernandez" se muestra como "Maria"), confirmando el nombre abreviado, el tiempo relativo, el comentario recortado, la etiqueta de riesgo y que seleccionar el nombre del establecimiento abre su detalle completo.
 
 **Unificación posterior**: confirmé con `curl` que `GET /establishments/:id/reviews` devuelve `"Maria"` en vez de `"Maria Fernandez"` tras el cambio, y volví a abrir el detalle de "Pastelaria Soul" en el navegador para confirmar visualmente que la sección "Reseñas de la comunidad" se sigue viendo igual (nombre, estrellas, comentario, badges de personal/menú/cocina/riesgo) — el único cambio es el nombre truncado.
 
@@ -414,7 +435,7 @@ historial una pantalla que ya no se puede usar con la sesión vencida.
   al cual volver).
 - Sesión expirada simulada (evento `gf:session-expired`) — sigue
   redirigiendo a `/perfil` y mostrando el banner "Tu sesión expiró.
-  Iniciá sesión de nuevo."
+  Inicia sesión de nuevo."
 - `BottomNav` confirmado oculto mientras se ve `/lugar/:id`, tanto en el
   caso overlay como en el de carga directa.
 
@@ -429,8 +450,9 @@ falta decidir de antemano cuánto se confía en la comunidad.
 `Review` suma dos campos: `hidden` (Boolean, default `false`) y
 `reportedBy` (array de `ObjectId` de `User`) — quién ya reportó esta
 reseña, para que la misma persona no pueda reportarla dos veces.
-`User` suma `isAdmin` (Boolean, default `false`) — sin UI para
-asignarlo, se marca a mano en Mongo Atlas (ver más abajo).
+`User` suma `isAdmin` (Boolean, default `false`). El primer administrador
+se crea con el script seguro `npm run set-admin -- correo@ejemplo.com`;
+después, los roles se gestionan desde el propio panel.
 
 ### Reportar — `POST /api/reviews/:id/report` (autenticado)
 
@@ -452,7 +474,7 @@ anónimos) y filtran `hidden: true` **excepto** cuando el usuario
 autenticado es el autor de esa reseña puntual (`visibilityFilter` en
 `utils/reviewFormatting.js`: `{ hidden: false }` si no hay sesión,
 `{ $or: [{ hidden: false }, { user: userId }] }` si la hay). Así, si tu
-propia reseña queda oculta para el resto, vos la seguís viendo en el
+propia reseña queda oculta para el resto, pero puedes seguir viéndola en el
 feed de comunidad y en el detalle del establecimiento.
 
 `GET /users/me/reviews` ("Mis reseñas") **no filtra por `hidden` en
@@ -484,26 +506,26 @@ rompe con `"must be an array, but was of type: missing"` en cualquier
 retroalimenta a documentos existentes). Cambiado a
 `{ $size: { $ifNull: ['$reportedBy', []] } }`.
 
-### Cómo usar los endpoints de admin (sin pantalla de admin todavía)
+### Panel y acceso administrativo
 
-No se construyó UI de admin — es más trabajo del que vale para un
-piloto sin fecha de audiencia decidida. Por ahora, curl/Postman con tu
-propio JWT:
+`/admin` lista las reseñas reportadas, permite ocultarlas/restaurarlas y
+gestiona los roles de las cuentas. El backend vuelve a comprobar
+`isAdmin` en cada petición; ocultar la ruta en el frontend no es el
+control de seguridad.
 
-**1. Marcarte `isAdmin` en Mongo Atlas** (una vez, a mano):
-
-Desde Atlas → tu cluster → Browse Collections → `users` → buscá tu
-documento por email → Edit → agregá el campo `isAdmin` con valor
-`true` (tipo Boolean) → Update. O por `mongosh` si tenés la connection
-string a mano:
+**1. Crear el primer administrador** (una vez):
 
 ```bash
-mongosh "$MONGODB_URI" --eval 'db.users.updateOne({email:"tu-email@ejemplo.com"}, {$set:{isAdmin:true}})'
+cd server
+npm run set-admin -- tu-email@ejemplo.com
 ```
 
-**2. Conseguir tu JWT**: iniciá sesión normal en la app (`/perfil`) y
-copiá el token de `localStorage.getItem('gf_auth_token')` desde la
-consola del navegador, o hacé login por curl:
+Para retirarlo por CLI: `npm run set-admin -- tu-email@ejemplo.com --remove`.
+El panel impide quitar al último administrador.
+
+**2. Obtener tu JWT**: inicia sesión normalmente en la aplicación (`/perfil`) y
+copia el token de `localStorage.getItem('gf_auth_token')` desde la
+consola del navegador, o inicia sesión mediante curl:
 
 ```bash
 curl -s -X POST http://localhost:4000/api/auth/login \
@@ -518,7 +540,7 @@ curl -s http://localhost:4000/api/admin/reviews/reported \
   -H "Authorization: Bearer TU_JWT" | python3 -m json.tool
 ```
 
-**4. Ocultar una reseña** (usá el `_id` que te devolvió el paso anterior):
+**4. Ocultar una reseña** (usa el `_id` devuelto en el paso anterior):
 
 ```bash
 curl -s -X PATCH http://localhost:4000/api/admin/reviews/REVIEW_ID/hide \

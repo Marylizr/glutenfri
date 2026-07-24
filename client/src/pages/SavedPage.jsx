@@ -10,8 +10,8 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
     return (
       <LoginRequiredState
         icon="♡"
-        title="Guardá tus lugares seguros"
-        message="Iniciá sesión para guardar restaurantes, tiendas y farmacias gluten-free."
+        title="Guarda tus lugares seguros"
+        message="Inicia sesión para guardar restaurantes, tiendas y farmacias sin gluten."
         onGoToProfile={onGoToProfile}
       />
     );
@@ -42,7 +42,7 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
 
         {!saved.loading && !saved.error && saved.establishments.length === 0 && (
           <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
-            Todavía no guardaste ningún lugar. Tocá el ♡ en una card para agregarla acá.
+            Todavía no has guardado ningún lugar. Selecciona el ♡ de una tarjeta para guardarlo.
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { divIcon } from 'leaflet';
-import { isGoogleSourced } from './GoogleAttribution';
+import { isGoogleSourced } from '../utils/googlePlaces';
 import 'leaflet/dist/leaflet.css';
 
 // Pin custom en verde salvia (certificado) o terracota (sin verificar),

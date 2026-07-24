@@ -139,8 +139,8 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     return (
       <StepShell
         step={1}
-        title="¿El personal entendió tus necesidades gluten-free?"
-        subtitle="Pensá en cómo respondieron cuando explicaste tu situación."
+        title="¿El personal entendió tus necesidades relacionadas con el gluten?"
+        subtitle="Piensa en cómo respondieron cuando explicaste tu situación."
         onBack={goBack}
       >
         <ChoiceButton active={staffUnderstanding === 'poor'} onClick={() => handleStaffAnswer('poor')}>
@@ -200,7 +200,7 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
       <StepShell
         step={4}
         title="¿Cómo calificarías el riesgo de contaminación cruzada?"
-        subtitle="Pensá en la preparación, el manejo y la separación de ingredientes."
+        subtitle="Piensa en la preparación, el manejo y la separación de ingredientes."
         onBack={goBack}
       >
         <ChoiceButton active={riskLevel === 'none'} onClick={() => handleRiskAnswer('none')}>
@@ -222,7 +222,7 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
   return (
     <StepShell
       step={5}
-      title="Para cerrar, ¿cómo calificás la experiencia?"
+      title="Para terminar, ¿cómo calificas la experiencia?"
       onBack={goBack}
     >
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
@@ -247,7 +247,7 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        placeholder="Contanos más sobre tu experiencia (opcional)"
+        placeholder="Cuéntanos más sobre tu experiencia (opcional)"
         maxLength={1000}
         rows={4}
         style={{
