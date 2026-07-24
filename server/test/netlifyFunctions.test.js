@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 test('Netlify enruta la API, limita auth y ejecuta Places en segundo plano', async () => {
   const previousJwtSecret = process.env.JWT_SECRET;
@@ -14,10 +16,7 @@ test('Netlify enruta la API, limita auth y ejecuta Places en segundo plano', asy
       import('../netlify/functions/refresh-google-places-background.mjs'),
     ]);
 
-    assert.equal(api.config.path, '/api/*');
-    assert.equal(api.config.excludedPath, '/api/auth/*');
     assert.equal(api.config.rateLimit.windowLimit, 200);
-    assert.equal(auth.config.path, '/api/auth/*');
     assert.equal(auth.config.rateLimit.windowLimit, 10);
     assert.equal(background.config.background, true);
     assert.equal(typeof api.handler, 'function');
@@ -29,4 +28,17 @@ test('Netlify enruta la API, limita auth y ejecuta Places en segundo plano', asy
     if (previousCorsOrigins === undefined) delete process.env.CORS_ORIGINS;
     else process.env.CORS_ORIGINS = previousCorsOrigins;
   }
+});
+
+test('los redirects de API se evalúan antes que el fallback de la SPA', () => {
+  const config = fs.readFileSync(path.resolve(__dirname, '../../netlify.toml'), 'utf8');
+  const authRedirect = config.indexOf('from = "/api/auth/*"');
+  const apiRedirect = config.indexOf('from = "/api/*"');
+  const spaFallback = config.indexOf('from = "/*"');
+
+  assert.ok(authRedirect >= 0);
+  assert.ok(apiRedirect > authRedirect);
+  assert.ok(spaFallback > apiRedirect);
+  assert.match(config, /to = "\/\.netlify\/functions\/auth\/:splat"/);
+  assert.match(config, /to = "\/\.netlify\/functions\/api\/:splat"/);
 });

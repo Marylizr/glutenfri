@@ -29,7 +29,8 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
   }, [load]);
 
   const filtered = useMemo(() => {
-    return establishments.filter((e) => {
+    const list = Array.isArray(establishments) ? establishments : [];
+    return list.filter((e) => {
       if (filters.type && e.type !== filters.type) return false;
       if (filters.certifiedOnly && !e.certified) return false;
       if (filters.discountOnly && !e.discount) return false;

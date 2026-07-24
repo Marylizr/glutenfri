@@ -1,4 +1,5 @@
 import { APP_NAME, REGION_CITIES } from '../config/brand';
+import HamburgerAssembly from '../components/HamburgerAssembly';
 
 const FEATURES = [
   { icon: '✓', text: 'Lugares sin gluten verificados' },
@@ -13,9 +14,9 @@ export default function OnboardingScreen({ onStart, onLogin }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
         background: 'linear-gradient(180deg, #e9dfc9 0%, var(--color-bg) 55%)',
         padding: '24px',
+        overflowY: 'auto',
       }}
     >
       <div
@@ -27,12 +28,13 @@ export default function OnboardingScreen({ onStart, onLogin }) {
           fontWeight: 700,
           padding: '6px 12px',
           borderRadius: 'var(--radius-pill)',
-          marginBottom: 'auto',
-          marginTop: '40px',
+          marginBottom: '4px',
         }}
       >
         🌿 {APP_NAME}
       </div>
+
+      <HamburgerAssembly />
 
       <h1 style={{ fontSize: '30px', lineHeight: 1.2, marginBottom: '12px' }}>
         Tu guía sin gluten en el norte de Portugal

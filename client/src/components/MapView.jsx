@@ -19,8 +19,9 @@ function pinIcon(certified) {
   });
 }
 
-export default function MapView({ establishments, center }) {
-  const withCoords = establishments.filter((e) => e.lat && e.lng);
+export default function MapView({ establishments = [], center }) {
+  const list = Array.isArray(establishments) ? establishments : [];
+  const withCoords = list.filter((e) => e.lat && e.lng);
   const hasGoogleData = withCoords.some(isGoogleSourced);
 
   // Atribución de Leaflet (siempre visible, no escondida en un popup) —

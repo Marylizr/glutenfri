@@ -1,10 +1,13 @@
 import api from './api';
+import { requireList } from './responseValidation';
 
 export const getAdminDashboard = () =>
   api.get('/admin/dashboard').then((response) => response.data);
 
 export const getReportedReviews = (params = {}) =>
-  api.get('/admin/reviews/reported', { params }).then((response) => response.data.data);
+  api
+    .get('/admin/reviews/reported', { params })
+    .then((response) => requireList(response.data, 'lista de reportes'));
 
 export const hideReview = (reviewId, reason) =>
   api.patch(`/admin/reviews/${reviewId}/hide`, { reason }).then((response) => response.data);
@@ -13,7 +16,9 @@ export const restoreReview = (reviewId, reason) =>
   api.patch(`/admin/reviews/${reviewId}/unhide`, { reason }).then((response) => response.data);
 
 export const getUsers = (params = {}) =>
-  api.get('/admin/users', { params }).then((response) => response.data.data);
+  api
+    .get('/admin/users', { params })
+    .then((response) => requireList(response.data, 'lista de usuarios'));
 
 export const setUserAdmin = (userId, isAdmin) =>
   api

@@ -29,7 +29,8 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
   }, [load]);
 
   const filtered = useMemo(() => {
-    return establishments.filter((e) => {
+    const list = Array.isArray(establishments) ? establishments : [];
+    return list.filter((e) => {
       if (type && e.type !== type) return false;
       if (query) {
         const searchText = `${e.name} ${e.address || ''}`.toLocaleLowerCase('es');
