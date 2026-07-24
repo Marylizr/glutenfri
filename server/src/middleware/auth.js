@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+function isSuspended(user) {
+  if (!user?.suspendedAt) return false;
+  return !user.suspendedUntil || user.suspendedUntil > new Date();
+}
+
 async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: 'No autenticado' });
@@ -17,10 +22,20 @@ async function requireAuth(req, res, next) {
   // no exista más — por ejemplo, justo después de un borrado GDPR (derecho
   // al olvido). Confirmamos que el usuario siga existiendo antes de dejar
   // pasar la request, para no dejar operar con una identidad borrada.
-  const exists = await User.exists({ _id: payload.id });
-  if (!exists) return res.status(401).json({ error: 'No autenticado' });
+  const account = await User.findById(payload.id)
+    .select('isAdmin suspendedAt suspendedUntil suspensionReason')
+    .lean();
+  if (!account) return res.status(401).json({ error: 'No autenticado' });
+  if (isSuspended(account)) {
+    return res.status(403).json({
+      error: 'Cuenta suspendida',
+      suspendedUntil: account.suspendedUntil,
+      reason: account.suspensionReason,
+    });
+  }
 
   req.user = payload;
+  req.account = account;
   next();
 }
 
@@ -35,8 +50,10 @@ async function optionalAuth(req, res, next) {
   const token = header.replace('Bearer ', '');
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    const exists = await User.exists({ _id: payload.id });
-    if (exists) req.user = payload;
+    const account = await User.findById(payload.id)
+      .select('suspendedAt suspendedUntil')
+      .lean();
+    if (account && !isSuspended(account)) req.user = payload;
   } catch (err) {
     // token inválido/vencido — seguimos como anónimo, no es un error acá.
   }
@@ -47,11 +64,12 @@ async function optionalAuth(req, res, next) {
 // token), así que se confirma contra la base en cada request en vez de
 // confiar en el payload.
 async function checkIsAdmin(req, res, next) {
-  const user = await User.findById(req.user.id).select('isAdmin').lean();
-  if (!user?.isAdmin) return res.status(403).json({ error: 'Requiere permisos de administrador' });
+  if (!req.account?.isAdmin) {
+    return res.status(403).json({ error: 'Requiere permisos de administrador' });
+  }
   next();
 }
 
 const requireAdmin = [requireAuth, checkIsAdmin];
 
-module.exports = { requireAuth, optionalAuth, requireAdmin };
+module.exports = { requireAuth, optionalAuth, requireAdmin, isSuspended };

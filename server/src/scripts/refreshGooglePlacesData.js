@@ -1,9 +1,6 @@
-// Job de refresco de lat/lng para establecimientos con placeId — la única
-// otra excepción de caché del ToS de Google además de place_id (30 días,
-// después hay que borrar/actualizar). NO está programado para correr
-// automáticamente todavía (sin cron/scheduler configurado); es un script
-// manual, listo para conectar a algo como Heroku Scheduler una vez en
-// producción.
+// Job de refresco de lat/lng para establecimientos con placeId. GitHub
+// Actions lo ejecuta semanalmente; el margen de 23 días evita superar el
+// máximo de 30 días aunque una ejecución programada se retrase.
 //
 // Uso:
 //   node src/scripts/refreshGooglePlacesData.js
@@ -14,17 +11,21 @@ const mongoose = require('mongoose');
 const Establishment = require('../models/Establishment');
 const { getPlaceLocation } = require('../services/googlePlaces');
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const REFRESH_AFTER_DAYS = 23;
+const REFRESH_AFTER_MS = REFRESH_AFTER_DAYS * 24 * 60 * 60 * 1000;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function run() {
   const force = process.argv.includes('--force');
 
+  if (!process.env.MONGODB_URI) throw new Error('Falta MONGODB_URI');
+  if (!process.env.GOOGLE_PLACES_API_KEY) throw new Error('Falta GOOGLE_PLACES_API_KEY');
+
   await mongoose.connect(process.env.MONGODB_URI);
 
   const query = { placeId: { $exists: true, $ne: null } };
   if (!force) {
-    const cutoff = new Date(Date.now() - THIRTY_DAYS_MS);
+    const cutoff = new Date(Date.now() - REFRESH_AFTER_MS);
     query.$or = [
       { googlePlaceRefreshedAt: { $lt: cutoff } },
       { googlePlaceRefreshedAt: { $exists: false } },
@@ -57,9 +58,13 @@ async function run() {
 
   console.log(`\nResumen: ${updated} actualizados, ${errored} con error.`);
   await mongoose.disconnect();
+  if (errored > 0) {
+    throw new Error(`${errored} establecimientos no pudieron refrescarse`);
+  }
 }
 
 run().catch((err) => {
   console.error(err);
+  mongoose.disconnect().catch(() => {});
   process.exit(1);
 });

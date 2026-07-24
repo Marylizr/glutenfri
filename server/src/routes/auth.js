@@ -1,9 +1,12 @@
 const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
-const { register, login } = require('../controllers/authController');
+const { register, login, me } = require('../controllers/authController');
 const { validate } = require('../middleware/validate');
 const { authLimiter } = require('../middleware/rateLimiters');
+const { requireAuth } = require('../middleware/auth');
+
+router.get('/me', requireAuth, me);
 
 router.post(
   '/register',
@@ -16,7 +19,7 @@ router.post(
     // no llega exactamente `true`, se rechaza el registro acá también.
     body('privacyAccepted')
       .custom((value) => value === true)
-      .withMessage('Debés aceptar la política de privacidad y los términos de uso'),
+      .withMessage('Debes aceptar la política de privacidad'),
   ],
   validate,
   register

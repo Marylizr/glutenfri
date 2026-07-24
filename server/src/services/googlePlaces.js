@@ -9,7 +9,7 @@ const BASE_URL = 'https://places.googleapis.com/v1';
 
 function getApiKey() {
   const key = process.env.GOOGLE_PLACES_API_KEY;
-  if (!key) throw new Error('GOOGLE_PLACES_API_KEY no está seteado en .env');
+  if (!key) throw new Error('GOOGLE_PLACES_API_KEY no está configurada en .env');
   return key;
 }
 
@@ -17,7 +17,8 @@ function getApiKey() {
 // FieldMask: id (Essentials) + displayName/formattedAddress/photos (Pro,
 // mismo tier que photos así que no suma costo pedirlos también) — NUNCA
 // rating/userRatingCount (Enterprise, más caro).
-async function textSearchPlace(textQuery) {
+async function textSearchPlaces(textQuery, { maxResultCount = 1 } = {}) {
+  const resultCount = Math.min(Math.max(Number(maxResultCount) || 1, 1), 20);
   const res = await fetch(`${BASE_URL}/places:searchText`, {
     method: 'POST',
     headers: {
@@ -25,7 +26,7 @@ async function textSearchPlace(textQuery) {
       'X-Goog-Api-Key': getApiKey(),
       'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.photos',
     },
-    body: JSON.stringify({ textQuery, maxResultCount: 1 }),
+    body: JSON.stringify({ textQuery, maxResultCount: resultCount }),
   });
 
   if (!res.ok) {
@@ -34,7 +35,12 @@ async function textSearchPlace(textQuery) {
   }
 
   const data = await res.json();
-  return data.places?.[0] || null;
+  return data.places || [];
+}
+
+async function textSearchPlace(textQuery) {
+  const places = await textSearchPlaces(textQuery);
+  return places[0] || null;
 }
 
 // Place Details restringido a photos — se llama en vivo cada vez que hace
@@ -89,4 +95,10 @@ async function getPlaceLocation(placeId) {
   return data.location || null;
 }
 
-module.exports = { textSearchPlace, getPlacePhotoName, fetchPlacePhotoMedia, getPlaceLocation };
+module.exports = {
+  textSearchPlace,
+  textSearchPlaces,
+  getPlacePhotoName,
+  fetchPlacePhotoMedia,
+  getPlaceLocation,
+};

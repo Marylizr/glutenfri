@@ -28,7 +28,7 @@ const reviewLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.user.id,
-  message: { error: 'Alcanzaste el límite de reseñas por hora. Intenta más tarde.' },
+  message: { error: 'Has alcanzado el límite de reseñas por hora. Intenta más tarde.' },
 });
 
 module.exports = { apiLimiter, authLimiter, reviewLimiter };

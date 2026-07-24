@@ -1,5 +1,5 @@
 const express = require('express');
-const { param, query } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const router = express.Router();
 const { listRecentReviews, reportReview } = require('../controllers/reviewsController');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
@@ -19,7 +19,17 @@ router.get(
 router.post(
   '/:id/report',
   requireAuth,
-  [param('id').isMongoId().withMessage('id inválido')],
+  [
+    param('id').isMongoId().withMessage('id inválido'),
+    body('reason')
+      .isIn(['incorrect_safety', 'offensive', 'spam', 'personal_data', 'other'])
+      .withMessage('Motivo inválido'),
+    body('details')
+      .optional({ nullable: true })
+      .isString()
+      .isLength({ max: 500 })
+      .withMessage('Detalle demasiado largo'),
+  ],
   validate,
   reportReview
 );

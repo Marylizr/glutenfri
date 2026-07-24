@@ -17,48 +17,28 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const Establishment = require('../models/Establishment');
-const { textSearchPlace } = require('../services/googlePlaces');
+const { textSearchPlaces } = require('../services/googlePlaces');
+const { selectCandidate } = require('../utils/placeMatching');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function normalize(str) {
-  return (str || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function looksLikeMatch(ourName, googleName) {
-  const a = normalize(ourName);
-  const b = normalize(googleName);
-  if (!a || !b) return false;
-  if (a.includes(b) || b.includes(a)) return true;
-
-  const aWords = new Set(a.split(' ').filter((w) => w.length > 2));
-  const bWords = new Set(b.split(' ').filter((w) => w.length > 2));
-  if (aWords.size === 0) return false;
-
-  let overlap = 0;
-  for (const w of aWords) if (bWords.has(w)) overlap++;
-  return overlap / aWords.size >= 0.5;
-}
 
 async function run() {
   const limitArg = process.argv.find((a) => a.startsWith('--limit='));
   const limit = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity;
+  const includeApc = process.argv.includes('--include-apc');
 
   await mongoose.connect(process.env.MONGODB_URI);
 
+  const sources = includeApc ? ['APC', 'Google', 'APC+Google'] : ['Google', 'APC+Google'];
   const candidates = await Establishment.find({
-    source: { $in: ['Google', 'APC+Google'] },
+    source: { $in: sources },
     placeId: { $in: [null, undefined] },
   });
 
   const toProcess = Math.min(limit, candidates.length);
-  console.log(`${candidates.length} establecimientos sin place_id. Procesando ${toProcess}.\n`);
+  console.log(
+    `${candidates.length} establecimientos sin place_id${includeApc ? ' (incluyendo APC)' : ''}. Procesando ${toProcess}.\n`
+  );
 
   const datasetPath = path.join(__dirname, '../../data/merged_dataset.json');
   const dataset = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
@@ -70,12 +50,12 @@ async function run() {
 
   for (let i = 0; i < toProcess; i++) {
     const est = candidates[i];
-    const query = est.address ? `${est.name}, ${est.address}` : est.name;
+    const query = est.address ? `${est.name}, ${est.address}` : `${est.name}, Portugal`;
     console.log(`[${i + 1}/${toProcess}] Buscando: "${query}"`);
 
-    let result;
+    let results;
     try {
-      result = await textSearchPlace(query);
+      results = await textSearchPlaces(query, { maxResultCount: 5 });
     } catch (err) {
       console.error(`  ✗ Error en Text Search: ${err.message}`);
       errored++;
@@ -83,23 +63,29 @@ async function run() {
       continue;
     }
 
-    if (!result) {
+    if (results.length === 0) {
       console.log('  ⚠️  Sin resultados de Google.\n');
       notFound++;
       await sleep(200);
       continue;
     }
 
-    const googleName = result.displayName?.text || '';
-    const googleAddress = result.formattedAddress || '';
+    const selection = selectCandidate(est.name, results);
+    const result = selection.best?.candidate || selection.ranked[0]?.candidate;
+    const googleName = result?.displayName?.text || '';
+    const googleAddress = result?.formattedAddress || '';
     const hasPhoto = (result.photos || []).length > 0;
 
     console.log(`  Nuestro: "${est.name}" — ${est.address || '(sin dirección)'}`);
     console.log(`  Google:  "${googleName}" — ${googleAddress}`);
     console.log(`  Fotos:   ${hasPhoto ? 'sí' : 'no'}`);
 
-    if (!looksLikeMatch(est.name, googleName)) {
-      console.log('  ⚠️  POSIBLE FALSO POSITIVO — no se guarda, revisar manualmente.\n');
+    if (!selection.accepted) {
+      console.log(
+        `  ⚠️  REVISAR (${selection.reason}) — no se guarda. Confianza: ${(
+          selection.ranked[0]?.score || 0
+        ).toFixed(2)}\n`
+      );
       flagged++;
       await sleep(200);
       continue;
@@ -108,10 +94,15 @@ async function run() {
     est.placeId = result.id;
     est.hasPhoto = hasPhoto;
     est.googlePlaceRefreshedAt = new Date();
+    if (est.source === 'APC') est.source = 'APC+Google';
     await est.save();
 
     const datasetEntry = dataset.establishments.find((e) => e.name === est.name);
-    if (datasetEntry) datasetEntry.placeId = result.id;
+    if (datasetEntry) {
+      datasetEntry.placeId = result.id;
+      datasetEntry.hasPhoto = hasPhoto;
+      if (datasetEntry.source === 'APC') datasetEntry.source = 'APC+Google';
+    }
 
     console.log('  ✓ Guardado.\n');
     matched++;

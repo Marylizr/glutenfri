@@ -33,14 +33,21 @@ async function reportReview(req, res) {
   const review = await Review.findById(req.params.id);
   if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
 
-  const alreadyReported = review.reportedBy.some((id) => id.toString() === req.user.id);
+  const alreadyReported =
+    review.reportedBy.some((id) => id.toString() === req.user.id) ||
+    review.reports.some((report) => report.reporter.toString() === req.user.id);
   if (alreadyReported) {
     return res.status(409).json({ error: 'Ya reportaste esta reseña' });
   }
 
   review.reportedBy.push(req.user.id);
+  review.reports.push({
+    reporter: req.user.id,
+    reason: req.body.reason,
+    details: req.body.details,
+  });
   await review.save();
-  res.json({ reported: true, reportsCount: review.reportedBy.length });
+  res.json({ reported: true, reportsCount: review.reports.length });
 }
 
 module.exports = { listRecentReviews, reportReview };

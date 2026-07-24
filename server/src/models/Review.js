@@ -23,6 +23,18 @@ const reviewSchema = new mongoose.Schema(
     // feeds públicos sin borrarla — el autor la sigue viendo/editando.
     hidden: { type: Boolean, default: false },
     reportedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    reports: [
+      {
+        reporter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        reason: {
+          type: String,
+          enum: ['incorrect_safety', 'offensive', 'spam', 'personal_data', 'other'],
+          required: true,
+        },
+        details: { type: String, maxlength: 500 },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
