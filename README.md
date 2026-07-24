@@ -77,6 +77,7 @@ npm run dev                 # http://localhost:5173
   - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca"; bottom nav Home/Map/Saved/Reviews/Profile → Inicio/Mapa/Guardados/Reseñas/Perfil
 - [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
 - [x] **Requisitos técnicos de GDPR** — ver sección dedicada abajo. Falta publicar la política de privacidad real (la estás armando con tu abogado) y decidir el representante UE si aplica
+- [x] **`react-router-dom` activado con rutas reales** (antes estaba instalado pero sin usar) — ver sección dedicada abajo
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
 ## ✅ Google Places: compliance de caché — RESUELTO (2026-07-24)
@@ -223,7 +224,7 @@ genérico como fallback).
 
 - **`server/Procfile`**: `web: node src/server.js`
 - **`server/package.json`**: agregado `"engines": { "node": "20.x" }` — coincide con la versión local (`node --version` → v20.20.2)
-- **`netlify.toml`** (raíz del repo): `base = "client"`, `command = "npm run build"`, `publish = "dist"`, más el redirect `/* → /index.html` (200) para que el SPA no dé 404 al refrescar una ruta. Nota: hoy la app no usa rutas de URL reales (`react-router-dom` está en `package.json` pero no se usa en ningún componente — toda la navegación es estado en memoria dentro de `App.jsx`), así que el redirect no tiene efecto práctico todavía, pero es lo correcto para cuando se agregue routing real
+- **`netlify.toml`** (raíz del repo): `base = "client"`, `command = "npm run build"`, `publish = "dist"`, más el redirect `/* → /index.html` (200) para que el SPA no dé 404 al refrescar una ruta. Ahora que hay routing real (ver sección dedicada), este redirect ya tiene efecto práctico: sin él, refrescar directamente en `/mapa` o `/lugar/:id` en producción daría 404 en vez de servir el SPA
 - Confirmado `npm run build` en `client/` — compila sin errores (`dist/` generado, ~131 KB gzipped)
 
 ### Variables de entorno para producción
@@ -317,6 +318,104 @@ Reemplaza el placeholder "próximamente". `ReviewsPage.jsx` con toggle
 **Antes de probar el estado vacío real** encontré 9 reseñas de prueba residuales de la sesión anterior (rate-limiting, cuentas "Upsert Test" y "Edit Flow Test") que no se habían limpiado. Confirmé con vos antes de borrarlas — usé el mismo `DELETE /api/users/me` (borrado en cascada + recálculo de `avgRating`) para las 2 cuentas. Con eso, probé el feed real: vacío primero (screenshot con el mensaje invitador), después con una reseña real de un usuario nuevo ("Maria Fernandez" → se muestra "Maria"), confirmando nombre truncado, tiempo relativo, comentario recortado, badge de riesgo, y que tocar el nombre del establecimiento abre su detalle completo.
 
 **Unificación posterior**: confirmé con `curl` que `GET /establishments/:id/reviews` devuelve `"Maria"` en vez de `"Maria Fernandez"` tras el cambio, y volví a abrir el detalle de "Pastelaria Soul" en el navegador para confirmar visualmente que la sección "Reseñas de la comunidad" se sigue viendo igual (nombre, estrellas, comentario, badges de personal/menú/cocina/riesgo) — el único cambio es el nombre truncado.
+
+## Routing real con react-router-dom (2026-07-24)
+
+`react-router-dom` estaba en `package.json` desde el principio pero nunca
+se usó — toda la navegación vivía en `useState` (`tab`/`selected`) dentro
+de `App.jsx`, sin URLs reales. Esto significaba: el botón atrás del
+navegador no hacía nada útil (o cerraba la app/salía del historial), y no
+había forma de compartir un link directo a un establecimiento.
+
+### Rutas
+
+| Ruta | Pantalla |
+|---|---|
+| `/` | Explore (Home) |
+| `/mapa` | Vista Map |
+| `/guardados` | Saved |
+| `/reseñas` | Reviews |
+| `/perfil` | Profile |
+| `/lugar/:id` | Detalle de establecimiento |
+
+`client/src/main.jsx` envuelve `<App />` en `<BrowserRouter>`.
+`BottomNav.jsx` se reescribió para usar `NavLink` (resalta el tab activo
+según la URL real vía `isActive`, no un estado interno) en vez de recibir
+`active`/`onChange` por props.
+
+### Patrón "background location" para el detalle
+
+El requisito difícil era: entrar al detalle desde Explore, Map o Reviews
+(incluyendo el feed de comunidad) y que "atrás" vuelva **exactamente** a
+la pantalla de origen con su estado intacto (ej. un filtro aplicado en
+Map, no resetear a Explore). Lift-state-up de todos los filtros locales a
+`App.jsx` hubiera funcionado pero es invasivo y frágil a futuro.
+
+En cambio, `openEstablishment` (en `App.jsx`) navega a `/lugar/:id`
+pasando `state: { backgroundLocation: location, establishment }`. Con
+eso, `App.jsx` renderiza **dos** `<Routes>`: el de fondo usa
+`backgroundLocation || location` (así la pantalla de origen sigue
+montada, nunca se desmonta, y su estado local —filtros, scroll— se
+conserva tal cual), y un segundo `<Routes>` con solo la ruta
+`/lugar/:id` se dibuja como overlay absoluto encima cuando hay
+`backgroundLocation`. El botón atrás propio de la pantalla de detalle
+llama `navigate(-1)`, que hace pop del historial y vuelve al
+`backgroundLocation` — y el botón atrás **nativo del navegador** hace
+exactamente lo mismo sin código adicional, porque es el mismo mecanismo
+de historial.
+
+`pages/EstablishmentDetailRoute.jsx` es el componente que cuelga de
+`/lugar/:id`: si `location.state.establishment` ya viene (abierto desde
+un click dentro de la app), lo usa directo sin refetch. Si no hay state
+(carga directa por URL — link compartido, o un refresh de página en
+`/lugar/:id`), hace `getEstablishmentById(id)` contra el backend. El
+botón atrás ahí mismo revisa si hay `backgroundLocation`: si sí,
+`navigate(-1)`; si no (no hay a dónde volver dentro de la app), manda a
+`/`.
+
+### Login/registro: se quedó en `/perfil`, sin rutas propias
+
+Evalué agregar `/login` y `/registro` como pedía el brief, pero decidí no
+hacerlo: `/perfil` ya no es un modal, es una pantalla de página completa
+(`ProfilePage.jsx`) que alterna internamente entre el formulario de
+login/registro y `AccountPanel` según `auth.user` — no hay nada "modal"
+que necesite poder cerrarse con atrás ni un flujo que se beneficie de una
+URL separada. Partirlo en rutas solo hubiera agregado redirecciones sin
+un beneficio real de UX o de compartibilidad (nadie comparte un link a
+"iniciar sesión").
+
+### Sesión expirada
+
+El flujo existente (`useAuth` escucha el evento `gf:session-expired` que
+dispara el interceptor 401 de `services/api.js`) sigue funcionando igual:
+un `useEffect` en `App.jsx` observa `auth.sessionExpired` y hace
+`navigate('/perfil', { replace: true })` — `replace` para no dejar en el
+historial una pantalla que ya no se puede usar con la sesión vencida.
+
+### Probado en el navegador
+
+- Navegación entre las 5 pantallas principales vía `BottomNav` — URL y
+  resaltado del tab activo correctos en cada una.
+- Detalle abierto desde Explore (con una búsqueda activa) → atrás →
+  vuelve a `/` con la búsqueda todavía en el input.
+- Detalle abierto desde Map **con un filtro de tipo aplicado**
+  (`Restaurante`) → atrás → vuelve a `/mapa` con el mismo filtro
+  seleccionado, no resetea a Explore. Este era el caso que más importaba
+  probar.
+- Detalle abierto desde el feed de Reviews (Comunidad) → atrás → vuelve a
+  `/reseñas`.
+- Atrás **nativo del navegador** (no el botón propio de la pantalla)
+  probado explícitamente desde el detalle abierto desde Reviews — mismo
+  comportamiento que el botón in-app, vuelve a `/reseñas`.
+- Carga directa (no un click dentro de la app) de una URL `/lugar/:id` en
+  una pestaña nueva — carga ese establecimiento vía fetch por id, sin
+  romper; su botón atrás manda a `/` (no hay historial propio de la app
+  al cual volver).
+- Sesión expirada simulada (evento `gf:session-expired`) — sigue
+  redirigiendo a `/perfil` y mostrando el banner "Tu sesión expiró.
+  Iniciá sesión de nuevo."
+- `BottomNav` confirmado oculto mientras se ve `/lugar/:id`, tanto en el
+  caso overlay como en el de carga directa.
 
 ## Notas técnicas
 

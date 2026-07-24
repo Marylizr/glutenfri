@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ExplorePage from './pages/ExplorePage';
 import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
-import EstablishmentDetailPage from './pages/EstablishmentDetailPage';
+import EstablishmentDetailRoute from './pages/EstablishmentDetailRoute';
 import ProfilePage from './pages/ProfilePage';
 import SavedPage from './pages/SavedPage';
 import ReviewsPage from './pages/ReviewsPage';
@@ -14,35 +15,76 @@ import './index.css';
 const ONBOARDED_KEY = 'gf_onboarded';
 
 function App() {
-  const [tab, setTab] = useState('home');
-  const [selected, setSelected] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [onboarded, setOnboarded] = useState(() => localStorage.getItem(ONBOARDED_KEY) === 'true');
   const auth = useAuth();
   const saved = useSaved(auth.user);
+
+  // "Background location": si /lugar/:id se abrió desde un click dentro de
+  // la app (no una carga directa por URL), la pantalla de origen sigue
+  // montada detrás y el detalle se dibuja como overlay encima — así no se
+  // pierden filtros ni scroll, y "atrás" (botón propio o el del navegador)
+  // vuelve exactamente a donde estaba.
+  const backgroundLocation = location.state?.backgroundLocation;
+
+  const openEstablishment = (establishment) => {
+    navigate(`/lugar/${establishment._id}`, {
+      state: { backgroundLocation: location, establishment },
+    });
+  };
+
+  const handleToggleSaved = (establishmentId) => {
+    if (!auth.user) {
+      navigate('/perfil');
+      return;
+    }
+    saved.toggle(establishmentId);
+  };
 
   const finishOnboarding = () => {
     localStorage.setItem(ONBOARDED_KEY, 'true');
     setOnboarded(true);
   };
 
-  const handleToggleSaved = (establishmentId) => {
-    if (!auth.user) {
-      setTab('profile');
-      return;
-    }
-    saved.toggle(establishmentId);
-  };
-
   // Si el JWT venció, useAuth ya limpió la sesión (evento
-  // 'gf:session-expired' desde services/api.js) — acá solo sacamos al
-  // usuario de donde estaba (detalle, review a medio llenar, etc.) y lo
-  // mandamos a la pantalla de login con el mensaje que muestra ProfilePage.
+  // 'gf:session-expired' desde services/api.js) — acá mandamos a la
+  // pantalla de login con el mensaje que muestra ProfilePage. `replace`
+  // para no dejar en el historial una pantalla que ya no puede usarse.
   useEffect(() => {
     if (auth.sessionExpired) {
-      setSelected(null);
-      setTab('profile');
+      navigate('/perfil', { replace: true });
     }
-  }, [auth.sessionExpired]);
+  }, [auth.sessionExpired, navigate]);
+
+  if (!onboarded) {
+    return (
+      <div
+        style={{
+          maxWidth: '480px',
+          margin: '0 auto',
+          height: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--color-bg)',
+          boxShadow: '0 0 40px rgba(0,0,0,0.06)',
+        }}
+      >
+        <OnboardingScreen
+          onStart={() => {
+            finishOnboarding();
+            navigate('/');
+          }}
+          onLogin={() => {
+            finishOnboarding();
+            navigate('/perfil');
+          }}
+        />
+      </div>
+    );
+  }
+
+  const isDetailRoute = location.pathname.startsWith('/lugar/');
 
   return (
     <div
@@ -56,60 +98,82 @@ function App() {
         boxShadow: '0 0 40px rgba(0,0,0,0.06)',
       }}
     >
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        {!onboarded ? (
-          <OnboardingScreen
-            onStart={finishOnboarding}
-            onLogin={() => {
-              finishOnboarding();
-              setTab('profile');
-            }}
-          />
-        ) : selected ? (
-          <EstablishmentDetailPage
-            establishment={selected}
-            onBack={() => setSelected(null)}
-            saved={saved.savedIds.has(selected._id)}
-            onToggleSaved={handleToggleSaved}
-            auth={auth}
-          />
-        ) : (
-          <>
-            {tab === 'home' && (
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <Routes location={backgroundLocation || location}>
+          <Route
+            path="/"
+            element={
               <ExplorePage
-                onSelectEstablishment={setSelected}
+                onSelectEstablishment={openEstablishment}
                 savedIds={saved.savedIds}
                 onToggleSaved={handleToggleSaved}
               />
-            )}
-            {tab === 'map' && (
+            }
+          />
+          <Route
+            path="/mapa"
+            element={
               <HomePage
-                onSelectEstablishment={setSelected}
+                onSelectEstablishment={openEstablishment}
                 savedIds={saved.savedIds}
                 onToggleSaved={handleToggleSaved}
               />
-            )}
-            {tab === 'saved' && (
+            }
+          />
+          <Route
+            path="/guardados"
+            element={
               <SavedPage
                 auth={auth}
                 saved={saved}
-                onSelectEstablishment={setSelected}
-                onGoToProfile={() => setTab('profile')}
+                onSelectEstablishment={openEstablishment}
+                onGoToProfile={() => navigate('/perfil')}
               />
-            )}
-            {tab === 'reviews' && (
+            }
+          />
+          <Route
+            path="/reseñas"
+            element={
               <ReviewsPage
                 auth={auth}
-                onSelectEstablishment={setSelected}
-                onGoToProfile={() => setTab('profile')}
-                onGoToExplore={() => setTab('home')}
+                onSelectEstablishment={openEstablishment}
+                onGoToProfile={() => navigate('/perfil')}
+                onGoToExplore={() => navigate('/')}
               />
-            )}
-            {tab === 'profile' && <ProfilePage auth={auth} />}
-          </>
+            }
+          />
+          <Route path="/perfil" element={<ProfilePage auth={auth} />} />
+          <Route
+            path="/lugar/:id"
+            element={
+              <EstablishmentDetailRoute
+                auth={auth}
+                savedIds={saved.savedIds}
+                onToggleSaved={handleToggleSaved}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+
+        {backgroundLocation && (
+          <div style={{ position: 'absolute', inset: 0, background: 'var(--color-bg)' }}>
+            <Routes>
+              <Route
+                path="/lugar/:id"
+                element={
+                  <EstablishmentDetailRoute
+                    auth={auth}
+                    savedIds={saved.savedIds}
+                    onToggleSaved={handleToggleSaved}
+                  />
+                }
+              />
+            </Routes>
+          </div>
         )}
       </div>
-      {onboarded && !selected && <BottomNav active={tab} onChange={setTab} />}
+      {!isDetailRoute && <BottomNav />}
     </div>
   );
 }

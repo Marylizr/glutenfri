@@ -1,12 +1,14 @@
+import { NavLink } from 'react-router-dom';
+
 const TABS = [
-  { key: 'home', label: 'Inicio', icon: '⌂' },
-  { key: 'map', label: 'Mapa', icon: '⚲' },
-  { key: 'saved', label: 'Guardados', icon: '♡' },
-  { key: 'reviews', label: 'Reseñas', icon: '✎' },
-  { key: 'profile', label: 'Perfil', icon: '◍' },
+  { to: '/', label: 'Inicio', icon: '⌂', end: true },
+  { to: '/mapa', label: 'Mapa', icon: '⚲' },
+  { to: '/guardados', label: 'Guardados', icon: '♡' },
+  { to: '/reseñas', label: 'Reseñas', icon: '✎' },
+  { to: '/perfil', label: 'Perfil', icon: '◍' },
 ];
 
-export default function BottomNav({ active, onChange }) {
+export default function BottomNav() {
   return (
     <nav
       style={{
@@ -17,29 +19,28 @@ export default function BottomNav({ active, onChange }) {
         padding: '8px 0 max(8px, env(safe-area-inset-bottom))',
       }}
     >
-      {TABS.map((tab) => {
-        const isActive = tab.key === active;
-        return (
-          <button
-            key={tab.key}
-            onClick={() => onChange(tab.key)}
-            style={{
-              background: 'none',
-              border: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px',
-              color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
-              fontSize: '11px',
-              fontWeight: isActive ? 600 : 400,
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>{tab.icon}</span>
-            {tab.label}
-          </button>
-        );
-      })}
+      {TABS.map((tab) => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          end={tab.end}
+          style={({ isActive }) => ({
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2px',
+            color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
+            fontSize: '11px',
+            fontWeight: isActive ? 600 : 400,
+            textDecoration: 'none',
+          })}
+        >
+          <span style={{ fontSize: '18px' }}>{tab.icon}</span>
+          {tab.label}
+        </NavLink>
+      ))}
     </nav>
   );
 }
