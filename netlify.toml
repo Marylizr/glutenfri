@@ -1,7 +1,13 @@
 [build]
-  base = "client"
-  command = "npm run build"
-  publish = "dist"
+  command = "npm ci --prefix client && npm ci --prefix server && npm run build --prefix client"
+  publish = "client/dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[functions]
+  directory = "server/netlify/functions"
+  node_bundler = "esbuild"
 
 # SPA: sin esto, refrescar cualquier ruta que no sea "/" da 404 en
 # Netlify porque no hay archivos físicos para esas rutas — todo el

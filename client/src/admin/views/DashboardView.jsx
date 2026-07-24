@@ -197,7 +197,11 @@ export default function DashboardView({ auth, navigate }) {
             <SystemRow
               icon={CloudCheck}
               label="API"
-              detail={`${Math.floor((system.api.uptimeSeconds || 0) / 60)} min activa`}
+              detail={
+                system.api.runtime === 'serverless'
+                  ? 'Serverless bajo demanda'
+                  : `${Math.floor((system.api.uptimeSeconds || 0) / 60)} min activa`
+              }
               status={system.api.status}
             />
             <SystemRow

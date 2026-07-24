@@ -1,41 +1,90 @@
 const Establishment = require('../models/Establishment');
+const SystemJob = require('../models/SystemJob');
 const { getPlaceLocation } = require('./googlePlaces');
 
+const JOB_KEY = 'google-places-refresh';
 const REFRESH_AFTER_MS = 23 * 24 * 60 * 60 * 1000;
-const state = {
-  status: 'idle',
-  startedAt: null,
-  finishedAt: null,
-  total: 0,
-  updated: 0,
-  errors: 0,
-  lastError: null,
-};
-
+const RUNNING_TIMEOUT_MS = 20 * 60 * 1000;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function getRefreshJobState() {
-  return { ...state };
-}
-
-function startGooglePlacesRefresh() {
-  if (state.status === 'running') return false;
-
-  Object.assign(state, {
-    status: 'running',
-    startedAt: new Date(),
+function idleState() {
+  return {
+    status: 'idle',
+    startedAt: null,
     finishedAt: null,
     total: 0,
     updated: 0,
     errors: 0,
     lastError: null,
-  });
-
-  void runRefresh();
-  return true;
+  };
 }
 
-async function runRefresh() {
+async function getRefreshJobState() {
+  const job = await SystemJob.findOne({ key: JOB_KEY }).lean();
+  if (!job) return idleState();
+  return {
+    status: job.status,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt,
+    total: job.total,
+    updated: job.updated,
+    errors: job.errorCount,
+    lastError: job.lastError,
+  };
+}
+
+async function claimGooglePlacesRefresh() {
+  const staleBefore = new Date(Date.now() - RUNNING_TIMEOUT_MS);
+  const initialState = {
+    status: 'running',
+    startedAt: new Date(),
+    finishedAt: null,
+    total: 0,
+    updated: 0,
+    errorCount: 0,
+    lastError: null,
+  };
+  const claimed = await SystemJob.findOneAndUpdate(
+    {
+      key: JOB_KEY,
+      $or: [
+        { status: { $ne: 'running' } },
+        { startedAt: { $lt: staleBefore } },
+        { startedAt: null },
+      ],
+    },
+    { $set: initialState },
+    { new: true, runValidators: true }
+  );
+  if (claimed) return true;
+
+  try {
+    await SystemJob.create({
+      key: JOB_KEY,
+      ...initialState,
+    });
+    return true;
+  } catch (error) {
+    if (error?.code === 11000) return false;
+    throw error;
+  }
+}
+
+async function markRefreshFailed(error) {
+  await SystemJob.findOneAndUpdate(
+    { key: JOB_KEY },
+    {
+      $set: {
+        status: 'failed',
+        finishedAt: new Date(),
+        lastError: error?.message || String(error),
+      },
+    },
+    { upsert: true }
+  );
+}
+
+async function runGooglePlacesRefresh() {
   try {
     const cutoff = new Date(Date.now() - REFRESH_AFTER_MS);
     const stale = await Establishment.find({
@@ -45,7 +94,11 @@ async function runRefresh() {
         { googlePlaceRefreshedAt: { $exists: false } },
       ],
     });
-    state.total = stale.length;
+    await SystemJob.updateOne({ key: JOB_KEY }, { $set: { total: stale.length } });
+
+    let updated = 0;
+    let errors = 0;
+    let lastError = null;
 
     for (const establishment of stale) {
       try {
@@ -56,20 +109,47 @@ async function runRefresh() {
         }
         establishment.googlePlaceRefreshedAt = new Date();
         await establishment.save();
-        state.updated += 1;
+        updated += 1;
       } catch (error) {
-        state.errors += 1;
-        state.lastError = error.message;
+        errors += 1;
+        lastError = error.message;
       }
+      await SystemJob.updateOne(
+        { key: JOB_KEY },
+        { $set: { updated, errorCount: errors, lastError } }
+      );
       await sleep(200);
     }
-    state.status = state.errors > 0 ? 'completed_with_errors' : 'completed';
+
+    await SystemJob.updateOne(
+      { key: JOB_KEY },
+      {
+        $set: {
+          status: errors > 0 ? 'completed_with_errors' : 'completed',
+          finishedAt: new Date(),
+          updated,
+          errorCount: errors,
+          lastError,
+        },
+      }
+    );
   } catch (error) {
-    state.status = 'failed';
-    state.lastError = error.message;
-  } finally {
-    state.finishedAt = new Date();
+    await markRefreshFailed(error);
+    throw error;
   }
 }
 
-module.exports = { getRefreshJobState, startGooglePlacesRefresh };
+async function startGooglePlacesRefresh() {
+  const claimed = await claimGooglePlacesRefresh();
+  if (!claimed) return false;
+  void runGooglePlacesRefresh();
+  return true;
+}
+
+module.exports = {
+  getRefreshJobState,
+  claimGooglePlacesRefresh,
+  markRefreshFailed,
+  runGooglePlacesRefresh,
+  startGooglePlacesRefresh,
+};

@@ -49,7 +49,10 @@ export default function SystemView() {
       icon: CloudCheck,
       name: 'API del backend',
       state: status.api.status,
-      detail: `Activa durante ${Math.floor(status.api.uptimeSeconds / 60)} minutos`,
+      detail:
+        status.api.runtime === 'serverless'
+          ? 'Función serverless bajo demanda'
+          : `Activa durante ${Math.floor(status.api.uptimeSeconds / 60)} minutos`,
     },
     {
       icon: Database,

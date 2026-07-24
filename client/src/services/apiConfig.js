@@ -1,7 +1,8 @@
-// Centralización de API URL — mismo patrón que SweatMate.
-// En Capacitor (móvil), import.meta.env.VITE_API_URL debe apuntar al backend
-// desplegado (Koyeb/Render), NUNCA a localhost, porque el WebView de
-// Capacitor no puede resolver localhost del host.
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+// En Netlify, frontend y API comparten dominio y /api apunta a Functions.
+// En desarrollo se mantiene Express en el puerto 4000.
+// En Capacitor sí hay que definir VITE_API_URL con la URL pública completa.
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api');
 
 export default API_URL;

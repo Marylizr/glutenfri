@@ -228,20 +228,26 @@ Requiere los secrets del repositorio `MONGODB_URI` y
 
 ### Variable de entorno nueva
 
-`GOOGLE_PLACES_API_KEY` en `server/.env` (no en `.env.example`, mismo
-patrón que `MONGODB_URI`). Agregala también a los secretos del proveedor
+`GOOGLE_PLACES_API_KEY` en `server/.env`; `.env.example` documenta únicamente
+un valor de muestra. Agrégala también a los secretos del proveedor
 cuando deployes — sin ella, el script de matching y el endpoint de fotos
 fallan (pero el resto de la app sigue funcionando normal, con el ícono
 genérico como fallback).
 
-## Deploy: checklist de producción (preparado, no ejecutado)
+## Deploy en Netlify Functions
 
 ### Ya está listo en el código
 
-- **`server/Procfile`**: `web: node src/server.js`
-- **`server/package.json`**: agregado `"engines": { "node": "20.x" }` — coincide con la versión local (`node --version` → v20.20.2)
-- **`netlify.toml`** (raíz del repo): `base = "client"`, `command = "npm run build"`, `publish = "dist"`, más el redirect `/* → /index.html` (200) para que el SPA no dé 404 al refrescar una ruta. Ahora que hay routing real (ver sección dedicada), este redirect ya tiene efecto práctico: sin él, refrescar directamente en `/mapa` o `/lugar/:id` en producción daría 404 en vez de servir el SPA
-- Confirmado `npm run build` en `client/` — compila sin errores (`dist/` generado, ~131 KB gzipped)
+- **Frontend y backend en un solo sitio**: React se publica desde
+  `client/dist` y Express se ejecuta como Netlify Functions bajo `/api/*`.
+- **MongoDB Atlas se conserva**: las Functions reutilizan la conexión entre
+  invocaciones cuando Netlify mantiene una instancia caliente.
+- **Rate limiting en dos capas**: Express mantiene sus límites y Netlify
+  aplica límites por IP en el borde para `/api/auth/*` y el resto de `/api/*`.
+- **Google Places**: el botón del backoffice inicia una Background Function.
+  El estado del proceso se guarda en Atlas, no en memoria.
+- **SPA**: el redirect final `/* → /index.html` permite recargar rutas como
+  `/mapa`, `/perfil` y `/admin` sin recibir un 404.
 
 ### Variables de entorno para producción
 
@@ -250,20 +256,32 @@ genérico como fallback).
 | `MONGODB_URI` | ✅ Listo | El clúster de Atlas ya está funcionando |
 | `JWT_SECRET` | ⏳ Crear al desplegar | Generar un valor exclusivo con `openssl rand -hex 32`. Nunca documentarlo, commitearlo ni reutilizar el de desarrollo. El servidor rechaza secretos ausentes, cortos o con valores de ejemplo. |
 | `JWT_EXPIRES_IN` | ✅ Opcional | El valor predeterminado es `7d`; solo debes configurarlo si necesitas otro periodo |
-| `CORS_ORIGINS` | ⏳ Pendiente | Actualmente contiene `https://gluten-free-app.netlify.app` como ejemplo en `.env.example`. Actualízalo con el dominio real asignado por Netlify antes de conectar el frontend con el backend en producción |
-| `TRUST_PROXY_HOPS` | ✅ Preparado | `1` para Koyeb/Render; permite que el rate limiter use la IP original detrás del reverse proxy |
-| `PORT` | ✅ No hace falta setearlo | La plataforma de hosting lo inyecta automáticamente |
+| `CORS_ORIGINS` | ⏳ Configurar | Dominio público de Netlify, por ejemplo `https://tu-sitio.netlify.app`. Puedes añadir varios separados por coma. |
+| `TRUST_PROXY_HOPS` | ✅ Preparado | `1` para Netlify; permite que Express use la IP original detrás del proxy |
+| `PORT` | ✅ No se usa | Netlify invoca Functions; solo hace falta para ejecutar Express localmente |
 | `GOOGLE_PLACES_API_KEY` | ✅ Listo | La clave ya tiene la facturación habilitada. Sin ella, el script de asociación y `/establishments/:id/photo` fallan, pero el resto de la aplicación sigue funcionando con un icono genérico como alternativa |
+| `NETLIFY_BACKGROUND_JOB_SECRET` | ⏳ Crear al desplegar | Generar un valor distinto con `openssl rand -hex 32`; protege la función interna de refresco |
 
 ### Pasos externos para desplegar la beta
 
-1. **Koyeb**: crear un Web Service conectado a `Marylizr/glutenfri`, rama `main`, Buildpack, work directory `server`, comando `npm start`, instancia Free y región Frankfurt.
-2. Cargar `MONGODB_URI`, un `JWT_SECRET` nuevo, `CORS_ORIGINS`, `TRUST_PROXY_HOPS=1`, `NODE_ENV=production` y `GOOGLE_PLACES_API_KEY`.
-3. Configurar el health check como `/api/health`.
-4. **Netlify**: conectar el repo; `netlify.toml` configura el build. Cargar `VITE_API_URL=https://TU-SERVICIO.koyeb.app/api`.
-5. Actualizar `CORS_ORIGINS` con el dominio final de Netlify.
-6. **GitHub → Settings → Secrets and variables → Actions**: agregar `MONGODB_URI` y `GOOGLE_PLACES_API_KEY` para el refresco programado.
-7. Probar registro/login, guardados, Safety Review, moderación, exportación y borrado de cuenta.
+1. En Netlify, importa el repositorio y selecciona la rama `main`.
+2. En **Project configuration → Build & deploy**, deja **Base directory**
+   vacío. `netlify.toml` ya define el comando, la publicación y las Functions.
+3. En **Environment variables**, carga `MONGODB_URI`, un `JWT_SECRET` nuevo,
+   `JWT_EXPIRES_IN=7d`, `CORS_ORIGINS`, `TRUST_PROXY_HOPS=1`,
+   `GOOGLE_PLACES_API_KEY` y `NETLIFY_BACKGROUND_JOB_SECRET`. No definas
+   `NODE_ENV=production` en el entorno de build, porque el cliente necesita
+   sus dependencias de desarrollo para ejecutar Vite.
+4. No configures `VITE_API_URL` para la web de Netlify: en producción el
+   frontend usa `/api` en el mismo dominio. Solo defínela para Capacitor.
+5. Despliega y comprueba `https://TU-SITIO.netlify.app/api/health`; debe
+   devolver `{"status":"ok","mongo":"connected"}`.
+6. Registra una cuenta normal y conviértela en admin desde local con
+   `cd server && npm run set-admin -- correo@ejemplo.com`, usando el mismo
+   `MONGODB_URI` de producción. Después entra en `/admin` con esa cuenta.
+7. Prueba login, guardados, reseñas, moderación y el refresco de Places.
+8. Mantén los secrets `MONGODB_URI` y `GOOGLE_PLACES_API_KEY` en GitHub
+   Actions si también quieres conservar el refresco semanal programado.
 
 ## GDPR: requisitos técnicos implementados
 
@@ -272,7 +290,9 @@ genérico como fallback).
 - **Geolocalización**: `useUserLocation.js` nunca sale del navegador — se usa solo para centrar el mapa y calcular distancias client-side (`utils/distance.js`, matemática pura). Ningún `services/*.js` la manda al backend.
 - **Campos del `User`**: `name`, `email`, `passwordHash` (hash bcrypt, nunca el password crudo), `savedEstablishments`, `privacyAcceptedAt` (nuevo), `createdAt`/`updatedAt`. El campo `avatar` estaba muerto (nadie lo completaba ni lo mostraba) — **se eliminó del schema** en este mismo cambio.
 - **Logging de password**: confirmado que ningún `console.log`/`console.error` ni el formato de `morgan` loguean `req.body` o el password. Los errores de validación de `express-validator` solo devuelven `.msg`, nunca `.value`.
-- **Región de los datos**: Atlas confirmado en AWS `eu-central-1` (Frankfurt). Para la beta, el backend está preparado para una instancia Koyeb en Frankfurt y el frontend para Netlify.
+- **Región de los datos**: Atlas confirmado en AWS `eu-central-1`
+  (Frankfurt). Frontend y API se publican juntos en Netlify; los documentos
+  permanecen almacenados en Atlas.
 
 ### Implementado
 

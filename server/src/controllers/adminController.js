@@ -5,7 +5,9 @@ const Establishment = require('../models/Establishment');
 const AdminAction = require('../models/AdminAction');
 const { recordAdminAction } = require('../services/adminAudit');
 const {
+  claimGooglePlacesRefresh,
   getRefreshJobState,
+  markRefreshFailed,
   startGooglePlacesRefresh,
 } = require('../services/googlePlacesRefreshJob');
 
@@ -341,7 +343,7 @@ async function listAuditLog(req, res) {
 
 async function systemStatus(req, res) {
   const cutoff = new Date(Date.now() - 23 * 24 * 60 * 60 * 1000);
-  const [placesTotal, placesStale, lastRefresh] = await Promise.all([
+  const [placesTotal, placesStale, lastRefresh, job] = await Promise.all([
     Establishment.countDocuments({ placeId: { $exists: true, $ne: null } }),
     Establishment.countDocuments({
       placeId: { $exists: true, $ne: null },
@@ -354,10 +356,15 @@ async function systemStatus(req, res) {
       .sort('-googlePlaceRefreshedAt')
       .select('googlePlaceRefreshedAt')
       .lean(),
+    getRefreshJobState(),
   ]);
 
   res.json({
-    api: { status: 'operational', uptimeSeconds: Math.floor(process.uptime()) },
+    api: {
+      status: 'operational',
+      runtime: process.env.NETLIFY ? 'serverless' : 'server',
+      uptimeSeconds: process.env.NETLIFY ? null : Math.floor(process.uptime()),
+    },
     mongo: {
       status: mongoose.connection.readyState === 1 ? 'operational' : 'degraded',
       database: mongoose.connection.name,
@@ -367,13 +374,44 @@ async function systemStatus(req, res) {
       total: placesTotal,
       stale: placesStale,
       lastRefreshAt: lastRefresh?.googlePlaceRefreshedAt || null,
-      job: getRefreshJobState(),
+      job,
     },
   });
 }
 
 async function triggerPlacesRefresh(req, res) {
-  const started = startGooglePlacesRefresh();
+  let started;
+
+  if (process.env.NETLIFY) {
+    started = await claimGooglePlacesRefresh();
+    if (started) {
+      try {
+        const secret = process.env.NETLIFY_BACKGROUND_JOB_SECRET;
+        const siteUrl = process.env.URL;
+        if (!secret || !siteUrl) {
+          throw new Error(
+            'Faltan NETLIFY_BACKGROUND_JOB_SECRET o la URL del sitio de Netlify.'
+          );
+        }
+        const response = await fetch(
+          `${siteUrl}/.netlify/functions/refresh-google-places-background`,
+          {
+            method: 'POST',
+            headers: { 'x-job-secret': secret },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Netlify no aceptó el proceso en segundo plano (${response.status}).`);
+        }
+      } catch (error) {
+        await markRefreshFailed(error);
+        throw error;
+      }
+    }
+  } else {
+    started = await startGooglePlacesRefresh();
+  }
+
   if (!started) return res.status(409).json({ error: 'El refresco ya está en curso' });
   await recordAdminAction({
     actorId: req.user.id,
@@ -381,7 +419,7 @@ async function triggerPlacesRefresh(req, res) {
     targetType: 'system',
     targetLabel: 'Google Places',
   });
-  res.status(202).json({ started: true, job: getRefreshJobState() });
+  res.status(202).json({ started: true, job: await getRefreshJobState() });
 }
 
 module.exports = {

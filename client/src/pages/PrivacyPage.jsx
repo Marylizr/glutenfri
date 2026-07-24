@@ -89,7 +89,7 @@ export default function PrivacyPage() {
           <p style={paragraphStyle}>
             En las reseñas públicas mostramos solo tu primer nombre. Usamos proveedores de
             infraestructura para prestar el servicio: MongoDB Atlas para la base de datos,
-            Netlify para el frontend y Koyeb para el backend cuando se complete el despliegue.
+            y Netlify para alojar el frontend y ejecutar la API mediante Functions.
             Google Places aporta información y fotografías de establecimientos; no le enviamos tu
             cuenta, reseñas ni ubicación.
           </p>
