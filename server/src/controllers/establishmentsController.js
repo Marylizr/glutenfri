@@ -1,6 +1,14 @@
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
 const { toPublicReview } = require('../utils/reviewFormatting');
+const { getPlacePhotoName, fetchPlacePhotoMedia } = require('../services/googlePlaces');
+
+// Cache en memoria de proceso (nunca en Mongo) del nombre de recurso de la
+// foto por placeId — evita pegarle a Place Details en cada request de
+// imagen. Se pierde al reiniciar el server; es exactamente el tipo de
+// caché de corto plazo que el ToS de Google permite porque no persiste.
+const photoNameCache = new Map(); // placeId -> { name, expiresAt }
+const PHOTO_NAME_TTL_MS = 60 * 60 * 1000; // 1 hora
 
 async function listEstablishments(req, res) {
   const { type, certifiedOnly } = req.query;
@@ -90,4 +98,46 @@ async function createReview(req, res) {
   res.status(existing ? 200 : 201).json(review);
 }
 
-module.exports = { listEstablishments, getEstablishment, listReviews, createReview };
+// Foto real de Google, resuelta en vivo — nunca persistimos photos[].name
+// en Mongo (ver nota de compliance en el modelo Establishment). Si no hay
+// placeId o la foto no se puede resolver, 404 — el frontend cae al ícono
+// genérico de PhotoPlaceholder.
+async function getEstablishmentPhoto(req, res) {
+  const establishment = await Establishment.findById(req.params.id).lean();
+  if (!establishment || !establishment.placeId) {
+    return res.status(404).json({ error: 'Sin foto disponible' });
+  }
+
+  let photoName;
+  const cached = photoNameCache.get(establishment.placeId);
+  if (cached && cached.expiresAt > Date.now()) {
+    photoName = cached.name;
+  } else {
+    photoName = await getPlacePhotoName(establishment.placeId);
+    photoNameCache.set(establishment.placeId, { name: photoName, expiresAt: Date.now() + PHOTO_NAME_TTL_MS });
+  }
+
+  if (!photoName) {
+    return res.status(404).json({ error: 'Sin foto disponible' });
+  }
+
+  const width = Math.min(Math.max(parseInt(req.query.w, 10) || 800, 100), 1600);
+  const googleRes = await fetchPlacePhotoMedia(photoName, { maxWidthPx: width });
+
+  res.set('Content-Type', googleRes.headers.get('content-type') || 'image/jpeg');
+  res.set('Cache-Control', 'public, max-age=86400'); // caché del navegador/CDN, no en nuestra base
+  // helmet pone Cross-Origin-Resource-Policy: same-origin por default, que
+  // bloquea que un <img> cargado desde el frontend (otro puerto/dominio)
+  // use esta imagen. Es una foto pública de un lugar, pensada justamente
+  // para consumirse cross-origin.
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.send(Buffer.from(await googleRes.arrayBuffer()));
+}
+
+module.exports = {
+  listEstablishments,
+  getEstablishment,
+  listReviews,
+  createReview,
+  getEstablishmentPhoto,
+};

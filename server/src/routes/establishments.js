@@ -6,6 +6,7 @@ const {
   getEstablishment,
   listReviews,
   createReview,
+  getEstablishmentPhoto,
 } = require('../controllers/establishmentsController');
 const { requireAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
@@ -39,6 +40,16 @@ router.get(
   [param('id').isMongoId().withMessage('id inválido')],
   validate,
   listReviews
+);
+
+router.get(
+  '/:id/photo',
+  [
+    param('id').isMongoId().withMessage('id inválido'),
+    query('w').optional().isInt({ min: 100, max: 1600 }).withMessage('w debe ser un entero entre 100 y 1600'),
+  ],
+  validate,
+  getEstablishmentPhoto
 );
 
 router.post(

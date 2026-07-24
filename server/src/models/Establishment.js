@@ -35,6 +35,18 @@ const establishmentSchema = new mongoose.Schema(
     dedicatedGlutenFreeMenu: { type: Boolean },
     staffTrained: { type: Boolean },
     riskLevel: { type: String, enum: ['none', 'low', 'moderate', 'high'] },
+
+    // Google Places (New) — place_id es la única referencia de Google que
+    // el ToS permite cachear indefinidamente (Places API Policies). NO
+    // guardamos photos[].name ni ningún otro dato de Google acá: eso se
+    // resuelve en vivo en cada request (ver services/googlePlaces.js) para
+    // no repetir el problema de compliance que ya documentamos con
+    // name/address/rating. hasPhoto es un booleano derivado nuestro (no
+    // contenido de Google), solo para decidir si vale la pena intentar
+    // pedir la foto.
+    placeId: { type: String },
+    hasPhoto: { type: Boolean, default: false },
+    googlePlaceRefreshedAt: { type: Date },
   },
   { timestamps: true }
 );

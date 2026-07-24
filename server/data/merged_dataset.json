@@ -167,7 +167,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 3.9,
-      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)"
+      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)",
+      "placeId": "ChIJ3RHB6eNkJA0Rg8lLQkCZaB0"
     },
     {
       "name": "Pastelaria Happy Cookie Lab",
@@ -375,7 +376,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)"
+      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)",
+      "placeId": "ChIJTQ_QindlJA0RvmP6i0DDSco"
     },
     {
       "name": "Restaurante Sergio Crivelli - Ristorante Italiano",
@@ -391,7 +393,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.2,
-      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)"
+      "notes": "Enriquecido con Google Places (dedup automático por similitud de nombre)",
+      "placeId": "ChIJV1tMQzpvJA0R4RENcdFBgA8"
     },
     {
       "name": "Celeiro - MarShopping",
@@ -487,7 +490,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.5,
-      "notes": "100% gluten free kitchen, mentioned repeatedly in reviews"
+      "notes": "100% gluten free kitchen, mentioned repeatedly in reviews",
+      "placeId": "ChIJcRYCFh5lJA0RUffl87xo6Uo"
     },
     {
       "name": "NOLA KITCHEN",
@@ -503,7 +507,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "vegan/vegetarian, asks dietary restrictions"
+      "notes": "vegan/vegetarian, asks dietary restrictions",
+      "placeId": "ChIJQcQqDghlJA0RWYJJPTN8srY"
     },
     {
       "name": "Tapabento S.Bento",
@@ -519,7 +524,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "tapas, no explicit GF mention in sample reviews"
+      "notes": "tapas, no explicit GF mention in sample reviews",
+      "placeId": "ChIJwbK6ceRkJA0R_zPMrOhZmgk"
     },
     {
       "name": "Kind Kitchen",
@@ -535,7 +541,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "vegan, no explicit GF confirmation"
+      "notes": "vegan, no explicit GF confirmation",
+      "placeId": "ChIJIZkemOVlJA0RVjxwb-6XvpI"
     },
     {
       "name": "Soul & Sip Douro - All Day Breakfast",
@@ -551,7 +558,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.9,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJp594YXNlJA0Rv962alpzc0E"
     },
     {
       "name": "Viva Creative Kitchen",
@@ -567,7 +575,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJu4WhEYRlJA0Rw3znNDWTYtA"
     },
     {
       "name": "Honest Greens Santa Catarina",
@@ -583,7 +592,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.3,
-      "notes": "healthy bowls chain, no explicit GF mention"
+      "notes": "healthy bowls chain, no explicit GF mention",
+      "placeId": "ChIJt5i7mb5lJA0RmRxMVJNjyUk"
     },
     {
       "name": "Morabeza Boavista",
@@ -599,7 +609,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJTeLp-qdlJA0RZ07CylDJc5o"
     },
     {
       "name": "Lareira - Vila Nova de Famalicão",
@@ -615,7 +626,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJNX84M_NZJA0R6J3DnJT0124"
     },
     {
       "name": "Bambinitto",
@@ -630,8 +642,9 @@
       "certified": false,
       "discount": null,
       "tags": [],
-      "avgRating": 5.0,
-      "notes": "no explicit GF mention"
+      "avgRating": 5,
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJkdgHtr9ZJA0RVQvNx-hNQDE"
     },
     {
       "name": "The Italian Garden",
@@ -647,7 +660,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "explicitly gluten-free friendly per reviews"
+      "notes": "explicitly gluten-free friendly per reviews",
+      "placeId": "ChIJBzWPqLRZJA0RVonTXjDzagA"
     },
     {
       "name": "Bendito Doce",
@@ -662,8 +676,9 @@
       "certified": false,
       "discount": null,
       "tags": [],
-      "avgRating": 5.0,
-      "notes": "anti-inflammatory/health-focused bakery, worth manual check"
+      "avgRating": 5,
+      "notes": "anti-inflammatory/health-focused bakery, worth manual check",
+      "placeId": "ChIJN9ZtJ09ZJA0Rhj2-xKrpMgs"
     },
     {
       "name": "Cantinho leve leve Famalicão",
@@ -679,7 +694,8 @@
       "discount": null,
       "tags": [],
       "avgRating": null,
-      "notes": "no reviews yet, name suggests healthy/light food - verify manually"
+      "notes": "no reviews yet, name suggests healthy/light food - verify manually",
+      "placeId": "ChIJbyBCgh1ZJA0Rhqb534X92Dc"
     },
     {
       "name": "Dona Maria Pregaria",
@@ -695,7 +711,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.2,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJrf8havhYJA0RusLStAmsAvs"
     },
     {
       "name": "Sei lá Tapas",
@@ -711,7 +728,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJeXSR3jJZJA0RH7jPZbHEeEI"
     },
     {
       "name": "BIS Pasta & Risotto - Famalicão",
@@ -727,7 +745,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.4,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJnRJ3kuBZJA0R30HBs1bW5J0"
     },
     {
       "name": "Sushiato",
@@ -743,7 +762,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.9,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJJbP0MQBZJA0R3m7395JIb7I"
     },
     {
       "name": "Alma & Sal",
@@ -759,7 +779,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJj8_5zelZJA0R2WvzObwxOiA"
     },
     {
       "name": "Gosto Superior",
@@ -775,7 +796,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "vegetarian, no explicit GF mention"
+      "notes": "vegetarian, no explicit GF mention",
+      "placeId": "ChIJl4Go7-r-JA0R3NazWjnMEnI"
     },
     {
       "name": "Ohlálá Braga",
@@ -791,7 +813,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.2,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJBQNjthz9JA0R0f6R2dXH0M0"
     },
     {
       "name": "Anjo Verde",
@@ -807,7 +830,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.4,
-      "notes": "vegan/vegetarian, no explicit GF mention"
+      "notes": "vegan/vegetarian, no explicit GF mention",
+      "placeId": "ChIJAScwssL-JA0RTkDrUfMlUNs"
     },
     {
       "name": "Restaurante Tia Isabel",
@@ -823,7 +847,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJ7Yq_FqP-JA0RCE-E-uRTUrM"
     },
     {
       "name": "Colher d'Pau",
@@ -839,7 +864,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJvS2q67j_JA0RQjvxx2PN5O0"
     },
     {
       "name": "Hibiscus",
@@ -855,7 +881,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "fully vegan buffet, no explicit GF mention"
+      "notes": "fully vegan buffet, no explicit GF mention",
+      "placeId": "ChIJ28db9On-JA0RO3t9efiX_4c"
     },
     {
       "name": "Antù Braga",
@@ -871,7 +898,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJjaAa5H__JA0RUAoEFvk5hQc"
     },
     {
       "name": "La Mafia se sienta a la mesa (Braga)",
@@ -887,7 +915,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "chain, no explicit GF mention"
+      "notes": "chain, no explicit GF mention",
+      "placeId": "ChIJSZxujkr_JA0R6-sXkrGn8xo"
     },
     {
       "name": "Donna Sé",
@@ -903,7 +932,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJOY0Vkff_JA0R6KRfJL1Tico"
     },
     {
       "name": "Guará Restaurant & Bakery",
@@ -919,7 +949,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "fully vegan, francesinha and pastries - verify GF status"
+      "notes": "fully vegan, francesinha and pastries - verify GF status",
+      "placeId": "ChIJ18yLIT5lJA0RnXUMpnm8xRk"
     },
     {
       "name": "Mamma & Papà Pizzeria",
@@ -935,7 +966,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJBa34G7RlJA0Rmku2DeQ_dx8"
     },
     {
       "name": "Cais-Me Bem",
@@ -951,7 +983,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJrwP6cABlJA0RbMY3xZrB5K8"
     },
     {
       "name": "Restaurante Cozinha da Ci",
@@ -967,7 +1000,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "cash only, no explicit GF mention"
+      "notes": "cash only, no explicit GF mention",
+      "placeId": "ChIJj2_EaAtlJA0RanJ6_R-L02o"
     },
     {
       "name": "Restaurante daTerra Mercado",
@@ -983,7 +1017,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "fully vegan buffet, verify GF status"
+      "notes": "fully vegan buffet, verify GF status",
+      "placeId": "ChIJ8cQtUCBlJA0Rs3a-mPvhH-4"
     },
     {
       "name": "Magina's",
@@ -999,7 +1034,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJp6aF6Zx8JA0RK7pFuoayoQk"
     },
     {
       "name": "Bistrô Severo",
@@ -1015,7 +1051,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJ1Y9vAO5lJA0RRXGQeFkG0z8"
     },
     {
       "name": "Cento e Três - Restaurante",
@@ -1031,7 +1068,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJewZ2l0hnJA0R6la_KVSnesU"
     },
     {
       "name": "O Porteiro",
@@ -1047,7 +1085,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.5,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJob3fd7pnJA0RGmNUTRb4HlA"
     },
     {
       "name": "DONA JU by Don Forno",
@@ -1063,7 +1102,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJJxPmHFRmJA0RDAKRQoCVPd4"
     },
     {
       "name": "Mit Rösti - Batatas Suíças Recheadas | Maia",
@@ -1079,7 +1119,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJmRvvC7BnJA0RqYngzJ4Ew7o"
     },
     {
       "name": "Coreto",
@@ -1095,7 +1136,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.6,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJacnWj0pnJA0Re2TnT-Yyhfo"
     },
     {
       "name": "Restaurante Tomar de Sal",
@@ -1111,7 +1153,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJaV7PFXloJA0RYnxCDtkjyWg"
     },
     {
       "name": "Pizza e kebab",
@@ -1127,7 +1170,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.7,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJGWBv4BhnJA0RzAr77K_AKQ8"
     },
     {
       "name": "O Forno",
@@ -1143,7 +1187,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.4,
-      "notes": "no explicit GF mention"
+      "notes": "no explicit GF mention",
+      "placeId": "ChIJsbgBu9lnJA0RqJ_gUBfCxNE"
     },
     {
       "name": "Pastelaria Soul",
@@ -1159,7 +1204,8 @@
       "discount": null,
       "tags": [],
       "avgRating": 4.8,
-      "notes": "Fusionado: certificado APC + datos de ubicación/rating de Google Places (antes duplicado como 'Soul - Alimentação Saudável e do Bem')"
+      "notes": "Fusionado: certificado APC + datos de ubicación/rating de Google Places (antes duplicado como 'Soul - Alimentação Saudável e do Bem')",
+      "placeId": "ChIJd_jP04b_JA0RhllYjJ_05nA"
     }
   ]
 }

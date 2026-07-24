@@ -79,7 +79,17 @@ npm run dev                 # http://localhost:5173
 - [x] **Requisitos técnicos de GDPR** — ver sección dedicada abajo. Falta publicar la política de privacidad real (la estás armando con tu abogado) y decidir el representante UE si aplica
 - [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
 
-## ⚠️ Google Places: hallazgo de compliance sobre caché de datos
+## ✅ Google Places: compliance de caché — RESUELTO (2026-07-24)
+
+**Actualización:** el riesgo de compliance descrito abajo ya no aplica.
+Conseguiste la API key de Places API (New) con billing habilitado, y los
+46 establecimientos con datos de Google ya tienen su `place_id` guardado
+(único dato de Google cacheable indefinidamente según el ToS). Detalle
+completo en la sección "Google Places: fotos reales + place_id" más abajo.
+Queda el hallazgo original tal cual se documentó, como referencia de la
+investigación que llevó a la decisión de diseño actual.
+
+## ⚠️ Google Places: hallazgo de compliance sobre caché de datos (histórico)
 
 Investigué los términos oficiales de Google Maps Platform (Service Specific
 Terms, sección 5.4, y las Places API Policies) antes de escribir cualquier
@@ -120,6 +130,93 @@ públicamente sin volver a este punto** — conseguir la API key de Google
 Maps Platform, re-popular los 46 registros con su `place_id`, y armar el
 job de refresco antes de un lanzamiento real.
 
+## Google Places: fotos reales + place_id (2026-07-24)
+
+### Compliance, primero
+
+Antes de guardar nada, confirmé contra la documentación oficial (Places
+API Policies) que **la referencia de foto (`photos[].name`) no está en la
+lista de excepciones de caché** — solo `place_id` (indefinido) y `lat`/`lng`
+(≤30 días) lo están. Guardar la referencia de foto en Mongo hubiera
+repetido el mismo problema que ya habíamos documentado con name/address/
+rating. Por eso el diseño final es distinto de lo pedido literalmente en
+un detalle: **el script guarda solo `place_id`; la foto se resuelve en
+vivo en cada request**, nunca se persiste.
+
+### `server/src/services/googlePlaces.js`
+
+Wrapper delgado sobre Places API (New), un método por operación:
+- `textSearchPlace(query)` — Text Search, FieldMask `id,displayName,formattedAddress,photos`. `id` es tier Essentials; `displayName`/`formattedAddress`/`photos` son tier Pro (mismo precio entre sí) — se agregaron `displayName`/`formattedAddress` para poder verificar el match a ojo sin subir de tier. **Nunca se pide `rating`/`userRatingCount`** (tier Enterprise, más caro).
+- `getPlacePhotoName(placeId)` — Place Details, FieldMask `photos` únicamente, dispara el tier más barato ("Place Details Essentials IDs Only" según la documentación).
+- `fetchPlacePhotoMedia(photoName, { maxWidthPx })` — Photo Media, devuelve los bytes de la imagen.
+- `getPlaceLocation(placeId)` — Place Details, FieldMask `location`, para el job de refresco de lat/lng.
+
+### `server/src/scripts/fetchGooglePlaceIds.js`
+
+Matching por `Text Search` con `"${nombre}, ${dirección}"`. Salvaguarda
+contra falsos positivos: normaliza (minúsculas, sin acentos/puntuación) y
+compara nombre nuestro vs. nombre de Google — si no hay suficiente
+superposición de palabras significativas, **no guarda el match** y lo
+marca para revisión manual en vez de asumir que es correcto. Guarda el
+resultado en Mongo (`placeId`, `hasPhoto`, `googlePlaceRefreshedAt`) y
+también en `merged_dataset.json`, porque `npm run seed` borra y recrea
+toda la colección desde ese archivo — sin este segundo guardado, un
+reseed futuro hubiera borrado todos los `place_id` conseguidos hoy.
+
+**Probado primero con `--limit=3`** antes de correr contra el resto, como
+pediste: los 3 matches salieron perfectos (dirección idéntica en los 3
+casos). Encontré en el camino que la key no tenía "Places API (New)"
+habilitada en Google Cloud — lo resolviste vos, no era algo que yo
+pudiera arreglar. Con la API habilitada, corrí contra los 43 restantes:
+**43/43 guardados, 0 falsos positivos marcados, 0 sin resultados, 0
+errores.** Los 46 establecimientos Google/APC+Google del dataset
+completo tienen `place_id` y `hasPhoto` ahora.
+
+### `GET /api/establishments/:id/photo`
+
+Resuelve la foto en vivo: `placeId` (Mongo) → `getPlacePhotoName` (con un
+caché en memoria de proceso de 1 hora, nunca en Mongo, para no pegarle a
+Place Details en cada request de imagen) → `fetchPlacePhotoMedia` →
+proxea los bytes al cliente. 404 si no hay `placeId` o no se puede
+resolver la foto — el frontend cae al ícono genérico.
+
+**Bug encontrado y corregido en el camino**: `helmet` pone
+`Cross-Origin-Resource-Policy: same-origin` por default, que bloqueaba
+que el `<img>` del frontend (puerto/dominio distinto del backend) cargara
+la imagen. Se agregó `Cross-Origin-Resource-Policy: cross-origin`
+explícito solo en esta ruta — es una foto pública, pensada para
+consumirse cross-origin.
+
+### Frontend
+
+`PhotoPlaceholder.jsx` recibe `establishmentId`/`hasPhoto`: si hay foto,
+renderiza `<img src={.../photo}>` con `onError` que cae al ícono genérico
+(gradiente + emoji por tipo) si la carga falla — nunca rompe el layout.
+`RestaurantCard` y `EstablishmentDetailPage` pasan esos props.
+
+Probado en el navegador: fotos reales cargando en la lista y en el
+detalle (fachada de "Com Cuore" con su cartel visible), y confirmado que
+los establecimientos sin `place_id` siguen mostrando el ícono genérico
+sin errores.
+
+### `server/src/scripts/refreshGooglePlacesData.js` — preparado, no corriendo
+
+Re-consulta `lat`/`lng` (única excepción de caché además de `place_id`)
+para establecimientos con `googlePlaceRefreshedAt` de más de 30 días o
+sin refrescar nunca. **No está programado** — no hay cron ni Heroku
+Scheduler configurado todavía. Correr a mano con
+`npm run refresh-google-places`, o `--force` para ignorar el corte de 30
+días. Programarlo (ej. Heroku Scheduler semanal) es un paso pendiente de
+cuando el proyecto esté desplegado.
+
+### Variable de entorno nueva
+
+`GOOGLE_PLACES_API_KEY` en `server/.env` (no en `.env.example`, mismo
+patrón que `MONGODB_URI`). Agregala también a las Config Vars de Heroku
+cuando deployes — sin ella, el script de matching y el endpoint de fotos
+fallan (pero el resto de la app sigue funcionando normal, con el ícono
+genérico como fallback).
+
 ## Deploy: checklist de producción (preparado, no ejecutado)
 
 ### Ya está listo en el código
@@ -138,6 +235,7 @@ job de refresco antes de un lanzamiento real.
 | `JWT_EXPIRES_IN` | ✅ Opcional | Default ya es `7d` en el código; solo hace falta setearlo si querés otro valor |
 | `CORS_ORIGINS` | ⏳ Pendiente de vos | Hoy tiene el placeholder `https://gluten-free-app.netlify.app` en `.env.example`. Actualizalo con el dominio real que te dé Netlify antes de que el frontend pueda hablarle al backend en producción |
 | `PORT` | ✅ No hace falta setearlo | Heroku lo inyecta automáticamente |
+| `GOOGLE_PLACES_API_KEY` | ✅ Listo | Ya tenés la key con billing habilitado. Sin ella, el script de matching y `/establishments/:id/photo` fallan, pero el resto de la app sigue funcionando (ícono genérico como fallback) |
 
 ### Lo que te falta a VOS (no lo puedo hacer yo)
 

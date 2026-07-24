@@ -225,7 +225,12 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ position: 'relative' }}>
-          <PhotoPlaceholder type={establishment.type} height={220} />
+          <PhotoPlaceholder
+            type={establishment.type}
+            establishmentId={establishment._id}
+            hasPhoto={establishment.hasPhoto}
+            height={220}
+          />
           <button
             onClick={onBack}
             style={{

@@ -62,7 +62,11 @@ export default function RestaurantCard({
       }}
     >
       <div style={{ position: 'relative' }}>
-        <PhotoPlaceholder type={establishment.type} />
+        <PhotoPlaceholder
+          type={establishment.type}
+          establishmentId={establishment._id}
+          hasPhoto={establishment.hasPhoto}
+        />
         <div style={{ position: 'absolute', top: 10, left: 10 }}>
           <Badge establishment={establishment} />
         </div>
