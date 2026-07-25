@@ -142,6 +142,28 @@ const CSS = `
   font-size: 10px;
 }
 
+@media (min-width: 768px) {
+  .gf-hamburger-animation {
+    width: min(100%, 720px);
+    height: auto;
+    aspect-ratio: 460 / 326;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
+  .gf-burger-badge {
+    padding: 10px 18px;
+    gap: 8px;
+    font-size: clamp(13px, 1.15vw, 16px);
+  }
+
+  .gf-burger-badge span {
+    width: 19px;
+    height: 19px;
+    font-size: 11px;
+  }
+}
+
 @keyframes gfBurgerFallIn {
   0% { transform: translateY(-420px); opacity: 0; }
   55% { opacity: 1; }

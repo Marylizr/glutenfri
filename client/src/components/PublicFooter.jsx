@@ -1,18 +1,41 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/index.jsx';
+import BrandLogo from './BrandLogo.jsx';
 
 export default function PublicFooter() {
   const { t } = useLanguage();
+  const year = new Date().getFullYear();
+
   return (
     <footer className="public-footer">
-      <nav aria-label="Legal">
-        <Link to="/informacion-sin-gluten">{t('safetyPageTitle')}</Link>
-        <Link to="/privacidad">{t('privacy')}</Link>
-        <Link to="/terminos">{t('terms')}</Link>
-        <Link to="/contacto">{t('contact')}</Link>
-        <Link to="/proyecto">{t('about')}</Link>
-      </nav>
-      <p>{t('footerDisclaimer')}</p>
+      <div className="public-footer__grid">
+        <div className="public-footer__brand">
+          <BrandLogo className="brand-logo--footer" />
+          <p>{t('footerDescription')}</p>
+        </div>
+
+        <nav aria-label={t('footerExplore')}>
+          <strong>{t('footerExplore')}</strong>
+          <Link to="/">{t('home')}</Link>
+          <Link to="/mapa">{t('map')}</Link>
+          <Link to="/guardados">{t('saved')}</Link>
+          <Link to="/reseñas">{t('reviews')}</Link>
+        </nav>
+
+        <nav aria-label={t('footerLegal')}>
+          <strong>{t('footerLegal')}</strong>
+          <Link to="/informacion-sin-gluten">{t('safetyPageTitle')}</Link>
+          <Link to="/privacidad">{t('privacy')}</Link>
+          <Link to="/terminos">{t('terms')}</Link>
+          <Link to="/contacto">{t('contact')}</Link>
+          <Link to="/proyecto">{t('about')}</Link>
+        </nav>
+      </div>
+
+      <div className="public-footer__bottom">
+        <p>{t('footerDisclaimer')}</p>
+        <small>© {year} GlutenFri</small>
+      </div>
     </footer>
   );
 }

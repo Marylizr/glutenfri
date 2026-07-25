@@ -25,6 +25,7 @@ export default function RestaurantCard({
 
   return (
     <div
+      className="restaurant-card"
       onClick={() => onSelect?.(establishment)}
       style={{
         background: 'var(--color-surface)',
@@ -35,7 +36,7 @@ export default function RestaurantCard({
         flexShrink: 0,
       }}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="restaurant-card__media" style={{ position: 'relative' }}>
         <PhotoPlaceholder
           type={establishment.type}
           establishmentId={establishment._id}
@@ -57,8 +58,14 @@ export default function RestaurantCard({
         )}
       </div>
 
-      <div style={{ padding: '12px 14px' }}>
-        <div
+      <div className="restaurant-card__content" style={{ padding: '12px 14px' }}>
+        <button
+          type="button"
+          className="restaurant-card__title"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect?.(establishment);
+          }}
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
@@ -67,7 +74,7 @@ export default function RestaurantCard({
           }}
         >
           {establishment.name}
-        </div>
+        </button>
 
         <div
           style={{

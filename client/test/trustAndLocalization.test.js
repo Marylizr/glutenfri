@@ -134,7 +134,7 @@ test('el menú fijo usa los cinco Material Symbols definidos para cada sección'
   const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
   for (const icon of ['home', 'distance', 'favorite', 'edit_square', 'for_you']) {
-    assert.match(navigation, new RegExp(`icon: '${icon}'`));
+    assert.match(navigation, new RegExp(`: '${icon}'`));
     assert.match(index, new RegExp(icon));
   }
   assert.match(navigation, /material-symbols-outlined bottom-nav__icon/);

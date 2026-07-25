@@ -4,6 +4,7 @@ import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
 import ReportButton from '../components/ReportButton';
 import PublicPageHeader from '../components/PublicPageHeader';
+import PublicFooter from '../components/PublicFooter.jsx';
 import { getEstablishmentById } from '../services/establishments';
 import { getMyReviews, getRecentReviews } from '../services/reviews';
 import { formatRelativeTime } from '../utils/time';
@@ -70,6 +71,7 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth, copy, language }) {
   const est = review.establishment;
   return (
     <div
+      className="review-feed-card"
       style={{
         background: 'var(--color-surface)',
         borderRadius: 'var(--radius-card)',
@@ -221,7 +223,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
         </div>
       </PublicPageHeader>
 
-      <main style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 16px' }}>
+      <main className="reviews-page__content">
         {mode === 'mine' && !auth.user ? (
           <LoginRequiredState
             icon="✎"
@@ -255,9 +257,9 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
               />
             )}
 
-            {!loading &&
-              !error &&
-              reviews.map((r) => (
+            {!loading && !error && reviews.length > 0 && (
+              <div className="reviews-page__grid">
+              {reviews.map((r) => (
                 <ReviewFeedCard
                   key={r._id}
                   review={r}
@@ -267,6 +269,8 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
                   language={language}
                 />
               ))}
+              </div>
+            )}
 
             {!loading && !error && reviews.length > 0 && page < totalPages && (
               <button
@@ -289,6 +293,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
             )}
           </>
         )}
+        <PublicFooter />
       </main>
     </div>
   );

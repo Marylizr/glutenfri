@@ -48,7 +48,7 @@ export default function PhotoPlaceholder({ type, establishmentId, hasPhoto, name
     return (
       <img
         src={fallbackImage}
-        alt={t('photoFallback', { name: name || type })}
+        alt=""
         onError={() => setFallbackFailed(true)}
         loading={height >= 200 ? 'eager' : 'lazy'}
         decoding="async"

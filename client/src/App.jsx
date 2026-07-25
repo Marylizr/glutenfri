@@ -13,6 +13,7 @@ import TermsPage from './pages/TermsPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import BottomNav from './components/BottomNav';
+import DesktopHeader from './components/DesktopHeader';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
 import './index.css';
@@ -76,17 +77,7 @@ function App() {
 
   if (!onboarded && isPublicEntry) {
     return (
-      <div
-        style={{
-          maxWidth: '480px',
-          margin: '0 auto',
-          height: '100dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--color-bg)',
-          boxShadow: '0 0 40px rgba(0,0,0,0.06)',
-        }}
-      >
+      <div className="onboarding-shell">
         <OnboardingScreen
           onStart={() => {
             finishOnboarding();
@@ -105,18 +96,9 @@ function App() {
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
-    <div
-      style={{
-        maxWidth: isAdminRoute ? 'none' : '480px',
-        margin: isAdminRoute ? 0 : '0 auto',
-        height: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--color-bg)',
-        boxShadow: '0 0 40px rgba(0,0,0,0.06)',
-      }}
-    >
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+    <div className={`app-shell${isAdminRoute ? ' app-shell--admin' : ''}`}>
+      {!isAdminRoute && <DesktopHeader />}
+      <div className="app-shell__content">
         <Routes location={backgroundLocation || location}>
           <Route
             path="/"

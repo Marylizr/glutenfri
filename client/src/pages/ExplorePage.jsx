@@ -29,9 +29,10 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
   }, [establishments, type, query, language, certifiedOnly]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="explore-page">
       <PublicPageHeader
         title={t('explore')}
+        className="explore-page__header"
         action={(
           <ExploreFiltersButton
             certifiedOnly={certifiedOnly}
@@ -52,38 +53,46 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
         </div>
       </div>
 
-      <main
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '12px 16px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-      >
-        {loading && <div role="status" style={{ color: 'var(--color-text-muted)' }}>{t('loading')}</div>}
+      <div className="explore-page__body">
+        <main className="explore-results" aria-live="polite">
+          {!loading && !error && (
+            <p className="explore-results__count">{t('resultsCount', { count: filtered.length })}</p>
+          )}
 
-        {!loading && error && <ErrorState message={error} onRetry={reload} />}
+          {loading && (
+            <div className="explore-results__message" role="status" style={{ color: 'var(--color-text-muted)' }}>
+              {t('loading')}
+            </div>
+          )}
 
-        {!loading && !error && filtered.length === 0 && (
-          <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
-            {t('noResults')}
-          </div>
-        )}
+          {!loading && error && (
+            <div className="explore-results__message">
+              <ErrorState message={error} onRetry={reload} />
+            </div>
+          )}
 
-        {filtered.map((e) => (
-          <RestaurantCard
-            key={e._id || e.name}
-            establishment={e}
-            userPosition={position}
-            onSelect={onSelectEstablishment}
-            saved={savedIds?.has(e._id)}
-            onToggleSaved={onToggleSaved}
-          />
-        ))}
-        {!loading && !error && <PublicFooter />}
-      </main>
+          {!loading && !error && filtered.length === 0 && (
+            <div
+              className="explore-results__message"
+              style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}
+            >
+              {t('noResults')}
+            </div>
+          )}
+
+          {filtered.map((e) => (
+            <RestaurantCard
+              key={e._id || e.name}
+              establishment={e}
+              userPosition={position}
+              onSelect={onSelectEstablishment}
+              saved={savedIds?.has(e._id)}
+              onToggleSaved={onToggleSaved}
+            />
+          ))}
+          {!loading && !error && <PublicFooter />}
+        </main>
+      </div>
     </div>
   );
 }

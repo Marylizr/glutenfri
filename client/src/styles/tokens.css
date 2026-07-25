@@ -17,6 +17,11 @@
   --radius-input: 12px;
 
   --shadow-card: 0 1px 3px rgba(43, 38, 32, 0.08), 0 1px 2px rgba(43, 38, 32, 0.06);
+  --shadow-elevated: 0 14px 36px rgba(43, 38, 32, 0.12);
+
+  --content-max: 1440px;
+  --page-gutter: clamp(16px, 3vw, 48px);
+  --desktop-header-height: 72px;
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

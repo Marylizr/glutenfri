@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import MapView from '../components/MapView';
+import LazyMapView from '../components/LazyMapView';
 import RestaurantCard from '../components/RestaurantCard';
 import Filters from '../components/Filters';
 import PublicPageHeader from '../components/PublicPageHeader';
+import PublicFooter from '../components/PublicFooter.jsx';
 import ErrorState from '../components/ErrorState';
 import { useUserLocation } from '../hooks/useUserLocation';
 import { useLanguage } from '../i18n/index.jsx';
@@ -34,7 +35,11 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
       />
 
       <div className="map-page__surface">
-        <MapView establishments={filtered} center={position} />
+        <LazyMapView
+          establishments={filtered}
+          center={position}
+          onSelectEstablishment={onSelectEstablishment}
+        />
       </div>
 
       <div className="map-page__results">
@@ -53,6 +58,7 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
             {t('noResults')}
           </div>
         )}
+        <PublicFooter />
       </div>
     </div>
   );

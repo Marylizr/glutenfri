@@ -11,31 +11,16 @@ export default function CategoryChips({ value, onChange }) {
     { value: 'supermarket', label: t('supermarkets') },
   ];
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: '8px',
-        overflowX: 'auto',
-        padding: '2px 0 4px',
-        scrollbarWidth: 'none',
-      }}
-    >
+    <div className="category-chips">
       {chips.map((chip) => {
         const active = value === chip.value;
         return (
           <button
             key={chip.label}
+            type="button"
+            className={`category-chips__item${active ? ' is-active' : ''}`}
+            aria-pressed={active}
             onClick={() => onChange(chip.value)}
-            style={{
-              flexShrink: 0,
-              border: active ? 'none' : '1px solid var(--color-border)',
-              background: active ? 'var(--color-accent)' : 'var(--color-surface)',
-              color: active ? '#fff' : 'var(--color-text)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: 500,
-            }}
           >
             {chip.label}
           </button>

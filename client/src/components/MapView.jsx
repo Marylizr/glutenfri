@@ -28,7 +28,7 @@ function pinIcon(status) {
   });
 }
 
-export default function MapView({ establishments = [], center }) {
+export default function MapView({ establishments = [], center, onSelectEstablishment }) {
   const { t } = useLanguage();
   const withCoords = getMappableEstablishments(establishments);
   const hasGoogleData = withCoords.some(isGoogleSourced);
@@ -70,6 +70,18 @@ export default function MapView({ establishments = [], center }) {
               <>
                 <br />
                 <span style={{ fontSize: '10px', color: '#8a8578' }}>{t('googleAttribution')}</span>
+              </>
+            )}
+            {onSelectEstablishment && (
+              <>
+                <br />
+                <button
+                  type="button"
+                  className="map-popup__action"
+                  onClick={() => onSelectEstablishment(e)}
+                >
+                  {t('viewDetails')}
+                </button>
               </>
             )}
           </Popup>

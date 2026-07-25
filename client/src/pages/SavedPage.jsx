@@ -2,6 +2,7 @@ import RestaurantCard from '../components/RestaurantCard';
 import PublicPageHeader from '../components/PublicPageHeader';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
+import PublicFooter from '../components/PublicFooter.jsx';
 import { useUserLocation } from '../hooks/useUserLocation';
 import { useLanguage } from '../i18n/index.jsx';
 
@@ -13,16 +14,7 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <PublicPageHeader title={t('saved')} />
 
-      <main
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '12px 16px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-      >
+      <main className="saved-page__results">
         {!auth.user && (
           <LoginRequiredState
             icon="♡"
@@ -60,6 +52,7 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
             ))}
           </>
         )}
+        <PublicFooter />
       </main>
     </div>
   );

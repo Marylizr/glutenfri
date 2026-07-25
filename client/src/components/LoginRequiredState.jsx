@@ -5,6 +5,7 @@ export default function LoginRequiredState({ icon, title, message, onGoToProfile
   const label = { 'pt-PT': 'Iniciar sessão', en: 'Log in', es: 'Iniciar sesión' }[language];
   return (
     <div
+      className="login-required-state"
       style={{
         height: '100%',
         display: 'flex',

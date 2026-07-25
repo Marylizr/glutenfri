@@ -287,9 +287,9 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ position: 'relative' }}>
+    <div className="establishment-detail">
+      <div className="establishment-detail__scroll">
+        <div className="establishment-detail__hero" style={{ position: 'relative' }}>
           <PhotoPlaceholder
             type={establishment.type}
             establishmentId={establishment._id}
@@ -329,7 +329,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           )}
         </div>
 
-        <div style={{ padding: '28px 16px 16px' }}>
+        <div className="establishment-detail__content" style={{ padding: '28px 16px 16px' }}>
           <h1 style={{ fontSize: '24px', marginBottom: '4px' }}>{establishment.name}</h1>
           {establishment.address && (
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '4px' }}>
@@ -383,8 +383,9 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
         </div>
       </div>
 
-      {(establishment.phone || establishment.lat) && (
+      {(establishment.phone || establishment.lat || establishment.address) && (
         <div
+          className="establishment-detail__actions"
           style={{
             display: 'flex',
             gap: '10px',
