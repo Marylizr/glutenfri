@@ -1,43 +1,123 @@
-const TYPES = [
-  { value: 'restaurant', label: 'Restaurante' },
-  { value: 'bakery', label: 'Pastelería' },
-  { value: 'store', label: 'Tienda' },
-  { value: 'pharmacy', label: 'Farmacia' },
-  { value: 'supermarket', label: 'Supermercado' },
-];
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function Filters({ filters, onChange }) {
+  const { t } = useLanguage();
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const panelId = useId();
+  const types = [
+    { value: 'restaurant', label: t('restaurants') },
+    { value: 'bakery', label: t('bakeries') },
+    { value: 'store', label: t('stores') },
+    { value: 'pharmacy', label: t('pharmacies') },
+    { value: 'supermarket', label: t('supermarkets') },
+  ];
+  const activeCount = [filters.type, filters.certifiedOnly, filters.discountOnly].filter(Boolean).length;
+
+  const close = useCallback((restoreFocus = false) => {
+    setOpen(false);
+    if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) close(true);
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close(true);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [close, open]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div style={{ display: 'flex', gap: '8px', padding: '8px', flexWrap: 'wrap' }}>
-      <select
-        value={filters.type || ''}
-        onChange={(e) => onChange({ ...filters, type: e.target.value || undefined })}
+    <div className="explore-filter map-filter-menu" ref={rootRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`explore-filter__trigger${activeCount ? ' is-active' : ''}`}
+        aria-label={t('filters')}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((visible) => !visible)}
       >
-        <option value="">Todos los tipos</option>
-        {TYPES.map((t) => (
-          <option key={t.value} value={t.value}>
-            {t.label}
-          </option>
-        ))}
-      </select>
+        <span className="material-symbols-outlined" aria-hidden="true">instant_mix</span>
+        <span className="explore-filter__trigger-label">{t('filters')}</span>
+        {activeCount > 0 && <span className="explore-filter__count">{activeCount}</span>}
+      </button>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={!!filters.certifiedOnly}
-          onChange={(e) => onChange({ ...filters, certifiedOnly: e.target.checked })}
-        />
-        Solo certificados APC
-      </label>
+      {open && (
+        <section
+          id={panelId}
+          className="explore-filter__panel map-filter-menu__panel"
+          aria-labelledby={`${panelId}-title`}
+        >
+          <div className="explore-filter__heading">
+            <strong id={`${panelId}-title`}>{t('filters')}</strong>
+          </div>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={!!filters.discountOnly}
-          onChange={(e) => onChange({ ...filters, discountOnly: e.target.checked })}
-        />
-        Con descuento
-      </label>
+          <label className="map-filter-menu__field">
+            <span>{t('allTypes')}</span>
+            <select
+              value={filters.type || ''}
+              onChange={(event) => onChange({ ...filters, type: event.target.value || undefined })}
+            >
+              <option value="">{t('allTypes')}</option>
+              {types.map((type) => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="explore-filter__check">
+            <input
+              type="checkbox"
+              checked={!!filters.certifiedOnly}
+              onChange={(event) => onChange({ ...filters, certifiedOnly: event.target.checked })}
+            />
+            <span className="explore-filter__option-copy">
+              <strong>{t('certificationFilter')}</strong>
+            </span>
+            <span className="explore-filter__switch" aria-hidden="true"><span /></span>
+          </label>
+
+          <label className="explore-filter__check">
+            <input
+              type="checkbox"
+              checked={!!filters.discountOnly}
+              onChange={(event) => onChange({ ...filters, discountOnly: event.target.checked })}
+            />
+            <span className="explore-filter__option-copy">
+              <strong>{t('discountFilter')}</strong>
+            </span>
+            <span className="explore-filter__switch" aria-hidden="true"><span /></span>
+          </label>
+
+          {activeCount > 0 && (
+            <div className="explore-filter__actions">
+              <button type="button" onClick={() => onChange({})}>{t('clearFilters')}</button>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

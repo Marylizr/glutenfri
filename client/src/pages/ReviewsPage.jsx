@@ -3,9 +3,11 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
 import ReportButton from '../components/ReportButton';
+import PublicPageHeader from '../components/PublicPageHeader';
 import { getEstablishmentById } from '../services/establishments';
 import { getMyReviews, getRecentReviews } from '../services/reviews';
 import { formatRelativeTime } from '../utils/time';
+import { useLanguage } from '../i18n/index.jsx';
 
 const TYPE_EMOJI = {
   restaurant: '🍽️',
@@ -15,14 +17,37 @@ const TYPE_EMOJI = {
   supermarket: '🛒',
 };
 
-const RISK_LABELS = {
-  none: 'Sin riesgo',
-  low: 'Riesgo bajo',
-  moderate: 'Riesgo moderado',
-  high: 'Riesgo alto',
+const REVIEWS_COPY = {
+  'pt-PT': {
+    risk: { none: 'Nenhum risco observado', low: 'Risco baixo reportado', moderate: 'Risco moderado reportado', high: 'Risco alto reportado' },
+    place: 'Estabelecimento', user: 'Utilizador', title: 'Avaliações', community: 'Comunidade', mine: 'As minhas avaliações',
+    loadError: 'Não foi possível carregar as avaliações. Tenta novamente.', moreError: 'Não foi possível carregar mais avaliações. Tenta novamente.',
+    loginTitle: 'As tuas avaliações num só lugar', loginMessage: 'Inicia sessão para veres as avaliações que publicaste.',
+    firstTitle: 'Ainda não existem experiências publicadas', firstMessage: 'Explora um local e partilha a tua experiência individual.',
+    mineTitle: 'Ainda não publicaste avaliações', mineMessage: 'Explora um local e partilha a tua experiência com a comunidade.',
+    explore: 'Explorar locais', more: 'Carregar mais',
+  },
+  en: {
+    risk: { none: 'No risk observed', low: 'Low risk reported', moderate: 'Moderate risk reported', high: 'High risk reported' },
+    place: 'Establishment', user: 'User', title: 'Reviews', community: 'Community', mine: 'My reviews',
+    loadError: 'We could not load the reviews. Please try again.', moreError: 'We could not load more reviews. Please try again.',
+    loginTitle: 'Your reviews in one place', loginMessage: 'Log in to view reviews you have published.',
+    firstTitle: 'No experiences have been published yet', firstMessage: 'Explore a place and share your individual experience.',
+    mineTitle: 'You have not published any reviews yet', mineMessage: 'Explore a place and share your experience with the community.',
+    explore: 'Explore places', more: 'Load more',
+  },
+  es: {
+    risk: { none: 'Ningún riesgo observado', low: 'Riesgo bajo reportado', moderate: 'Riesgo moderado reportado', high: 'Riesgo alto reportado' },
+    place: 'Establecimiento', user: 'Usuario', title: 'Reseñas', community: 'Comunidad', mine: 'Mis reseñas',
+    loadError: 'No pudimos cargar las reseñas. Intenta de nuevo.', moreError: 'No pudimos cargar más reseñas. Intenta de nuevo.',
+    loginTitle: 'Tus reseñas en un solo lugar', loginMessage: 'Inicia sesión para ver las reseñas que has publicado.',
+    firstTitle: 'Todavía no hay experiencias publicadas', firstMessage: 'Explora un lugar y comparte tu experiencia individual.',
+    mineTitle: 'Todavía no has publicado reseñas', mineMessage: 'Explora un lugar y comparte tu experiencia con la comunidad.',
+    explore: 'Explorar lugares', more: 'Cargar más',
+  },
 };
 
-function RiskBadge({ level }) {
+function RiskBadge({ level, labels }) {
   if (!level) return null;
   const isHigh = level === 'moderate' || level === 'high';
   return (
@@ -36,12 +61,12 @@ function RiskBadge({ level }) {
         color: isHigh ? 'var(--color-warn)' : 'var(--color-accent)',
       }}
     >
-      {RISK_LABELS[level] || level}
+      {labels[level] || level}
     </span>
   );
 }
 
-function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
+function ReviewFeedCard({ review, onOpenEstablishment, auth, copy, language }) {
   const est = review.establishment;
   return (
     <div
@@ -71,7 +96,7 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
           }}
         >
           <span>{TYPE_EMOJI[est?.type] || '📍'}</span>
-          <span>{est?.name || 'Establecimiento'}</span>
+          <span>{est?.name || copy.place}</span>
         </button>
         <span style={{ marginLeft: 'auto', color: 'var(--color-accent)', fontWeight: 600, fontSize: '14px' }}>
           ⭐ {review.rating}
@@ -88,9 +113,9 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
           marginBottom: '8px',
         }}
       >
-        <span>{review.user?.name || 'Usuario'}</span>
+        <span>{review.user?.name || copy.user}</span>
         <span>·</span>
-        <span>{formatRelativeTime(review.createdAt)}</span>
+        <span>{formatRelativeTime(review.createdAt, language)}</span>
       </div>
 
       {review.comment && (
@@ -110,7 +135,7 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <RiskBadge level={review.riskLevel} />
+        <RiskBadge level={review.riskLevel} labels={copy.risk} />
         <ReportButton reviewId={review._id} auth={auth} />
       </div>
     </div>
@@ -118,6 +143,8 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth }) {
 }
 
 export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile, onGoToExplore }) {
+  const { language, t } = useLanguage();
+  const copy = REVIEWS_COPY[language];
   const [mode, setMode] = useState('community'); // 'community' | 'mine'
   const [reviews, setReviews] = useState([]);
   const [page, setPage] = useState(1);
@@ -138,10 +165,10 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
         setPage(res.page);
         setTotalPages(res.totalPages);
       })
-      .catch(() => setError('No pudimos cargar las reseñas. Intenta de nuevo.'))
+      .catch(() => setError(copy.loadError))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, auth.user]);
+  }, [mode, auth.user, copy.loadError]);
 
   useEffect(() => {
     load();
@@ -155,7 +182,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
         setPage(res.page);
         setTotalPages(res.totalPages);
       })
-      .catch(() => setError('No pudimos cargar más reseñas. Intenta de nuevo.'))
+      .catch(() => setError(copy.moreError))
       .finally(() => setLoadingMore(false));
   };
 
@@ -165,12 +192,11 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <header style={{ padding: '16px 16px 8px' }}>
-        <h1 style={{ fontSize: '22px', marginBottom: '14px' }}>Reseñas</h1>
+      <PublicPageHeader title={copy.title}>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
-            { key: 'community', label: 'Comunidad' },
-            { key: 'mine', label: 'Mis reseñas' },
+            { key: 'community', label: copy.community },
+            { key: 'mine', label: copy.mine },
           ].map((t) => {
             const active = mode === t.key;
             return (
@@ -193,28 +219,28 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
             );
           })}
         </div>
-      </header>
+      </PublicPageHeader>
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '12px 16px 16px' }}>
         {mode === 'mine' && !auth.user ? (
           <LoginRequiredState
             icon="✎"
-            title="Tus reseñas en un solo lugar"
-            message="Inicia sesión para ver las reseñas que has publicado."
+            title={copy.loginTitle}
+            message={copy.loginMessage}
             onGoToProfile={onGoToProfile}
           />
         ) : (
           <>
-            {loading && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
+            {loading && <div style={{ color: 'var(--color-text-muted)' }}>{t('loading')}</div>}
 
             {!loading && error && <ErrorState message={error} onRetry={load} />}
 
             {!loading && !error && reviews.length === 0 && mode === 'community' && (
               <EmptyState
                 icon="✎"
-                title="Sé la primera en dejar una reseña esta semana"
-                message="Todavía no hay reseñas de la comunidad. Explora un lugar y cuéntanos cómo fue tu experiencia."
-                actionLabel="Explorar lugares"
+                title={copy.firstTitle}
+                message={copy.firstMessage}
+                actionLabel={copy.explore}
                 onAction={onGoToExplore}
               />
             )}
@@ -222,9 +248,9 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
             {!loading && !error && reviews.length === 0 && mode === 'mine' && (
               <EmptyState
                 icon="✎"
-                title="Todavía no has publicado ninguna reseña"
-                message="Explora un lugar y comparte tu experiencia; ayudarás a otras personas celíacas a elegir con confianza."
-                actionLabel="Explorar lugares"
+                title={copy.mineTitle}
+                message={copy.mineMessage}
+                actionLabel={copy.explore}
                 onAction={onGoToExplore}
               />
             )}
@@ -237,6 +263,8 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
                   review={r}
                   onOpenEstablishment={handleOpenEstablishment}
                   auth={auth}
+                  copy={copy}
+                  language={language}
                 />
               ))}
 
@@ -256,7 +284,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
                   marginTop: '4px',
                 }}
               >
-                {loadingMore ? 'Cargando…' : 'Cargar más'}
+                {loadingMore ? t('loading') : copy.more}
               </button>
             )}
           </>

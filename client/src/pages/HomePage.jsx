@@ -1,63 +1,43 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import MapView from '../components/MapView';
 import RestaurantCard from '../components/RestaurantCard';
 import Filters from '../components/Filters';
+import PublicPageHeader from '../components/PublicPageHeader';
 import ErrorState from '../components/ErrorState';
-import { getEstablishments } from '../services/establishments';
 import { useUserLocation } from '../hooks/useUserLocation';
+import { useLanguage } from '../i18n/index.jsx';
+import useEstablishmentList from '../hooks/useEstablishmentList.js';
+import { filterEstablishments } from '../utils/establishmentFilters.js';
 
 // Vista "Map" del bottom nav: mapa + lista debajo (mobile-first,
 // a diferencia del layout de dos columnas fijas de la versión anterior).
 export default function HomePage({ onSelectEstablishment, savedIds, onToggleSaved }) {
-  const [establishments, setEstablishments] = useState([]);
+  const { t } = useLanguage();
+  const { establishments, loading, error, reload } = useEstablishmentList();
   const [filters, setFilters] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { position } = useUserLocation();
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    getEstablishments()
-      .then(setEstablishments)
-      .catch(() => setError('No pudimos cargar los establecimientos. Intenta de nuevo.'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const filtered = useMemo(() => {
-    const list = Array.isArray(establishments) ? establishments : [];
-    return list.filter((e) => {
-      if (filters.type && e.type !== filters.type) return false;
-      if (filters.certifiedOnly && !e.certified) return false;
-      if (filters.discountOnly && !e.discount) return false;
-      return true;
-    });
+    return filterEstablishments(establishments, filters);
   }, [establishments, filters]);
 
-  if (loading) return <div style={{ padding: 24 }}>Cargando establecimientos…</div>;
+  if (loading) return <div role="status" style={{ padding: 24 }}>{t('loading')}</div>;
 
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Filters filters={filters} onChange={setFilters} />
-      <div style={{ height: '45%', minHeight: '200px' }}>
+    <div className="map-page">
+      <PublicPageHeader
+        title={t('map')}
+        action={<Filters filters={filters} onChange={setFilters} />}
+        className="map-page__header"
+      />
+
+      <div className="map-page__surface">
         <MapView establishments={filtered} center={position} />
       </div>
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '12px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-      >
+
+      <div className="map-page__results">
         {filtered.map((e) => (
           <RestaurantCard
             key={e._id || e.name}
@@ -70,7 +50,7 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
         ))}
         {filtered.length === 0 && (
           <div style={{ padding: 16, color: 'var(--color-text-muted)' }}>
-            Sin resultados con estos filtros.
+            {t('noResults')}
           </div>
         )}
       </div>

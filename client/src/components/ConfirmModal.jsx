@@ -1,3 +1,5 @@
+import { useLanguage } from '../i18n/index.jsx';
+
 export default function ConfirmModal({
   title,
   message,
@@ -8,6 +10,12 @@ export default function ConfirmModal({
   confirming,
   children,
 }) {
+  const { language } = useLanguage();
+  const labels = {
+    'pt-PT': { cancel: 'Cancelar', wait: 'Um momento…' },
+    en: { cancel: 'Cancel', wait: 'One moment…' },
+    es: { cancel: 'Cancelar', wait: 'Un momento…' },
+  }[language];
   return (
     <div
       style={{
@@ -51,7 +59,7 @@ export default function ConfirmModal({
               fontWeight: 600,
             }}
           >
-            Cancelar
+            {labels.cancel}
           </button>
           <button
             onClick={onConfirm}
@@ -67,7 +75,7 @@ export default function ConfirmModal({
               fontWeight: 600,
             }}
           >
-            {confirming ? 'Un momento…' : confirmLabel}
+            {confirming ? labels.wait : confirmLabel}
           </button>
         </div>
       </div>

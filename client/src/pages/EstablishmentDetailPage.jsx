@@ -9,18 +9,73 @@ import SafetyReviewFlow from '../components/SafetyReviewFlow';
 import ErrorState from '../components/ErrorState';
 import ReportButton from '../components/ReportButton';
 import { getReviews } from '../services/establishments';
+import TrustDetails from '../components/TrustDetails.jsx';
+import { useLanguage } from '../i18n/index.jsx';
 
-const STAFF_LABELS = {
-  poor: 'Malo',
-  okay: 'Regular',
-  excellent: 'Excelente',
-};
-
-const RISK_LABELS = {
-  none: 'Ninguno',
-  low: 'Bajo',
-  moderate: 'Moderado',
-  high: 'Alto',
+const DETAIL_COPY = {
+  'pt-PT': {
+    staff: { poor: 'Fraca', okay: 'Razoável', excellent: 'Excelente' },
+    risk: { none: 'Nenhum', low: 'Baixo', moderate: 'Moderado', high: 'Alto' },
+    communityTitle: 'Informação comunicada pela comunidade',
+    communityNotice: 'Estas respostas descrevem experiências individuais e não constituem uma verificação nem uma garantia.',
+    dedicatedKitchen: 'Cozinha dedicada declarada',
+    dedicatedMenu: 'Menu específico sem glúten declarado',
+    staffUnderstanding: 'Compreensão da equipa reportada',
+    riskLevel: 'Nível de risco reportado',
+    user: 'Utilizador',
+    staffLabel: 'Equipa',
+    yes: 'Sim',
+    no: 'Não',
+    editReview: 'Editar a minha avaliação',
+    leaveReview: 'Partilhar uma experiência',
+    communityReviews: 'Experiências da comunidade',
+    reviewError: 'Não foi possível carregar as avaliações. Tenta novamente.',
+    noReviews: 'Ainda não existem experiências publicadas.',
+    directions: 'Como chegar',
+    call: 'Ligar',
+  },
+  en: {
+    staff: { poor: 'Poor', okay: 'Fair', excellent: 'Excellent' },
+    risk: { none: 'None', low: 'Low', moderate: 'Moderate', high: 'High' },
+    communityTitle: 'Information shared by the community',
+    communityNotice: 'These answers describe individual experiences and are not verification or a guarantee.',
+    dedicatedKitchen: 'Dedicated kitchen reported',
+    dedicatedMenu: 'Specific gluten-free menu reported',
+    staffUnderstanding: 'Staff understanding reported',
+    riskLevel: 'Reported risk level',
+    user: 'User',
+    staffLabel: 'Staff',
+    yes: 'Yes',
+    no: 'No',
+    editReview: 'Edit my review',
+    leaveReview: 'Share an experience',
+    communityReviews: 'Community experiences',
+    reviewError: 'We could not load the reviews. Please try again.',
+    noReviews: 'No community experiences have been published yet.',
+    directions: 'Directions',
+    call: 'Call',
+  },
+  es: {
+    staff: { poor: 'Mala', okay: 'Regular', excellent: 'Excelente' },
+    risk: { none: 'Ninguno', low: 'Bajo', moderate: 'Moderado', high: 'Alto' },
+    communityTitle: 'Información comunicada por la comunidad',
+    communityNotice: 'Estas respuestas describen experiencias individuales y no constituyen una verificación ni una garantía.',
+    dedicatedKitchen: 'Cocina dedicada declarada',
+    dedicatedMenu: 'Menú específico sin gluten declarado',
+    staffUnderstanding: 'Comprensión del personal reportada',
+    riskLevel: 'Nivel de riesgo reportado',
+    user: 'Usuario',
+    staffLabel: 'Personal',
+    yes: 'Sí',
+    no: 'No',
+    editReview: 'Editar mi reseña',
+    leaveReview: 'Compartir una experiencia',
+    communityReviews: 'Experiencias de la comunidad',
+    reviewError: 'No pudimos cargar las reseñas. Intenta de nuevo.',
+    noReviews: 'Todavía no hay experiencias publicadas.',
+    directions: 'Cómo llegar',
+    call: 'Llamar',
+  },
 };
 
 const PROTOCOL_FIELDS = ['dedicatedKitchen', 'dedicatedGlutenFreeMenu', 'staffTrained', 'riskLevel'];
@@ -52,23 +107,26 @@ function ProtocolRow({ icon, label, active }) {
   );
 }
 
-function SafetyProtocols({ establishment }) {
+function CommunityExperienceSignals({ establishment, copy }) {
   const hasAny = PROTOCOL_FIELDS.some((k) => establishment[k] !== undefined && establishment[k] !== null);
   if (!hasAny) return null;
 
   return (
     <>
-      <h2 style={{ fontSize: '16px', marginBottom: '4px' }}>Protocolos de seguridad celíaca</h2>
+      <h2 style={{ fontSize: '16px', marginBottom: '4px' }}>{copy.communityTitle}</h2>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: 12, lineHeight: 1.45 }}>
+        {copy.communityNotice}
+      </p>
       <div style={{ marginBottom: '20px' }}>
-        <ProtocolRow icon="🍳" label="Cocina dedicada" active={establishment.dedicatedKitchen} />
-        <ProtocolRow icon="📋" label="Menú 100% sin gluten" active={establishment.dedicatedGlutenFreeMenu} />
-        <ProtocolRow icon="🎓" label="Personal capacitado" active={establishment.staffTrained} />
+        <ProtocolRow icon="🍳" label={copy.dedicatedKitchen} active={establishment.dedicatedKitchen} />
+        <ProtocolRow icon="📋" label={copy.dedicatedMenu} active={establishment.dedicatedGlutenFreeMenu} />
+        <ProtocolRow icon="🎓" label={copy.staffUnderstanding} active={establishment.staffTrained} />
         {establishment.riskLevel != null && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span>
-            <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>Nivel de riesgo</span>
+            <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>{copy.riskLevel}</span>
             <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--color-text)' }}>
-              {RISK_LABELS[establishment.riskLevel] || establishment.riskLevel}
+              {copy.risk[establishment.riskLevel] || establishment.riskLevel}
             </span>
           </div>
         )}
@@ -77,7 +135,7 @@ function SafetyProtocols({ establishment }) {
   );
 }
 
-function ReviewItem({ review, auth }) {
+function ReviewItem({ review, auth, copy }) {
   return (
     <div
       style={{
@@ -89,7 +147,7 @@ function ReviewItem({ review, auth }) {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <span style={{ fontWeight: 600, fontSize: '14px' }}>{review.user?.name || 'Usuario'}</span>
+        <span style={{ fontWeight: 600, fontSize: '14px' }}>{review.user?.name || copy.user}</span>
         <span style={{ color: 'var(--color-accent)', fontWeight: 600 }}>⭐ {review.rating}</span>
       </div>
       {review.comment && (
@@ -114,7 +172,7 @@ function ReviewItem({ review, auth }) {
             borderRadius: 'var(--radius-pill)',
           }}
         >
-          Personal: {STAFF_LABELS[review.staffUnderstanding] || '—'}
+          {copy.staffLabel}: {copy.staff[review.staffUnderstanding] || '—'}
         </span>
         <span
           style={{
@@ -125,7 +183,7 @@ function ReviewItem({ review, auth }) {
             borderRadius: 'var(--radius-pill)',
           }}
         >
-          Menú dedicado: {review.hasDedicatedMenu ? 'Sí' : 'No'}
+          {copy.dedicatedMenu}: {review.hasDedicatedMenu ? copy.yes : copy.no}
         </span>
         <span
           style={{
@@ -136,7 +194,7 @@ function ReviewItem({ review, auth }) {
             borderRadius: 'var(--radius-pill)',
           }}
         >
-          Cocina dedicada: {review.dedicatedKitchen ? 'Sí' : 'No'}
+          {copy.dedicatedKitchen}: {review.dedicatedKitchen ? copy.yes : copy.no}
         </span>
         <span
           style={{
@@ -147,7 +205,7 @@ function ReviewItem({ review, auth }) {
             borderRadius: 'var(--radius-pill)',
           }}
         >
-          Riesgo: {RISK_LABELS[review.riskLevel] || '—'}
+          {copy.riskLevel}: {copy.risk[review.riskLevel] || '—'}
         </span>
       </div>
       <div style={{ marginTop: '10px', textAlign: 'right' }}>
@@ -178,6 +236,8 @@ function ActionButton({ children, onClick, primary }) {
 }
 
 export default function EstablishmentDetailPage({ establishment, onBack, saved, onToggleSaved, auth }) {
+  const { language, t } = useLanguage();
+  const copy = DETAIL_COPY[language];
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [reviewsError, setReviewsError] = useState(null);
@@ -188,9 +248,9 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
     setReviewsError(null);
     getReviews(establishment._id)
       .then(setReviews)
-      .catch(() => setReviewsError('No pudimos cargar las reseñas. Intenta de nuevo.'))
+      .catch(() => setReviewsError(copy.reviewError))
       .finally(() => setLoadingReviews(false));
-  }, [establishment._id]);
+  }, [copy.reviewError, establishment._id]);
 
   useEffect(() => {
     loadReviews();
@@ -234,6 +294,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             type={establishment.type}
             establishmentId={establishment._id}
             hasPhoto={establishment.hasPhoto}
+            name={establishment.name}
             height={220}
           />
           <button
@@ -251,7 +312,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
               fontSize: '16px',
               boxShadow: 'var(--shadow-card)',
             }}
-            aria-label="Volver"
+            aria-label={t('back')}
           >
             ←
           </button>
@@ -286,7 +347,8 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             </div>
           )}
 
-          <SafetyProtocols establishment={establishment} />
+          <TrustDetails establishment={establishment} />
+          <CommunityExperienceSignals establishment={establishment} copy={copy} />
 
           <button
             onClick={() => setShowReview(true)}
@@ -302,21 +364,21 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
               marginBottom: '20px',
             }}
           >
-            {myReview ? 'Editar mi reseña' : 'Dejar reseña (Safety Review)'}
+            {myReview ? copy.editReview : copy.leaveReview}
           </button>
 
-          <h2 style={{ fontSize: '16px', marginBottom: '10px' }}>Reseñas de la comunidad</h2>
-          {loadingReviews && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
+          <h2 style={{ fontSize: '16px', marginBottom: '10px' }}>{copy.communityReviews}</h2>
+          {loadingReviews && <div style={{ color: 'var(--color-text-muted)' }}>{t('loading')}</div>}
           {!loadingReviews && reviewsError && (
             <ErrorState message={reviewsError} onRetry={loadReviews} />
           )}
           {!loadingReviews && !reviewsError && reviews.length === 0 && (
             <div style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>
-              Todavía no hay reseñas. ¡Sé la primera en dejar una!
+              {copy.noReviews}
             </div>
           )}
           {reviews.map((r) => (
-            <ReviewItem key={r._id} review={r} auth={auth} />
+            <ReviewItem key={r._id} review={r} auth={auth} copy={copy} />
           ))}
         </div>
       </div>
@@ -332,11 +394,11 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           }}
         >
           <ActionButton primary onClick={handleDirections}>
-            Cómo llegar
+            {copy.directions}
           </ActionButton>
           {establishment.phone && (
             <ActionButton onClick={() => window.open(`tel:${establishment.phone}`, '_self')}>
-              Llamar
+              {copy.call}
             </ActionButton>
           )}
         </div>

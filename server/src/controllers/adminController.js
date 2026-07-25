@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { normalizeEstablishmentTrust } = require('../utils/trustStatus');
 const Review = require('../models/Review');
 const User = require('../models/User');
 const Establishment = require('../models/Establishment');
@@ -252,6 +253,7 @@ async function listAdminEstablishments(req, res) {
   if (req.query.riskLevel) query.riskLevel = req.query.riskLevel;
   if (req.query.certified === 'true') query.certified = true;
   if (req.query.certified === 'false') query.certified = false;
+  if (req.query.trustStatus) query.trustStatus = req.query.trustStatus;
 
   const [data, total] = await Promise.all([
     Establishment.find(query)
@@ -261,7 +263,13 @@ async function listAdminEstablishments(req, res) {
       .lean(),
     Establishment.countDocuments(query),
   ]);
-  res.json({ data, page, limit, total, totalPages: Math.ceil(total / limit) });
+  res.json({
+    data: data.map(normalizeEstablishmentTrust),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  });
 }
 
 function establishmentPayload(body) {
@@ -276,6 +284,10 @@ function establishmentPayload(body) {
     'facebook',
     'source',
     'certified',
+    'trustStatus',
+    'sourceName',
+    'sourceUrl',
+    'lastVerifiedAt',
     'discount',
     'tags',
     'notes',
@@ -284,9 +296,13 @@ function establishmentPayload(body) {
     'staffTrained',
     'riskLevel',
   ];
-  return Object.fromEntries(
+  const payload = Object.fromEntries(
     allowed.filter((key) => body[key] !== undefined).map((key) => [key, body[key]])
   );
+  if (body.trustStatus) {
+    payload.certified = body.trustStatus === 'CERTIFIED_APC_BIOTRAB';
+  }
+  return payload;
 }
 
 async function createEstablishment(req, res) {

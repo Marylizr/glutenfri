@@ -3,6 +3,44 @@ import { Link } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/auth';
 import { deleteMyAccount, exportMyData } from '../services/users';
 import ConfirmModal from '../components/ConfirmModal';
+import PublicPageHeader from '../components/PublicPageHeader';
+import { useLanguage } from '../i18n/index.jsx';
+
+const PROFILE_COPY = {
+  'pt-PT': {
+    logout: 'Terminar sessão', admin: 'Abrir painel de moderação', data: 'Os teus dados',
+    exportBusy: 'A gerar…', export: 'Descarregar os meus dados', exportError: 'Não foi possível gerar a exportação. Tenta novamente.',
+    delete: 'Eliminar a minha conta', deleteError: 'Não foi possível eliminar a conta. Tenta novamente.',
+    deleteTitle: 'Eliminar a tua conta?', deleteMessage: 'O perfil e todas as avaliações serão eliminados permanentemente. Esta ação não pode ser anulada.',
+    deleteConfirm: 'Eliminar conta', sessionExpired: 'A tua sessão expirou. Inicia sessão novamente.',
+    login: 'Iniciar sessão', register: 'Criar conta', name: 'Nome', email: 'Email', password: 'Palavra-passe',
+    hidePassword: 'Ocultar palavra-passe', showPassword: 'Mostrar palavra-passe', hide: 'Ocultar', show: 'Mostrar',
+    acceptPrefix: 'Li e aceito a', privacy: 'política de privacidade', genericError: 'Ocorreu um erro. Tenta novamente.',
+    sending: 'A enviar…', enter: 'Entrar', noAccount: 'Ainda não tens conta? Cria uma', hasAccount: 'Já tens conta? Inicia sessão',
+  },
+  en: {
+    logout: 'Log out', admin: 'Open moderation panel', data: 'Your data',
+    exportBusy: 'Generating…', export: 'Download my data', exportError: 'We could not generate your export. Please try again.',
+    delete: 'Delete my account', deleteError: 'We could not delete your account. Please try again.',
+    deleteTitle: 'Delete your account?', deleteMessage: 'Your profile and all reviews will be permanently deleted. This cannot be undone.',
+    deleteConfirm: 'Delete account', sessionExpired: 'Your session has expired. Please log in again.',
+    login: 'Log in', register: 'Create account', name: 'Name', email: 'Email', password: 'Password',
+    hidePassword: 'Hide password', showPassword: 'Show password', hide: 'Hide', show: 'Show',
+    acceptPrefix: 'I have read and accept the', privacy: 'privacy policy', genericError: 'Something went wrong. Please try again.',
+    sending: 'Sending…', enter: 'Log in', noAccount: 'No account yet? Create one', hasAccount: 'Already have an account? Log in',
+  },
+  es: {
+    logout: 'Cerrar sesión', admin: 'Abrir panel de moderación', data: 'Tus datos',
+    exportBusy: 'Generando…', export: 'Descargar mis datos', exportError: 'No pudimos generar tu exportación. Intenta de nuevo.',
+    delete: 'Eliminar mi cuenta', deleteError: 'No pudimos eliminar tu cuenta. Intenta de nuevo.',
+    deleteTitle: '¿Eliminar tu cuenta?', deleteMessage: 'Se borrarán tu perfil y todas tus reseñas de forma permanente. Esta acción no se puede deshacer.',
+    deleteConfirm: 'Eliminar cuenta', sessionExpired: 'Tu sesión ha expirado. Inicia sesión de nuevo.',
+    login: 'Iniciar sesión', register: 'Crear cuenta', name: 'Nombre', email: 'Email', password: 'Contraseña',
+    hidePassword: 'Ocultar contraseña', showPassword: 'Mostrar contraseña', hide: 'Ocultar', show: 'Mostrar',
+    acceptPrefix: 'He leído y acepto la', privacy: 'política de privacidad', genericError: 'Algo salió mal. Intenta de nuevo.',
+    sending: 'Enviando…', enter: 'Entrar', noAccount: '¿No tienes cuenta? Crea una', hasAccount: '¿Ya tienes cuenta? Inicia sesión',
+  },
+};
 
 const inputStyle = {
   width: '100%',
@@ -14,6 +52,8 @@ const inputStyle = {
 };
 
 function AccountPanel({ auth }) {
+  const { language } = useLanguage();
+  const copy = PROFILE_COPY[language];
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -33,7 +73,7 @@ function AccountPanel({ auth }) {
       link.click();
       URL.revokeObjectURL(url);
     } catch {
-      setExportError('No pudimos generar tu exportación. Intenta de nuevo.');
+      setExportError(copy.exportError);
     } finally {
       setExporting(false);
     }
@@ -46,7 +86,7 @@ function AccountPanel({ auth }) {
       await deleteMyAccount();
       auth.logout();
     } catch {
-      setDeleteError('No pudimos eliminar tu cuenta. Intenta de nuevo.');
+      setDeleteError(copy.deleteError);
       setDeleting(false);
       setShowDeleteModal(false);
     }
@@ -72,7 +112,7 @@ function AccountPanel({ auth }) {
           display: 'block',
         }}
       >
-        Cerrar sesión
+        {copy.logout}
       </button>
 
       {auth.user.isAdmin && (
@@ -90,11 +130,11 @@ function AccountPanel({ auth }) {
             margin: '-20px 0 24px',
           }}
         >
-          Abrir panel de moderación
+          {copy.admin}
         </Link>
       )}
 
-      <h2 style={{ fontSize: '15px', marginBottom: '10px' }}>Tus datos</h2>
+      <h2 style={{ fontSize: '15px', marginBottom: '10px' }}>{copy.data}</h2>
 
       <button
         onClick={handleExport}
@@ -111,7 +151,7 @@ function AccountPanel({ auth }) {
           marginBottom: '10px',
         }}
       >
-        {exporting ? 'Generando…' : 'Descargar mis datos'}
+        {exporting ? copy.exportBusy : copy.export}
       </button>
       {exportError && (
         <div style={{ color: 'var(--color-warn)', fontSize: '13px', marginBottom: '10px' }}>
@@ -132,7 +172,7 @@ function AccountPanel({ auth }) {
           fontWeight: 600,
         }}
       >
-        Eliminar mi cuenta
+        {copy.delete}
       </button>
       {deleteError && (
         <div style={{ color: 'var(--color-warn)', fontSize: '13px', marginTop: '10px' }}>
@@ -142,9 +182,9 @@ function AccountPanel({ auth }) {
 
       {showDeleteModal && (
         <ConfirmModal
-          title="¿Eliminar tu cuenta?"
-          message="Se borra tu perfil y todas tus reseñas de forma permanente. Esta acción no se puede deshacer."
-          confirmLabel="Eliminar cuenta"
+          title={copy.deleteTitle}
+          message={copy.deleteMessage}
+          confirmLabel={copy.deleteConfirm}
           danger
           confirming={deleting}
           onCancel={() => setShowDeleteModal(false)}
@@ -156,6 +196,8 @@ function AccountPanel({ auth }) {
 }
 
 export default function ProfilePage({ auth }) {
+  const { language, t } = useLanguage();
+  const copy = PROFILE_COPY[language];
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -166,7 +208,14 @@ export default function ProfilePage({ auth }) {
   const [error, setError] = useState(null);
 
   if (auth.user) {
-    return <AccountPanel auth={auth} />;
+    return (
+      <div className="public-section-page">
+        <PublicPageHeader title={t('profile')} />
+        <main className="public-section-page__body">
+          <AccountPanel auth={auth} />
+        </main>
+      </div>
+    );
   }
 
   const handleSubmit = async (e) => {
@@ -181,15 +230,17 @@ export default function ProfilePage({ auth }) {
           : { name, email, password, privacyAccepted: acceptedPrivacy };
       const data = await action(payload);
       auth.setSession(data);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Algo salió mal. Intenta de nuevo.');
+    } catch {
+      setError(copy.genericError);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div style={{ padding: '24px 16px' }}>
+    <div className="public-section-page">
+      <PublicPageHeader title={t('profile')} />
+      <main className="public-section-page__body" style={{ padding: '12px 16px 24px' }}>
       {auth.sessionExpired && (
         <div
           style={{
@@ -201,19 +252,20 @@ export default function ProfilePage({ auth }) {
             marginBottom: '16px',
           }}
         >
-          {auth.sessionMessage || 'Tu sesión ha expirado. Inicia sesión de nuevo.'}
+          {copy.sessionExpired}
         </div>
       )}
 
       <h1 style={{ fontSize: '22px', marginBottom: '20px' }}>
-        {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+        {mode === 'login' ? copy.login : copy.register}
       </h1>
 
       <form onSubmit={handleSubmit}>
         {mode === 'register' && (
           <input
             style={inputStyle}
-            placeholder="Nombre"
+            placeholder={copy.name}
+            aria-label={copy.name}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -222,7 +274,8 @@ export default function ProfilePage({ auth }) {
         <input
           style={inputStyle}
           type="email"
-          placeholder="Email"
+          placeholder={copy.email}
+          aria-label={copy.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -231,7 +284,8 @@ export default function ProfilePage({ auth }) {
           <input
             style={{ ...inputStyle, marginBottom: 0, paddingRight: '92px' }}
             type={showPassword ? 'text' : 'password'}
-            placeholder="Contraseña"
+            placeholder={copy.password}
+            aria-label={copy.password}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -239,7 +293,7 @@ export default function ProfilePage({ auth }) {
           <button
             type="button"
             onClick={() => setShowPassword((visible) => !visible)}
-            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-label={showPassword ? copy.hidePassword : copy.showPassword}
             aria-pressed={showPassword}
             style={{
               position: 'absolute',
@@ -255,7 +309,7 @@ export default function ProfilePage({ auth }) {
               cursor: 'pointer',
             }}
           >
-            {showPassword ? 'Ocultar' : 'Mostrar'}
+            {showPassword ? copy.hide : copy.show}
           </button>
         </div>
 
@@ -279,9 +333,9 @@ export default function ProfilePage({ auth }) {
               style={{ marginTop: '2px', flexShrink: 0 }}
             />
             <span>
-              He leído y acepto la{' '}
+              {copy.acceptPrefix}{' '}
               <Link to="/privacidad" style={{ color: 'var(--color-accent)' }}>
-                política de privacidad
+                {copy.privacy}
               </Link>
             </span>
           </label>
@@ -308,7 +362,7 @@ export default function ProfilePage({ auth }) {
             marginBottom: '12px',
           }}
         >
-          {submitting ? 'Enviando…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
+          {submitting ? copy.sending : mode === 'login' ? copy.enter : copy.register}
         </button>
       </form>
 
@@ -321,14 +375,15 @@ export default function ProfilePage({ auth }) {
           fontSize: '14px',
         }}
       >
-        {mode === 'login' ? '¿No tienes cuenta? Crea una' : '¿Ya tienes cuenta? Inicia sesión'}
+        {mode === 'login' ? copy.noAccount : copy.hasAccount}
       </button>
 
       <div style={{ marginTop: '24px' }}>
         <Link to="/privacidad" style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-          Política de privacidad
+          {t('privacy')}
         </Link>
       </div>
+      </main>
     </div>
   );
 }

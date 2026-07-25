@@ -18,6 +18,7 @@ const {
 } = require('../controllers/adminController');
 const { requireAdmin } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const { TRUST_STATUSES } = require('../utils/trustStatus');
 
 const ESTABLISHMENT_TYPES = ['restaurant', 'store', 'pharmacy', 'bakery', 'supermarket'];
 const SOURCES = ['APC', 'Google', 'APC+Google', 'user'];
@@ -30,6 +31,19 @@ const establishmentValidators = [
   body('source').optional().isIn(SOURCES).withMessage('Fuente inválida'),
   body('riskLevel').optional({ nullable: true }).isIn(RISK_LEVELS).withMessage('Riesgo inválido'),
   body('certified').optional().isBoolean().withMessage('certified debe ser boolean'),
+  body('trustStatus').optional().isIn(TRUST_STATUSES).withMessage('Estado de confianza inválido'),
+  body('sourceName').optional({ nullable: true }).isString().isLength({ max: 200 }),
+  body('sourceUrl').optional({ nullable: true }).isURL({ protocols: ['https'], require_protocol: true }),
+  body('lastVerifiedAt').optional({ nullable: true }).isISO8601().withMessage('Fecha inválida'),
+  body().custom((_, { req }) => {
+    if (
+      req.body.trustStatus === 'CERTIFIED_APC_BIOTRAB' &&
+      (!req.body.sourceName || !req.body.sourceUrl)
+    ) {
+      throw new Error('Una certificación requiere nombre y URL HTTPS de la fuente');
+    }
+    return true;
+  }),
   body('dedicatedKitchen').optional({ nullable: true }).isBoolean(),
   body('dedicatedGlutenFreeMenu').optional({ nullable: true }).isBoolean(),
   body('staffTrained').optional({ nullable: true }).isBoolean(),
@@ -117,6 +131,7 @@ router.get(
     query('source').optional().isIn(SOURCES).withMessage('Fuente inválida'),
     query('riskLevel').optional().isIn(RISK_LEVELS).withMessage('Riesgo inválido'),
     query('certified').optional().isBoolean().withMessage('Certificación inválida'),
+    query('trustStatus').optional().isIn(TRUST_STATUSES).withMessage('Estado de confianza inválido'),
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],

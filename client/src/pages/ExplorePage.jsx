@@ -1,67 +1,55 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import SearchBar from '../components/SearchBar';
 import CategoryChips from '../components/CategoryChips';
+import PublicPageHeader from '../components/PublicPageHeader';
 import RestaurantCard from '../components/RestaurantCard';
 import ErrorState from '../components/ErrorState';
-import { getEstablishments } from '../services/establishments';
 import { useUserLocation } from '../hooks/useUserLocation';
-import { APP_NAME, REGION_NAME } from '../config/brand';
+import { useLanguage } from '../i18n/index.jsx';
+import PublicFooter from '../components/PublicFooter.jsx';
+import useEstablishmentList from '../hooks/useEstablishmentList.js';
+import { filterEstablishments } from '../utils/establishmentFilters.js';
+import ExploreFiltersButton from '../components/ExploreFiltersButton.jsx';
 
 export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleSaved }) {
-  const [establishments, setEstablishments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { language, t } = useLanguage();
+  const { establishments, loading, error, reload } = useEstablishmentList();
   const [query, setQuery] = useState('');
   const [type, setType] = useState(undefined);
+  const [certifiedOnly, setCertifiedOnly] = useState(false);
   const { position } = useUserLocation();
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    getEstablishments()
-      .then(setEstablishments)
-      .catch(() => setError('No pudimos cargar los establecimientos. Intenta de nuevo.'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
   const filtered = useMemo(() => {
-    const list = Array.isArray(establishments) ? establishments : [];
-    return list.filter((e) => {
-      if (type && e.type !== type) return false;
-      if (query) {
-        const searchText = `${e.name} ${e.address || ''}`.toLocaleLowerCase('es');
-        if (!searchText.includes(query.toLocaleLowerCase('es'))) return false;
-      }
-      return true;
+    return filterEstablishments(establishments, {
+      type,
+      query,
+      language,
+      certifiedOnly,
     });
-  }, [establishments, type, query]);
+  }, [establishments, type, query, language, certifiedOnly]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <header style={{ padding: '16px 16px 8px' }}>
-        <div
-          style={{
-            fontSize: '12px',
-            color: 'var(--color-text-muted)',
-            marginBottom: '2px',
-          }}
-        >
-          {APP_NAME} · 📍 {REGION_NAME}
-        </div>
-        <h1 style={{ fontSize: '22px', marginBottom: '14px' }}>Explora sin gluten</h1>
+      <PublicPageHeader
+        title={t('explore')}
+        action={(
+          <ExploreFiltersButton
+            certifiedOnly={certifiedOnly}
+            onCertifiedChange={setCertifiedOnly}
+          />
+        )}
+      >
         <SearchBar
           value={query}
           onChange={setQuery}
-          placeholder="Buscar lugar o ciudad…"
+          placeholder={t('search')}
         />
-      </header>
+      </PublicPageHeader>
 
-      <div style={{ padding: '0 16px' }}>
-        <CategoryChips value={type} onChange={setType} />
+      <div className="explore-controls">
+        <div className="explore-controls__categories">
+          <CategoryChips value={type} onChange={setType} />
+        </div>
       </div>
 
       <main
@@ -74,13 +62,13 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
           gap: '12px',
         }}
       >
-        {loading && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
+        {loading && <div role="status" style={{ color: 'var(--color-text-muted)' }}>{t('loading')}</div>}
 
-        {!loading && error && <ErrorState message={error} onRetry={load} />}
+        {!loading && error && <ErrorState message={error} onRetry={reload} />}
 
         {!loading && !error && filtered.length === 0 && (
           <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
-            No encontramos sitios con esos filtros.
+            {t('noResults')}
           </div>
         )}
 
@@ -94,6 +82,7 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
             onToggleSaved={onToggleSaved}
           />
         ))}
+        {!loading && !error && <PublicFooter />}
       </main>
     </div>
   );

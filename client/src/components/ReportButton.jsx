@@ -1,6 +1,31 @@
 import { useState } from 'react';
 import ConfirmModal from './ConfirmModal';
 import { reportReview } from '../services/reviews';
+import { useLanguage } from '../i18n/index.jsx';
+
+const REPORT_COPY = {
+  'pt-PT': {
+    reported: 'Reportado', reporting: 'A reportar…', report: 'Reportar', title: 'Reportar esta avaliação?',
+    message: 'Indica o motivo. A equipa de moderação irá rever o conteúdo; este não será ocultado automaticamente.',
+    reason: 'Motivo', incorrect: 'Informação sobre glúten incorreta', offensive: 'Conteúdo ofensivo',
+    spam: 'Spam ou promoção', personal: 'Dados pessoais', other: 'Outro motivo', detail: 'Detalhe opcional',
+    placeholder: 'Ajuda-nos a compreender o que deve ser revisto.',
+  },
+  en: {
+    reported: 'Reported', reporting: 'Reporting…', report: 'Report', title: 'Report this review?',
+    message: 'Tell us why. The moderation team will review it; it will not be hidden automatically.',
+    reason: 'Reason', incorrect: 'Incorrect gluten-related information', offensive: 'Offensive content',
+    spam: 'Spam or promotion', personal: 'Personal data', other: 'Other reason', detail: 'Optional details',
+    placeholder: 'Help us understand what the team should review.',
+  },
+  es: {
+    reported: 'Reportado', reporting: 'Reportando…', report: 'Reportar', title: '¿Reportar esta reseña?',
+    message: 'Cuéntanos el motivo. El equipo de moderación la revisará; no se ocultará automáticamente.',
+    reason: 'Motivo', incorrect: 'Información sobre gluten incorrecta', offensive: 'Contenido ofensivo',
+    spam: 'Spam o promoción', personal: 'Datos personales', other: 'Otro motivo', detail: 'Detalle opcional',
+    placeholder: 'Ayúdanos a entender qué debería revisar el equipo.',
+  },
+};
 
 // Botón discreto de moderación básica — solo visible con sesión iniciada
 // (reportar requiere saber quién reporta). "Reportado" es estado de esta
@@ -8,6 +33,8 @@ import { reportReview } from '../services/reviews';
 // mismo usuario con 409, así que si vuelve a cargar la página y lo toca
 // de nuevo, el resultado es el mismo, solo sin el estado visual previo.
 export default function ReportButton({ reviewId, auth }) {
+  const { language } = useLanguage();
+  const copy = REPORT_COPY[language];
   const [showConfirm, setShowConfirm] = useState(false);
   const [status, setStatus] = useState('idle'); // idle | reporting | reported
   const [reason, setReason] = useState('incorrect_safety');
@@ -46,21 +73,21 @@ export default function ReportButton({ reviewId, auth }) {
           cursor: status === 'idle' ? 'pointer' : 'default',
         }}
         >
-        {status === 'reported' ? 'Reportado' : status === 'reporting' ? 'Reportando…' : '⚑ Reportar'}
+        {status === 'reported' ? copy.reported : status === 'reporting' ? copy.reporting : `⚑ ${copy.report}`}
       </button>
 
       {showConfirm && (
         <ConfirmModal
-          title="¿Reportar esta reseña?"
-          message="Cuéntanos el motivo. Un moderador la revisará; no se ocultará automáticamente."
-          confirmLabel="Reportar"
+          title={copy.title}
+          message={copy.message}
+          confirmLabel={copy.report}
           danger
           confirming={status === 'reporting'}
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirm(false)}
         >
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>
-            Motivo
+            {copy.reason}
             <select
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -73,20 +100,20 @@ export default function ReportButton({ reviewId, auth }) {
                 background: 'var(--color-surface)',
               }}
             >
-              <option value="incorrect_safety">Información de seguridad incorrecta</option>
-              <option value="offensive">Contenido ofensivo</option>
-              <option value="spam">Spam o promoción</option>
-              <option value="personal_data">Datos personales</option>
-              <option value="other">Otro motivo</option>
+              <option value="incorrect_safety">{copy.incorrect}</option>
+              <option value="offensive">{copy.offensive}</option>
+              <option value="spam">{copy.spam}</option>
+              <option value="personal_data">{copy.personal}</option>
+              <option value="other">{copy.other}</option>
             </select>
           </label>
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '18px' }}>
-            Detalle opcional
+            {copy.detail}
             <textarea
               value={details}
               maxLength={500}
               onChange={(event) => setDetails(event.target.value)}
-              placeholder="Ayúdanos a entender qué debería revisar el equipo."
+              placeholder={copy.placeholder}
               style={{
                 width: '100%',
                 minHeight: '76px',

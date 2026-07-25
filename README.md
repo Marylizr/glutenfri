@@ -1,7 +1,26 @@
 # glutenfri
 
-Guía comunitaria de lugares sin gluten —restaurantes, tiendas, farmacias y
-pastelerías— en Braga, Porto, Maia, Matosinhos y el norte de Portugal.
+Guía comunitaria de establecimientos con información sobre oferta sin gluten
+en Braga, Porto, Maia, Matosinhos y el norte de Portugal.
+
+> **Importante:** GlutenFri es un proyecto independiente desarrollado por
+> PixelTrend Studio. No representa ni está afiliado a APC, Biotrab o entidades
+> certificadoras. La aplicación no certifica establecimientos ni garantiza la
+> ausencia de contacto cruzado. La interfaz pública distingue entre
+> `CERTIFIED_APC_BIOTRAB`, `COMMUNITY_REPORTED` y `PENDING_VALIDATION`, muestra
+> fuente/fecha cuando existen y remite a la comprobación directa.
+
+La normalización de registros antiguos se ejecuta primero en modo lectura:
+
+```bash
+cd server
+npm run migrate-trust-status
+```
+
+Solo después de revisar el resumen puede aplicarse expresamente con
+`npm run migrate-trust-status -- --apply`. El proceso no inventa fechas y solo
+conserva como certificación el legado con `certified:true` y fuente explícita
+`APC` o `APC+Google`.
 
 ## Estructura
 
@@ -50,10 +69,10 @@ npm run dev                 # http://localhost:5173
 - [x] Pantalla de detalle de establecimiento (`EstablishmentDetailPage`) — muestra info + lista de reviews + botón para iniciar el Safety Review
 - [x] Auth conectado en el frontend: `ProfilePage` con login/registro, token guardado vía `useAuth` (mismas keys `gf_auth_token`/`gf_auth_user` que ya usaba el interceptor de `services/api.js`)
 - [x] Alineación visual con el mockup de Stitch: badge circular de score (`ScoreBadge`), pines custom del mapa (salvia/terracota), detail page con hero photo + barra de acciones fija (Cómo llegar / Llamar, usando lat/lng y phone reales)
-- [x] Guardados ("Your Safe Spots"): ligado a la cuenta — `savedEstablishments` en `User`, endpoints `/api/users/me/saved` (GET/POST/DELETE), tab "Saved" conectado, corazón de guardar en cards y detail page
-- [x] Celiac Safety Protocols en la detail page: `dedicatedKitchen`, `dedicatedGlutenFreeMenu`, `staffTrained` (Boolean opcionales) y `riskLevel` (enum opcional) en `Establishment` — la sección solo se muestra si hay datos cargados
-- [x] Safety Review (5 pasos) conectado a los Celiac Safety Protocols: al enviar una reseña, `createReview` actualiza `dedicatedGlutenFreeMenu`/`dedicatedKitchen`/`riskLevel` (respuestas directas del flujo) y `staffTrained` (derivado: `true` solo si `staffUnderstanding === 'excellent'`) en el `Establishment`. **La reseña más reciente sobrescribe estos campos** — no se promedia entre reseñas de distintos usuarios
-- [x] Pantalla de onboarding/landing (`OnboardingScreen`) — se muestra solo una vez (flag `gf_onboarded` en localStorage)
+- [x] Guardados: ligados a la cuenta mediante `savedEstablishments` en `User`, endpoints `/api/users/me/saved` (GET/POST/DELETE), pestaña y corazón conectados
+- [x] Señales de experiencia comunitaria en el detalle: `dedicatedKitchen`, `dedicatedGlutenFreeMenu`, `staffTrained` y `riskLevel` son datos declarados, no certificaciones; la sección solo se muestra cuando existen
+- [x] Flujo de evaluación en 5 pasos: la reseña más reciente actualiza esas señales comunitarias. La interfaz indica que son experiencias individuales y no una verificación ni una garantía
+- [x] Pantalla de onboarding/landing (`OnboardingScreen`) — aparece en cada carga nueva de la aplicación pública; las rutas informativas y `/admin` siguen disponibles por URL directa
 - [x] Tab "Map" ahora también abre la pantalla de detalle al tocar una card (antes tenía un estado `selected` local sin conectar)
 - [x] **Seguridad backend** (rumbo a producción):
   - `helmet` para headers de seguridad
@@ -74,7 +93,7 @@ npm run dev                 # http://localhost:5173
   - Componente `ErrorState` reutilizable (mensaje + botón "Reintentar"), conectado en `ExplorePage`, `HomePage`, `SavedPage` y la lista de reseñas de `EstablishmentDetailPage` — si el backend/Atlas no responde, el usuario ve un mensaje claro y puede reintentar, en vez de una lista vacía engañosa o un spinner colgado. Probado matando el backend a propósito y confirmando la recuperación con "Reintentar"
   - **Sesión expirada manejada globalmente**: interceptor de respuesta en `services/api.js` detecta un 401 cuando SÍ había un token guardado (JWT vencido/inválido, no un anónimo), limpia la sesión y dispara un evento que `useAuth` escucha; `App.jsx` redirige a la pantalla de acceso con el mensaje "Tu sesión ha expirado. Inicia sesión de nuevo." Probado corrompiendo el token manualmente y confirmando la redirección — sin quedar bloqueado ni mostrar un error técnico en la consola
   - **Bug real encontrado y corregido**: `useSaved.toggle()` no tenía `try/catch` — si el token vencía mientras alguien tocaba el corazón de guardar, la promesa quedaba rechazada sin manejar (unhandled rejection silenciosa). Ahora atrapa el error y deja que el interceptor global maneje el 401
-  - **Auditoría de textos en inglés** corregida: dropdown de tipos en `Filters.jsx` mostraba los valores crudos del enum (`restaurant`, `store`, etc.) en vez de traducirlos como ya hacía `CategoryChips`; "Your Safe Spots" → "Tus lugares seguros"; labels Poor/Okay/Excellent → Malo/Regular/Excelente (tanto en las respuestas del Safety Review como en los badges de reseñas); "Celiac Safety Protocols" → "Protocolos de seguridad celíaca"; bottom nav Home/Map/Saved/Reviews/Profile → Inicio/Mapa/Guardados/Reseñas/Perfil
+  - **Auditoría de textos**: el selector global ofrece portugués de Portugal, inglés y español; los términos de confianza distinguen certificación, experiencias comunitarias e información pendiente.
 - [x] **Deploy preparado** (Procfile, `engines`, `netlify.toml`, checklist de env vars) — ver sección dedicada abajo. **No desplegado todavía.**
 - [x] **Requisitos técnicos de GDPR + política publicada** — `/privacidad`, enlazada desde registro y perfil; ver sección dedicada abajo. Se recomienda revisión jurídica antes del lanzamiento público.
 - [x] **`react-router-dom` activado con rutas reales** (antes estaba instalado pero sin usar) — ver sección dedicada abajo

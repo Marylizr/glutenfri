@@ -13,7 +13,8 @@
     "seed": "node src/scripts/seed.js",
     "set-admin": "node src/scripts/setAdmin.js",
     "fetch-place-ids": "node src/scripts/fetchGooglePlaceIds.js",
-    "refresh-google-places": "node src/scripts/refreshGooglePlacesData.js"
+    "refresh-google-places": "node src/scripts/refreshGooglePlacesData.js",
+    "migrate-trust-status": "node src/scripts/migrateTrustStatus.js"
   },
   "keywords": [],
   "author": "",

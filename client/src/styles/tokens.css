@@ -7,7 +7,7 @@
   --color-text-muted: #8a8578;   /* texto secundario, metadata */
   --color-border: #e6dfcf;
 
-  --color-accent: #3d5a45;       /* verde salvia — "Verified", "100% Gluten-Free", nav activo */
+  --color-accent: #3d5a45;       /* verde salvia — acciones y navegación activa */
   --color-accent-soft: #e3ead9;  /* fondo de badge verde */
   --color-warn: #c1502e;         /* terracota — badges de riesgo/alerta */
   --color-warn-soft: #f5ddd2;

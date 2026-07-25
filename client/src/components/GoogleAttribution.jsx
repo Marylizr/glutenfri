@@ -3,7 +3,10 @@
 // Maps" (no alcanza con "Google" solo). Se muestra solo cuando el
 // establishment.source indica datos de Google ('Google' o 'APC+Google').
 
+import { useLanguage } from '../i18n/index.jsx';
+
 export default function GoogleAttribution({ compact = false }) {
+  const { t } = useLanguage();
   return (
     <span
       style={{
@@ -11,7 +14,7 @@ export default function GoogleAttribution({ compact = false }) {
         color: 'var(--color-text-muted)',
       }}
     >
-      Datos de ubicación: Google Maps
+      {t('googleAttribution')}
     </span>
   );
 }

@@ -1,12 +1,21 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { divIcon } from 'leaflet';
 import { isGoogleSourced } from '../utils/googlePlaces';
+import {
+  getMappableEstablishments,
+  getTrustPresentation,
+  normalizeTrustStatus,
+  TRUST_STATUS,
+} from '../utils/trustStatus.js';
+import { useLanguage } from '../i18n/index.jsx';
 import 'leaflet/dist/leaflet.css';
 
-// Pin custom en verde salvia (certificado) o terracota (sin verificar),
-// estilo "gota" para que coincida con el mockup en vez del pin azul default de Leaflet.
-function pinIcon(certified) {
-  const color = certified ? '#3d5a45' : '#c1502e';
+function pinIcon(status) {
+  const color = {
+    [TRUST_STATUS.CERTIFIED_APC_BIOTRAB]: '#3d5a45',
+    [TRUST_STATUS.COMMUNITY_REPORTED]: '#9a6828',
+    [TRUST_STATUS.PENDING_VALIDATION]: '#6f6a60',
+  }[status];
   return divIcon({
     className: '',
     html: `<svg width="28" height="36" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
@@ -20,15 +29,15 @@ function pinIcon(certified) {
 }
 
 export default function MapView({ establishments = [], center }) {
-  const list = Array.isArray(establishments) ? establishments : [];
-  const withCoords = list.filter((e) => e.lat && e.lng);
+  const { t } = useLanguage();
+  const withCoords = getMappableEstablishments(establishments);
   const hasGoogleData = withCoords.some(isGoogleSourced);
 
   // Atribución de Leaflet (siempre visible, no escondida en un popup) —
   // sumamos el crédito a Google Maps cuando alguno de los pines visibles
   // trae datos de ubicación de la Places API.
   const attribution = hasGoogleData
-    ? '&copy; OpenStreetMap contributors | Datos de ubicación: Google Maps'
+    ? `&copy; OpenStreetMap contributors | ${t('googleAttribution')}`
     : '&copy; OpenStreetMap contributors';
 
   return (
@@ -41,14 +50,16 @@ export default function MapView({ establishments = [], center }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution={attribution}
       />
-      {withCoords.map((e) => (
-        <Marker key={e._id || e.name} position={[e.lat, e.lng]} icon={pinIcon(e.certified)}>
+      {withCoords.map((e) => {
+        const trust = getTrustPresentation(e, t);
+        return (
+        <Marker key={e._id || e.name} position={[Number(e.lat), Number(e.lng)]} icon={pinIcon(normalizeTrustStatus(e))}>
           <Popup>
             <strong>{e.name}</strong>
             <br />
             {e.address}
             <br />
-            {e.certified && <span>✅ Certificado APC</span>}
+            <span style={{ color: trust.color, fontWeight: 700 }}>{trust.icon} {trust.label}</span>
             {e.discount && (
               <>
                 <br />
@@ -58,12 +69,13 @@ export default function MapView({ establishments = [], center }) {
             {isGoogleSourced(e) && (
               <>
                 <br />
-                <span style={{ fontSize: '10px', color: '#8a8578' }}>Datos de ubicación: Google Maps</span>
+                <span style={{ fontSize: '10px', color: '#8a8578' }}>{t('googleAttribution')}</span>
               </>
             )}
           </Popup>
         </Marker>
-      ))}
+        );
+      })}
     </MapContainer>
   );
 }

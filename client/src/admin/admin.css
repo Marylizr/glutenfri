@@ -47,9 +47,14 @@
   letter-spacing: .12em;
 }
 
-.admin-brand-kicker {
-  font-family: Georgia, serif;
-  font-size: 15px;
+.admin-brand-logo {
+  width: 168px;
+  height: auto;
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: #fffbed;
+  box-shadow: 0 8px 18px rgba(18, 38, 27, .2);
 }
 
 .admin-brand strong {

@@ -56,3 +56,60 @@ Blocked for the same reason. Required regions when a browser becomes available:
 None classified until the first rendered comparison is possible.
 
 final result: blocked
+
+---
+
+# Design QA — Sección Mapa
+
+- Source visual truth: captura de la sección Mapa adjunta en la conversación (ruta local no expuesta)
+- Source dimensions: 970 × 1660 px
+- Intended implementation viewport: viewport móvil responsive equivalente
+- Implementation route: `/mapa`
+- State: listado cargado, filtros sin seleccionar
+- Implementation screenshot: unavailable
+- Browser-rendered evidence: unavailable
+- Primary interactions tested in browser: unavailable
+- Browser console checked: unavailable
+
+## Findings
+
+- [P0] No hay una superficie de navegador disponible para la comparación visual
+  - Location: cabecera, filtros, mapa y primer resultado de `/mapa`.
+  - Evidence: el runtime del navegador integrado devolvió una lista vacía de superficies disponibles.
+  - Impact: no se puede confirmar visualmente el ajuste responsive, el desplazamiento horizontal de filtros ni la alineación del mapa.
+  - Fix: abrir la vista previa local cuando el navegador integrado esté disponible y capturar `/mapa` en el mismo estado y proporción que la referencia.
+
+## Required fidelity surfaces
+
+- Fonts and typography: se reutilizan Fraunces e Inter del sistema existente; validación visual bloqueada.
+- Spacing and layout rhythm: se implementaron cabecera, chips, tarjeta de mapa y lista; validación visual bloqueada.
+- Colors and visual tokens: se reutilizan los tokens existentes de superficie, borde, texto y acento; validación visual bloqueada.
+- Image quality and asset fidelity: se reutilizan el logo oficial, Leaflet/OpenStreetMap y las imágenes reales/fallback existentes; validación visual bloqueada.
+- Copy and content: se mantiene la traducción activa y los nombres actuales de filtros; validación de wrapping bloqueada.
+
+## Full-view comparison evidence
+
+Blocked: la referencia está disponible en la conversación, pero no fue posible capturar la implementación.
+
+## Focused region comparison evidence
+
+Blocked. La siguiente revisión debe comprobar:
+
+1. Logo, región y título.
+2. Selector de categoría y chips de certificación/descuento.
+3. Bordes, controles y atribución del mapa.
+4. Transición entre mapa y tarjetas.
+
+## Comparison history
+
+- Initial pass: blocked antes de la comparación porque no había navegador integrado disponible.
+
+## Implementation checklist
+
+1. Abrir `/mapa` en la vista previa local.
+2. Verificar activación y desactivación de los dos chips.
+3. Verificar el selector de categorías.
+4. Comprobar que la atribución de Leaflet no desborda.
+5. Capturar y comparar con la referencia.
+
+final result: blocked

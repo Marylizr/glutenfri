@@ -1,4 +1,8 @@
+import { useLanguage } from '../i18n/index.jsx';
+
 export default function LoginRequiredState({ icon, title, message, onGoToProfile }) {
+  const { language } = useLanguage();
+  const label = { 'pt-PT': 'Iniciar sessão', en: 'Log in', es: 'Iniciar sesión' }[language];
   return (
     <div
       style={{
@@ -28,7 +32,7 @@ export default function LoginRequiredState({ icon, title, message, onGoToProfile
           fontWeight: 600,
         }}
       >
-        Iniciar sesión
+        {label}
       </button>
     </div>
   );

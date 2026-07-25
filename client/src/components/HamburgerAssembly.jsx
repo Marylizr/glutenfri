@@ -22,7 +22,10 @@ const LAYERS = [
   { key: 'pan', src: IMAGES.pan, x: 10.25, y: 0, width: 432, height: 185.5, delay: 0.6, duration: 0.62 },
 ];
 
-export default function HamburgerAssembly({ badge = '100% sin gluten' }) {
+export default function HamburgerAssembly({
+  badge = 'Informação sobre opções sem glúten',
+  alt = 'Ilustração de uma hambúrguer montada em camadas sobre um prato',
+}) {
   return (
     <div className="gf-hamburger-animation">
       <style>{CSS}</style>
@@ -30,7 +33,7 @@ export default function HamburgerAssembly({ badge = '100% sin gluten' }) {
         className="gf-hamburger-stage"
         viewBox="0 0 460 326"
         role="img"
-        aria-label="Hamburguesa sin gluten montándose capa a capa"
+        aria-label={alt}
       >
         <circle cx="230" cy="158" r="145" fill="#dfeadd" />
         <circle cx="175" cy="218" r="62" fill="#f3e1d8" opacity="0.72" />
@@ -45,6 +48,9 @@ export default function HamburgerAssembly({ badge = '100% sin gluten' }) {
             height="111.5"
             preserveAspectRatio="none"
             aria-hidden="true"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
           />
 
           {LAYERS.map((layer) => (
@@ -58,6 +64,9 @@ export default function HamburgerAssembly({ badge = '100% sin gluten' }) {
               height={layer.height}
               preserveAspectRatio="none"
               aria-hidden="true"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
               style={{
                 animationDuration: `${layer.duration}s`,
                 animationDelay: `${layer.delay}s`,

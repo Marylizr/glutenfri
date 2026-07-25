@@ -8,6 +8,10 @@ import SavedPage from './pages/SavedPage';
 import ReviewsPage from './pages/ReviewsPage';
 import OnboardingScreen from './pages/OnboardingScreen';
 import PrivacyPage from './pages/PrivacyPage';
+import SafetyInformationPage from './pages/SafetyInformationPage.jsx';
+import TermsPage from './pages/TermsPage.jsx';
+import ContactPage from './pages/ContactPage.jsx';
+import AboutPage from './pages/AboutPage.jsx';
 import BottomNav from './components/BottomNav';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
@@ -60,8 +64,15 @@ function App() {
   // La portada es la entrada de cada carga nueva de la app pública y solo
   // avanza cuando la persona pulsa uno de sus CTA. No se persiste el estado
   // "visto"; /admin y /privacidad permanecen accesibles por URL directa.
-  const isPublicEntry =
-    !location.pathname.startsWith('/admin') && location.pathname !== '/privacidad';
+  const publicInformationRoutes = [
+    '/privacidad',
+    '/terminos',
+    '/contacto',
+    '/proyecto',
+    '/informacion-sin-gluten',
+  ];
+  const isInformationRoute = publicInformationRoutes.includes(location.pathname);
+  const isPublicEntry = !location.pathname.startsWith('/admin') && !isInformationRoute;
 
   if (!onboarded && isPublicEntry) {
     return (
@@ -151,6 +162,10 @@ function App() {
           />
           <Route path="/perfil" element={<ProfilePage auth={auth} />} />
           <Route path="/privacidad" element={<PrivacyPage />} />
+          <Route path="/terminos" element={<TermsPage />} />
+          <Route path="/contacto" element={<ContactPage />} />
+          <Route path="/proyecto" element={<AboutPage />} />
+          <Route path="/informacion-sin-gluten" element={<SafetyInformationPage />} />
           <Route
             path="/admin/*"
             element={
@@ -195,7 +210,7 @@ function App() {
       </div>
       {!isDetailRoute &&
         !isAdminRoute &&
-        location.pathname !== '/privacidad' && <BottomNav />}
+        !isInformationRoute && <BottomNav />}
     </div>
   );
 }

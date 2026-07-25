@@ -24,6 +24,37 @@ function resolveTrustProxy(environment, rawValue) {
   return hops;
 }
 
+function isDevelopmentLoopbackOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === 'http:' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) &&
+      /^\d+$/.test(url.port)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function buildCorsOptions(corsOrigins, environment) {
+  const allowedOrigins = new Set(
+    corsOrigins.split(',').map((origin) => origin.trim()).filter(Boolean)
+  );
+  return {
+    origin(origin, callback) {
+      const allowed =
+        !origin ||
+        allowedOrigins.has(origin) ||
+        (environment === 'development' && isDevelopmentLoopbackOrigin(origin));
+      callback(null, allowed);
+    },
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false,
+  };
+}
+
 function createApp({
   environment = process.env.NODE_ENV || 'development',
   corsOrigins = process.env.CORS_ORIGINS,
@@ -36,14 +67,15 @@ function createApp({
   const app = express();
   app.set('trust proxy', resolveTrustProxy(environment, trustProxyHops));
 
-  app.use(helmet());
+  // La API y las fotos se consumen desde el origen del frontend. CORP no
+  // concede acceso por sí mismo: CORS sigue limitando qué orígenes pueden
+  // leer las respuestas.
+  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   // Evita persistir IP y User-Agent en los logs del proveedor. El rate
   // limiter usa la IP en memoria durante su ventana, pero no la escribe.
   app.use(morgan(environment === 'production' ? ':method :url :status :response-time ms' : 'dev'));
   app.use(
-    cors({
-      origin: corsOrigins.split(',').map((origin) => origin.trim()),
-    })
+    cors(buildCorsOptions(corsOrigins, environment))
   );
   app.use(express.json());
   app.use(apiLimiter);
@@ -66,4 +98,9 @@ function createApp({
   return app;
 }
 
-module.exports = { createApp, resolveTrustProxy };
+module.exports = {
+  buildCorsOptions,
+  createApp,
+  isDevelopmentLoopbackOrigin,
+  resolveTrustProxy,
+};

@@ -1,7 +1,44 @@
 import { useState } from 'react';
 import { postReview } from '../services/establishments';
+import { useLanguage } from '../i18n/index.jsx';
 
 const TOTAL_STEPS = 5;
+const FLOW_COPY = {
+  'pt-PT': {
+    back: 'Atrás', staffTitle: 'Como respondeu a equipa às tuas necessidades relacionadas com o glúten?',
+    staffSubtitle: 'Descreve apenas a tua experiência nesta visita.', poor: 'Fraca — não compreenderam ou ignoraram o pedido',
+    okay: 'Razoável — compreenderam, mas com dúvidas', excellent: 'Excelente — responderam com clareza',
+    menuTitle: 'Foi apresentado um menu específico sem glúten?', menuSubtitle: 'Pode ser um menu dedicado, marcado ou separado.',
+    kitchenTitle: 'Foi indicada uma área ou preparação dedicada sem glúten?', kitchenSubtitle: 'Responde apenas com base no que observaste ou te comunicaram; isto não verifica o protocolo.',
+    riskTitle: 'Que nível de risco de contacto cruzado percecionaste?', riskSubtitle: 'Considera a preparação, o manuseamento e a separação de ingredientes.',
+    none: 'Nenhum observado', low: 'Baixo', moderate: 'Moderado', high: 'Alto', yes: 'Sim', no: 'Não',
+    ratingTitle: 'Para terminar, como avalias esta experiência?', stars: 'estrelas',
+    comment: 'Conta mais sobre a tua experiência (opcional)', authError: 'Precisas de iniciar sessão para publicar uma avaliação.',
+    saveError: 'Não foi possível guardar a avaliação. Tenta novamente.', sending: 'A enviar…', update: 'Atualizar avaliação', submit: 'Publicar avaliação',
+  },
+  en: {
+    back: 'Back', staffTitle: 'How did staff respond to your gluten-related needs?', staffSubtitle: 'Describe only your experience during this visit.',
+    poor: 'Poor — they did not understand or ignored the request', okay: 'Fair — they understood, but had doubts', excellent: 'Excellent — they responded clearly',
+    menuTitle: 'Was a specific gluten-free menu provided?', menuSubtitle: 'This may be a dedicated, marked or separate menu.',
+    kitchenTitle: 'Was a dedicated gluten-free area or preparation reported?', kitchenSubtitle: 'Answer only from what you observed or were told; this does not verify the protocol.',
+    riskTitle: 'What level of cross-contact risk did you perceive?', riskSubtitle: 'Consider preparation, handling and separation of ingredients.',
+    none: 'None observed', low: 'Low', moderate: 'Moderate', high: 'High', yes: 'Yes', no: 'No',
+    ratingTitle: 'Finally, how do you rate this experience?', stars: 'stars', comment: 'Tell us more about your experience (optional)',
+    authError: 'You need to log in to publish a review.', saveError: 'We could not save the review. Please try again.',
+    sending: 'Sending…', update: 'Update review', submit: 'Publish review',
+  },
+  es: {
+    back: 'Atrás', staffTitle: '¿Cómo respondió el personal a tus necesidades relacionadas con el gluten?', staffSubtitle: 'Describe únicamente tu experiencia durante esta visita.',
+    poor: 'Mala — no entendieron o ignoraron la petición', okay: 'Regular — entendieron, pero con dudas', excellent: 'Excelente — respondieron con claridad',
+    menuTitle: '¿Te ofrecieron un menú específico sin gluten?', menuSubtitle: 'Puede ser un menú dedicado, marcado o separado.',
+    kitchenTitle: '¿Te indicaron un área o preparación dedicada sin gluten?', kitchenSubtitle: 'Responde solo según lo que observaste o te comunicaron; esto no verifica el protocolo.',
+    riskTitle: '¿Qué nivel de riesgo de contacto cruzado percibiste?', riskSubtitle: 'Considera la preparación, manipulación y separación de ingredientes.',
+    none: 'Ninguno observado', low: 'Bajo', moderate: 'Moderado', high: 'Alto', yes: 'Sí', no: 'No',
+    ratingTitle: 'Para terminar, ¿cómo valoras esta experiencia?', stars: 'estrellas', comment: 'Cuéntanos más sobre tu experiencia (opcional)',
+    authError: 'Necesitas iniciar sesión para publicar una reseña.', saveError: 'No pudimos guardar la reseña. Intenta de nuevo.',
+    sending: 'Enviando…', update: 'Actualizar reseña', submit: 'Publicar reseña',
+  },
+};
 
 function ProgressDots({ step }) {
   return (
@@ -43,7 +80,7 @@ function ChoiceButton({ active, onClick, children }) {
   );
 }
 
-function StepShell({ step, title, subtitle, onBack, children }) {
+function StepShell({ step, title, subtitle, onBack, backLabel, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <ProgressDots step={step} />
@@ -58,7 +95,7 @@ function StepShell({ step, title, subtitle, onBack, children }) {
             padding: '8px 0',
           }}
         >
-          ← Atrás
+          ← {backLabel}
         </button>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px 20px' }}>
@@ -75,6 +112,8 @@ function StepShell({ step, title, subtitle, onBack, children }) {
 }
 
 export default function SafetyReviewFlow({ establishmentId, existingReview, onCancel, onComplete }) {
+  const { language } = useLanguage();
+  const copy = FLOW_COPY[language];
   const isEditing = !!existingReview;
   const [step, setStep] = useState(1);
   const [staffUnderstanding, setStaffUnderstanding] = useState(existingReview?.staffUnderstanding ?? null);
@@ -127,8 +166,8 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     } catch (err) {
       setError(
         err.response?.status === 401
-          ? 'Necesitas iniciar sesión para dejar una reseña.'
-          : 'No pudimos guardar tu reseña. Intenta de nuevo.'
+          ? copy.authError
+          : copy.saveError
       );
     } finally {
       setSubmitting(false);
@@ -139,21 +178,22 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     return (
       <StepShell
         step={1}
-        title="¿El personal entendió tus necesidades relacionadas con el gluten?"
-        subtitle="Piensa en cómo respondieron cuando explicaste tu situación."
+        title={copy.staffTitle}
+        subtitle={copy.staffSubtitle}
         onBack={goBack}
+        backLabel={copy.back}
       >
         <ChoiceButton active={staffUnderstanding === 'poor'} onClick={() => handleStaffAnswer('poor')}>
-          Malo — no entendieron o ignoraron el pedido
+          {copy.poor}
         </ChoiceButton>
         <ChoiceButton active={staffUnderstanding === 'okay'} onClick={() => handleStaffAnswer('okay')}>
-          Regular — entendieron, pero con dudas
+          {copy.okay}
         </ChoiceButton>
         <ChoiceButton
           active={staffUnderstanding === 'excellent'}
           onClick={() => handleStaffAnswer('excellent')}
         >
-          Excelente — muy claros y seguros
+          {copy.excellent}
         </ChoiceButton>
       </StepShell>
     );
@@ -163,15 +203,16 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     return (
       <StepShell
         step={2}
-        title="¿Había un menú específico sin gluten?"
-        subtitle="Un menú dedicado, marcado o una carta aparte cuentan como sí."
+        title={copy.menuTitle}
+        subtitle={copy.menuSubtitle}
         onBack={goBack}
+        backLabel={copy.back}
       >
         <ChoiceButton active={hasDedicatedMenu === true} onClick={() => handleMenuAnswer(true)}>
-          Sí
+          {copy.yes}
         </ChoiceButton>
         <ChoiceButton active={hasDedicatedMenu === false} onClick={() => handleMenuAnswer(false)}>
-          No
+          {copy.no}
         </ChoiceButton>
       </StepShell>
     );
@@ -181,15 +222,16 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     return (
       <StepShell
         step={3}
-        title="¿Había un área de cocina dedicada sin gluten?"
-        subtitle="Zona o utensilios separados para evitar contaminación cruzada."
+        title={copy.kitchenTitle}
+        subtitle={copy.kitchenSubtitle}
         onBack={goBack}
+        backLabel={copy.back}
       >
         <ChoiceButton active={dedicatedKitchen === true} onClick={() => handleKitchenAnswer(true)}>
-          Sí
+          {copy.yes}
         </ChoiceButton>
         <ChoiceButton active={dedicatedKitchen === false} onClick={() => handleKitchenAnswer(false)}>
-          No
+          {copy.no}
         </ChoiceButton>
       </StepShell>
     );
@@ -199,21 +241,22 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     return (
       <StepShell
         step={4}
-        title="¿Cómo calificarías el riesgo de contaminación cruzada?"
-        subtitle="Piensa en la preparación, el manejo y la separación de ingredientes."
+        title={copy.riskTitle}
+        subtitle={copy.riskSubtitle}
         onBack={goBack}
+        backLabel={copy.back}
       >
         <ChoiceButton active={riskLevel === 'none'} onClick={() => handleRiskAnswer('none')}>
-          Ninguno
+          {copy.none}
         </ChoiceButton>
         <ChoiceButton active={riskLevel === 'low'} onClick={() => handleRiskAnswer('low')}>
-          Bajo
+          {copy.low}
         </ChoiceButton>
         <ChoiceButton active={riskLevel === 'moderate'} onClick={() => handleRiskAnswer('moderate')}>
-          Moderado
+          {copy.moderate}
         </ChoiceButton>
         <ChoiceButton active={riskLevel === 'high'} onClick={() => handleRiskAnswer('high')}>
-          Alto
+          {copy.high}
         </ChoiceButton>
       </StepShell>
     );
@@ -222,15 +265,16 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
   return (
     <StepShell
       step={5}
-      title="Para terminar, ¿cómo calificas la experiencia?"
+      title={copy.ratingTitle}
       onBack={goBack}
+      backLabel={copy.back}
     >
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             onClick={() => setRating(n)}
-            aria-label={`${n} estrellas`}
+            aria-label={`${n} ${copy.stars}`}
             style={{
               background: 'none',
               border: 'none',
@@ -247,7 +291,7 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        placeholder="Cuéntanos más sobre tu experiencia (opcional)"
+        placeholder={copy.comment}
         maxLength={1000}
         rows={4}
         style={{
@@ -282,7 +326,7 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
           fontWeight: 600,
         }}
       >
-        {submitting ? 'Enviando…' : isEditing ? 'Actualizar reseña' : 'Enviar reseña'}
+        {submitting ? copy.sending : isEditing ? copy.update : copy.submit}
       </button>
     </StepShell>
   );

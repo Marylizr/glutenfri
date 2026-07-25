@@ -1,31 +1,17 @@
 import RestaurantCard from '../components/RestaurantCard';
+import PublicPageHeader from '../components/PublicPageHeader';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
 import { useUserLocation } from '../hooks/useUserLocation';
-import { APP_NAME, REGION_NAME } from '../config/brand';
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToProfile }) {
   const { position } = useUserLocation();
-
-  if (!auth.user) {
-    return (
-      <LoginRequiredState
-        icon="♡"
-        title="Guarda tus lugares seguros"
-        message="Inicia sesión para guardar restaurantes, tiendas y farmacias sin gluten."
-        onGoToProfile={onGoToProfile}
-      />
-    );
-  }
+  const { language, t } = useLanguage();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <header style={{ padding: '16px 16px 8px' }}>
-        <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '2px' }}>
-          {APP_NAME} · 📍 {REGION_NAME}
-        </div>
-        <h1 style={{ fontSize: '22px' }}>Tus lugares seguros</h1>
-      </header>
+      <PublicPageHeader title={t('saved')} />
 
       <main
         style={{
@@ -37,26 +23,43 @@ export default function SavedPage({ auth, saved, onSelectEstablishment, onGoToPr
           gap: '12px',
         }}
       >
-        {saved.loading && <div style={{ color: 'var(--color-text-muted)' }}>Cargando…</div>}
-
-        {!saved.loading && saved.error && <ErrorState message={saved.error} onRetry={saved.reload} />}
-
-        {!saved.loading && !saved.error && saved.establishments.length === 0 && (
-          <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
-            Todavía no has guardado ningún lugar. Selecciona el ♡ de una tarjeta para guardarlo.
-          </div>
+        {!auth.user && (
+          <LoginRequiredState
+            icon="♡"
+            title={t('saved')}
+            message={t('informationNotice')}
+            onGoToProfile={onGoToProfile}
+          />
         )}
 
-        {saved.establishments.map((e) => (
-          <RestaurantCard
-            key={e._id}
-            establishment={e}
-            userPosition={position}
-            onSelect={onSelectEstablishment}
-            saved={saved.savedIds.has(e._id)}
-            onToggleSaved={saved.toggle}
-          />
-        ))}
+        {auth.user && (
+          <>
+            {saved.loading && <div role="status" style={{ color: 'var(--color-text-muted)' }}>{t('loading')}</div>}
+
+            {!saved.loading && saved.error && <ErrorState message={saved.error} onRetry={saved.reload} />}
+
+            {!saved.loading && !saved.error && saved.establishments.length === 0 && (
+              <div style={{ color: 'var(--color-text-muted)', padding: '24px 0', textAlign: 'center' }}>
+                {{
+                  'pt-PT': 'Ainda não guardaste nenhum local. Seleciona o ♡ de um cartão para o guardar.',
+                  en: 'You have not saved any places yet. Select the ♡ on a card to save it.',
+                  es: 'Todavía no has guardado ningún lugar. Selecciona el ♡ de una tarjeta para guardarlo.',
+                }[language]}
+              </div>
+            )}
+
+            {saved.establishments.map((e) => (
+              <RestaurantCard
+                key={e._id}
+                establishment={e}
+                userPosition={position}
+                onSelect={onSelectEstablishment}
+                saved={saved.savedIds.has(e._id)}
+                onToggleSaved={saved.toggle}
+              />
+            ))}
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { TRUST_STATUSES } = require('../utils/trustStatus');
 
 const establishmentSchema = new mongoose.Schema(
   {
@@ -15,22 +16,25 @@ const establishmentSchema = new mongoose.Schema(
     email: { type: String },
     facebook: { type: String },
 
-    // 'certified' = certificación oficial APC. 'source' distingue de dónde
-    // vino el registro para poder auditar calidad de dato más adelante.
+    // `certified` se conserva solo para compatibilidad con registros antiguos.
+    // La clasificación pública se deriva siempre de trustStatus + evidencia.
     source: {
       type: String,
       enum: ['APC', 'Google', 'APC+Google', 'user'],
       required: true,
     },
     certified: { type: Boolean, default: false },
+    trustStatus: { type: String, enum: TRUST_STATUSES, default: 'PENDING_VALIDATION' },
+    sourceName: { type: String, trim: true },
+    sourceUrl: { type: String, trim: true },
+    lastVerifiedAt: { type: Date },
     discount: { type: String },
     tags: [{ type: String }],
     avgRating: { type: Number, default: null },
     notes: { type: String },
 
-    // Celiac Safety Protocols — opcionales, se completan caso a caso (no
-    // vienen en el dataset semilla APC/Google). La sección de detalle solo
-    // se muestra si alguno de estos campos está definido.
+    // Señales declaradas por la comunidad. No representan certificación ni
+    // verificación y se muestran explícitamente como experiencias.
     dedicatedKitchen: { type: Boolean },
     dedicatedGlutenFreeMenu: { type: Boolean },
     staffTrained: { type: Boolean },
@@ -56,6 +60,7 @@ establishmentSchema.index({ type: 1 });
 // listEstablishments filtra por certifiedOnly=true — el único filtro nuevo
 // de las sesiones recientes que corre sobre un campo no indexado.
 establishmentSchema.index({ certified: 1 });
+establishmentSchema.index({ trustStatus: 1 });
 
 // dedicatedKitchen/dedicatedGlutenFreeMenu/staffTrained/riskLevel NO tienen
 // índice: hoy solo se leen (detail page), nada los usa como filtro de

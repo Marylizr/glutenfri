@@ -20,7 +20,10 @@ const EMPTY_ESTABLISHMENT = {
   phone: '',
   email: '',
   source: 'user',
-  certified: false,
+  trustStatus: 'PENDING_VALIDATION',
+  sourceName: '',
+  sourceUrl: '',
+  lastVerifiedAt: '',
   riskLevel: 'none',
   dedicatedKitchen: false,
   dedicatedGlutenFreeMenu: false,
@@ -43,11 +46,17 @@ const RISK_LABELS = {
   high: 'Alto',
 };
 
+const TRUST_LABELS = {
+  CERTIFIED_APC_BIOTRAB: 'Certificado APC/Biotrab',
+  COMMUNITY_REPORTED: 'Reportado por la comunidad — no certificado',
+  PENDING_VALIDATION: 'Información pendiente de validación',
+};
+
 export default function EstablishmentsView() {
   const initialQuery = useMemo(() => new URLSearchParams(window.location.search), []);
   const [search, setSearch] = useState(initialQuery.get('q') || '');
   const [type, setType] = useState('');
-  const [certified, setCertified] = useState('');
+  const [trustStatus, setTrustStatus] = useState('');
   const [riskLevel, setRiskLevel] = useState('');
   const [source, setSource] = useState('');
   const [result, setResult] = useState({ data: [], total: 0, page: 1, totalPages: 1 });
@@ -67,14 +76,14 @@ export default function EstablishmentsView() {
         limit: 25,
         search: search || undefined,
         type: type || undefined,
-        certified: certified || undefined,
+        trustStatus: trustStatus || undefined,
         riskLevel: riskLevel || undefined,
         source: source || undefined,
       })
         .then(setResult)
         .finally(() => setLoading(false));
     },
-    [search, type, certified, riskLevel, source]
+    [search, type, trustStatus, riskLevel, source]
   );
 
   useEffect(() => {
@@ -109,6 +118,7 @@ export default function EstablishmentsView() {
       delete payload.isNew;
       delete payload.placeId;
       delete payload.googlePlaceRefreshedAt;
+      delete payload.certified;
       const saved = selected.isNew
         ? await createAdminEstablishment(payload)
         : await updateAdminEstablishment(selected._id, payload);
@@ -151,10 +161,9 @@ export default function EstablishmentsView() {
               <option value="">Todos los tipos</option>
               {Object.entries(TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
-            <select className="admin-filter-select" value={certified} onChange={(event) => setCertified(event.target.value)}>
-              <option value="">Certificación</option>
-              <option value="true">Certificados</option>
-              <option value="false">No certificados</option>
+            <select className="admin-filter-select" value={trustStatus} onChange={(event) => setTrustStatus(event.target.value)}>
+              <option value="">Estado de confianza</option>
+              {Object.entries(TRUST_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             <select className="admin-filter-select" value={riskLevel} onChange={(event) => setRiskLevel(event.target.value)}>
               <option value="">Todos los riesgos</option>
@@ -175,7 +184,7 @@ export default function EstablishmentsView() {
                   <tr>
                     <th>Establecimiento</th>
                     <th>Tipo</th>
-                    <th>Certificación</th>
+                    <th>Estado de confianza</th>
                     <th>Riesgo</th>
                     <th>Fuente</th>
                     <th>Actualizado</th>
@@ -195,11 +204,11 @@ export default function EstablishmentsView() {
                       </td>
                       <td>{TYPE_LABELS[establishment.type]}</td>
                       <td>
-                        <span className={`admin-status-pill ${establishment.certified ? '' : 'is-warning'}`}>
-                          {establishment.certified
+                        <span className={`admin-status-pill ${establishment.trustStatus === 'PENDING_VALIDATION' ? 'is-warning' : ''}`}>
+                          {establishment.trustStatus === 'CERTIFIED_APC_BIOTRAB'
                             ? <CheckCircle size={13} weight="fill" />
                             : <WarningCircle size={13} weight="fill" />}
-                          {establishment.certified ? 'Certificado' : 'No certificado'}
+                          {TRUST_LABELS[establishment.trustStatus] || TRUST_LABELS.PENDING_VALIDATION}
                         </span>
                       </td>
                       <td>
@@ -255,8 +264,16 @@ export default function EstablishmentsView() {
                 options={{ APC: 'APC', Google: 'Google', 'APC+Google': 'APC + Google', user: 'Equipo interno' }}
                 onChange={(value) => updateDraft('source', value)}
               />
+              <SelectField
+                label="Estado de confianza"
+                value={draft.trustStatus || 'PENDING_VALIDATION'}
+                options={TRUST_LABELS}
+                onChange={(value) => updateDraft('trustStatus', value)}
+              />
+              <Field wide label="Nombre de la fuente" value={draft.sourceName || ''} onChange={(value) => updateDraft('sourceName', value)} />
+              <Field wide label="URL HTTPS de la fuente" value={draft.sourceUrl || ''} onChange={(value) => updateDraft('sourceUrl', value)} type="url" />
+              <Field wide label="Última verificación" value={draft.lastVerifiedAt ? String(draft.lastVerifiedAt).slice(0, 10) : ''} onChange={(value) => updateDraft('lastVerifiedAt', value || null)} type="date" />
               <div className="admin-checkbox-row">
-                <Checkbox label="Certificado" checked={draft.certified} onChange={(value) => updateDraft('certified', value)} />
                 <Checkbox label="Cocina dedicada" checked={draft.dedicatedKitchen || false} onChange={(value) => updateDraft('dedicatedKitchen', value)} />
                 <Checkbox label="Menú dedicado" checked={draft.dedicatedGlutenFreeMenu || false} onChange={(value) => updateDraft('dedicatedGlutenFreeMenu', value)} />
                 <Checkbox label="Personal capacitado" checked={draft.staffTrained || false} onChange={(value) => updateDraft('staffTrained', value)} />

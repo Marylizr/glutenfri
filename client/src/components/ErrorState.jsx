@@ -1,4 +1,7 @@
+import { useLanguage } from '../i18n/index.jsx';
+
 export default function ErrorState({ message, onRetry }) {
+  const { t } = useLanguage();
   return (
     <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--color-text-muted)' }}>
       <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</div>
@@ -16,7 +19,7 @@ export default function ErrorState({ message, onRetry }) {
             fontWeight: 600,
           }}
         >
-          Reintentar
+          {t('retry')}
         </button>
       )}
     </div>

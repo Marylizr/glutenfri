@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
-
-const TABS = [
-  { to: '/', label: 'Inicio', icon: '⌂', end: true },
-  { to: '/mapa', label: 'Mapa', icon: '⚲' },
-  { to: '/guardados', label: 'Guardados', icon: '♡' },
-  { to: '/reseñas', label: 'Reseñas', icon: '✎' },
-  { to: '/perfil', label: 'Perfil', icon: '◍' },
-];
+import { useLanguage } from '../i18n/index.jsx';
 
 export default function BottomNav() {
+  const { t } = useLanguage();
+  const tabs = [
+    { to: '/', label: t('home'), icon: 'home', end: true },
+    { to: '/mapa', label: t('map'), icon: 'distance' },
+    { to: '/guardados', label: t('saved'), icon: 'favorite' },
+    { to: '/reseñas', label: t('reviews'), icon: 'edit_square' },
+    { to: '/perfil', label: t('profile'), icon: 'for_you' },
+  ];
   return (
     <nav
       style={{
@@ -19,11 +20,12 @@ export default function BottomNav() {
         padding: '8px 0 max(8px, env(safe-area-inset-bottom))',
       }}
     >
-      {TABS.map((tab) => (
+      {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           end={tab.end}
+          className={({ isActive }) => `bottom-nav__item${isActive ? ' is-active' : ''}`}
           style={({ isActive }) => ({
             background: 'none',
             border: 'none',
@@ -37,8 +39,10 @@ export default function BottomNav() {
             textDecoration: 'none',
           })}
         >
-          <span style={{ fontSize: '18px' }}>{tab.icon}</span>
-          {tab.label}
+          <span className="material-symbols-outlined bottom-nav__icon" aria-hidden="true">
+            {tab.icon}
+          </span>
+          <span>{tab.label}</span>
         </NavLink>
       ))}
     </nav>

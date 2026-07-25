@@ -2,6 +2,7 @@ const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
 const { toPublicReview, visibilityFilter } = require('../utils/reviewFormatting');
 const { getPlacePhotoName, fetchPlacePhotoMedia } = require('../services/googlePlaces');
+const { TRUST_STATUS, normalizeEstablishmentTrust } = require('../utils/trustStatus');
 
 // Cache en memoria de proceso (nunca en Mongo) del nombre de recurso de la
 // foto por placeId — evita pegarle a Place Details en cada request de
@@ -14,7 +15,16 @@ async function listEstablishments(req, res) {
   const { type, certifiedOnly } = req.query;
   const query = {};
   if (type) query.type = type;
-  if (certifiedOnly === 'true') query.certified = true;
+  if (certifiedOnly === 'true') {
+    query.$or = [
+      { trustStatus: TRUST_STATUS.CERTIFIED_APC_BIOTRAB },
+      {
+        certified: true,
+        source: { $in: ['APC', 'APC+Google'] },
+        trustStatus: { $exists: false },
+      },
+    ];
+  }
 
   // Paginación preparada para cuando el dataset crezca más allá de un
   // puñado de cientos de registros. Default limit=100 cubre el dataset
@@ -29,13 +39,19 @@ async function listEstablishments(req, res) {
     Establishment.countDocuments(query),
   ]);
 
-  res.json({ data, page, limit, total, totalPages: Math.ceil(total / limit) });
+  res.json({
+    data: data.map(normalizeEstablishmentTrust),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  });
 }
 
 async function getEstablishment(req, res) {
   const establishment = await Establishment.findById(req.params.id).lean();
   if (!establishment) return res.status(404).json({ error: 'No encontrado' });
-  res.json(establishment);
+  res.json(normalizeEstablishmentTrust(establishment));
 }
 
 async function listReviews(req, res) {
@@ -84,7 +100,7 @@ async function createReview(req, res) {
     { $group: { _id: '$establishment', avg: { $avg: '$rating' } } },
   ]);
 
-  // Celiac Safety Protocols: la reseña más reciente sobrescribe los campos
+  // Señales comunitarias: la reseña más reciente sobrescribe los campos
   // del establecimiento (decisión de producto — no se promedia entre reseñas).
   // staffTrained se deriva de staffUnderstanding: solo "excellent" cuenta como
   // personal capacitado.

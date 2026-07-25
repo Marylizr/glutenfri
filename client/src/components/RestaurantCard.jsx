@@ -4,42 +4,12 @@ import SaveButton from './SaveButton';
 import GoogleAttribution from './GoogleAttribution';
 import { isGoogleSourced } from '../utils/googlePlaces';
 import { distanceKm, formatDistance } from '../utils/distance';
+import TrustBadge from './TrustBadge.jsx';
+import { Link } from 'react-router-dom';
+import { formatVerificationDate, useLanguage } from '../i18n/index.jsx';
 
 export function Badge({ establishment }) {
-  // Prioridad: certificación oficial APC > señal de Google no verificada.
-  if (establishment.certified) {
-    return (
-      <span
-        style={{
-          background: 'var(--color-accent-soft)',
-          color: 'var(--color-accent)',
-          fontSize: '11px',
-          fontWeight: 600,
-          padding: '4px 8px',
-          borderRadius: 'var(--radius-pill)',
-        }}
-      >
-        ✓ Certificado APC
-      </span>
-    );
-  }
-  if (establishment.notes) {
-    return (
-      <span
-        style={{
-          background: 'var(--color-warn-soft)',
-          color: 'var(--color-warn)',
-          fontSize: '11px',
-          fontWeight: 600,
-          padding: '4px 8px',
-          borderRadius: 'var(--radius-pill)',
-        }}
-      >
-        Sin verificar
-      </span>
-    );
-  }
-  return null;
+  return <TrustBadge establishment={establishment} />;
 }
 
 export default function RestaurantCard({
@@ -49,7 +19,9 @@ export default function RestaurantCard({
   saved,
   onToggleSaved,
 }) {
+  const { language, t } = useLanguage();
   const km = distanceKm(userPosition, establishment);
+  const lastChecked = formatVerificationDate(establishment.lastVerifiedAt, language);
 
   return (
     <div
@@ -68,6 +40,7 @@ export default function RestaurantCard({
           type={establishment.type}
           establishmentId={establishment._id}
           hasPhoto={establishment.hasPhoto}
+          name={establishment.name}
         />
         <div style={{ position: 'absolute', top: 10, left: 10 }}>
           <Badge establishment={establishment} />
@@ -119,6 +92,17 @@ export default function RestaurantCard({
             <GoogleAttribution compact />
           </div>
         )}
+        <div style={{ marginTop: 8, color: 'var(--color-text-muted)', fontSize: 11, lineHeight: 1.45 }}>
+          <div><strong>{t('source')}:</strong> {establishment.sourceName || t('sourceMissing')}</div>
+          <div><strong>{t('lastChecked')}:</strong> {lastChecked || t('dateMissing')}</div>
+        </div>
+        <Link
+          to="/informacion-sin-gluten"
+          onClick={(event) => event.stopPropagation()}
+          style={{ display: 'inline-block', marginTop: 8, color: 'var(--color-accent)', fontSize: 12 }}
+        >
+          {t('understandCategory')}
+        </Link>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const Establishment = require('../models/Establishment');
+const { normalizeEstablishmentTrust } = require('../utils/trustStatus');
 
 async function seed() {
   const filePath = path.join(__dirname, '../../data/merged_dataset.json');
@@ -12,7 +13,7 @@ async function seed() {
   }
 
   const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  const docs = raw.establishments.map((e) => ({
+  const docs = raw.establishments.map((e) => normalizeEstablishmentTrust({
     name: e.name,
     type: e.type,
     address: e.address || undefined,

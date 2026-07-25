@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import EstablishmentDetailPage from './EstablishmentDetailPage';
 import ErrorState from '../components/ErrorState';
 import { getEstablishmentById } from '../services/establishments';
+import { useLanguage } from '../i18n/index.jsx';
 
 // Traduce /lugar/:id a la pantalla de detalle. Si llegamos acá desde un
 // click dentro de la app (RestaurantCard, feed de reseñas), el
@@ -10,6 +11,12 @@ import { getEstablishmentById } from '../services/establishments';
 // redundante. Si es una carga directa por URL (link compartido, refresh),
 // no hay state y lo pedimos al backend.
 export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved }) {
+  const { language, t } = useLanguage();
+  const copy = {
+    'pt-PT': { error: 'Não foi possível carregar este local. Tenta novamente.', missing: 'Não encontrámos este local.', home: 'Voltar ao início' },
+    en: { error: 'We could not load this place. Please try again.', missing: 'We could not find this place.', home: 'Back to home' },
+    es: { error: 'No pudimos cargar este lugar. Intenta de nuevo.', missing: 'No encontramos este lugar.', home: 'Volver al inicio' },
+  }[language];
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,7 +33,7 @@ export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved
     setError(null);
     getEstablishmentById(id)
       .then(setEstablishment)
-      .catch(() => setError('No pudimos cargar este lugar. Intenta de nuevo.'))
+      .catch(() => setError(copy.error))
       .finally(() => setLoading(false));
   };
 
@@ -52,13 +59,13 @@ export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved
   };
 
   if (loading) {
-    return <div style={{ padding: 24, color: 'var(--color-text-muted)' }}>Cargando…</div>;
+    return <div style={{ padding: 24, color: 'var(--color-text-muted)' }}>{t('loading')}</div>;
   }
 
   if (error || !establishment) {
     return (
       <div style={{ padding: '16px' }}>
-        <ErrorState message={error || 'No encontramos este lugar.'} onRetry={load} />
+        <ErrorState message={error || copy.missing} onRetry={load} />
         <button
           onClick={() => navigate('/')}
           style={{
@@ -70,7 +77,7 @@ export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved
             fontSize: '14px',
           }}
         >
-          Volver a Inicio
+          {copy.home}
         </button>
       </div>
     );
