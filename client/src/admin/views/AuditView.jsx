@@ -9,18 +9,8 @@ import {
 } from '@phosphor-icons/react';
 import { getAuditLog } from '../../services/admin';
 import { formatRelativeTime } from '../../utils/time';
-
-const ACTION_LABELS = {
-  review_hidden: 'Reseña ocultada',
-  review_restored: 'Reseña restaurada',
-  user_suspended: 'Usuario suspendido',
-  user_restored: 'Usuario restaurado',
-  admin_granted: 'Permiso de admin concedido',
-  admin_revoked: 'Permiso de admin retirado',
-  establishment_created: 'Establecimiento creado',
-  establishment_updated: 'Establecimiento actualizado',
-  places_refresh_started: 'Refresco de Places iniciado',
-};
+import { useLanguage } from '../../i18n';
+import { ADMIN_COPY, formatAdminCopy } from '../adminCopy';
 
 const TARGET_ICONS = {
   review: Star,
@@ -30,6 +20,9 @@ const TARGET_ICONS = {
 };
 
 export default function AuditView() {
+  const { language } = useLanguage();
+  const copy = ADMIN_COPY[language].audit;
+  const common = ADMIN_COPY[language].common;
   const [targetType, setTargetType] = useState('');
   const [result, setResult] = useState({ data: [], total: 0, page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -52,34 +45,34 @@ export default function AuditView() {
     <>
       <div className="admin-page-header">
         <div>
-          <h1>Actividad administrativa</h1>
-          <p>Registro inmutable de las decisiones realizadas desde el backoffice.</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.subtitle}</p>
         </div>
-        <span className="admin-status-pill"><ShieldCheck size={14} weight="fill" />Auditoría activa</span>
+        <span className="admin-status-pill"><ShieldCheck size={14} weight="fill" />{copy.active}</span>
       </div>
 
       <div className="admin-filter-bar">
         <select className="admin-filter-select" value={targetType} onChange={(event) => setTargetType(event.target.value)}>
-          <option value="">Todos los recursos</option>
-          <option value="review">Reseñas</option>
-          <option value="user">Usuarios</option>
-          <option value="establishment">Establecimientos</option>
-          <option value="system">Sistema</option>
+          <option value="">{copy.allResources}</option>
+          <option value="review">{copy.reviews}</option>
+          <option value="user">{copy.users}</option>
+          <option value="establishment">{copy.establishments}</option>
+          <option value="system">{copy.system}</option>
         </select>
       </div>
 
       <div className="admin-table-wrap">
         {loading ? (
-          <div className="admin-loading">Leyendo el historial…</div>
+          <div className="admin-loading">{copy.loading}</div>
         ) : (
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Acción</th>
-                <th>Administrador</th>
-                <th>Recurso</th>
-                <th>Motivo</th>
-                <th>Fecha</th>
+                <th>{copy.action}</th>
+                <th>{copy.administrator}</th>
+                <th>{copy.resource}</th>
+                <th>{copy.reason}</th>
+                <th>{copy.date}</th>
               </tr>
             </thead>
             <tbody>
@@ -90,18 +83,18 @@ export default function AuditView() {
                     <td>
                       <span className="admin-cell-title admin-inline-actions">
                         <Icon size={16} />
-                        {ACTION_LABELS[action.action] || action.action}
+                        {copy.actionsMap[action.action] || action.action}
                       </span>
                     </td>
                     <td>
-                      <span className="admin-cell-title">{action.actor?.name || 'Cuenta eliminada'}</span>
+                      <span className="admin-cell-title">{action.actor?.name || copy.deletedAccount}</span>
                       <span className="admin-cell-subtitle">{action.actor?.email}</span>
                     </td>
                     <td>{action.targetLabel || action.targetType}</td>
                     <td>{action.reason || '—'}</td>
                     <td>
-                      <span className="admin-cell-title">{new Date(action.createdAt).toLocaleString('es-ES')}</span>
-                      <span className="admin-cell-subtitle">{formatRelativeTime(action.createdAt)}</span>
+                      <span className="admin-cell-title">{new Date(action.createdAt).toLocaleString(language)}</span>
+                      <span className="admin-cell-subtitle">{formatRelativeTime(action.createdAt, language)}</span>
                     </td>
                   </tr>
                 );
@@ -109,13 +102,13 @@ export default function AuditView() {
             </tbody>
           </table>
         )}
-        {!loading && result.data.length === 0 && <div className="admin-empty">Todavía no hay acciones registradas.</div>}
+        {!loading && result.data.length === 0 && <div className="admin-empty">{copy.noActions}</div>}
         <div className="admin-pagination">
-          <span>{result.total} acciones</span>
+          <span>{formatAdminCopy(copy.total, { count: result.total })}</span>
           <div className="admin-inline-actions">
-            <button className="admin-secondary-button" type="button" disabled={result.page <= 1} onClick={() => load(result.page - 1)}>Anterior</button>
-            <span>Página {result.page} de {Math.max(result.totalPages, 1)}</span>
-            <button className="admin-secondary-button" type="button" disabled={result.page >= result.totalPages} onClick={() => load(result.page + 1)}>Siguiente</button>
+            <button className="admin-secondary-button" type="button" disabled={result.page <= 1} onClick={() => load(result.page - 1)}>{common.previous}</button>
+            <span>{formatAdminCopy(common.page, { page: result.page, total: Math.max(result.totalPages, 1) })}</span>
+            <button className="admin-secondary-button" type="button" disabled={result.page >= result.totalPages} onClick={() => load(result.page + 1)}>{common.next}</button>
           </div>
         </div>
       </div>

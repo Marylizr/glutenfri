@@ -18,6 +18,7 @@ const PROFILE_COPY = {
     hidePassword: 'Ocultar palavra-passe', showPassword: 'Mostrar palavra-passe', hide: 'Ocultar', show: 'Mostrar',
     acceptPrefix: 'Li e aceito a', privacy: 'política de privacidade', genericError: 'Ocorreu um erro. Tenta novamente.',
     sending: 'A enviar…', enter: 'Entrar', noAccount: 'Ainda não tens conta? Cria uma', hasAccount: 'Já tens conta? Inicia sessão',
+    business: 'Abrir painel do negócio',
   },
   en: {
     logout: 'Log out', admin: 'Open moderation panel', data: 'Your data',
@@ -29,6 +30,7 @@ const PROFILE_COPY = {
     hidePassword: 'Hide password', showPassword: 'Show password', hide: 'Hide', show: 'Show',
     acceptPrefix: 'I have read and accept the', privacy: 'privacy policy', genericError: 'Something went wrong. Please try again.',
     sending: 'Sending…', enter: 'Log in', noAccount: 'No account yet? Create one', hasAccount: 'Already have an account? Log in',
+    business: 'Open business dashboard',
   },
   es: {
     logout: 'Cerrar sesión', admin: 'Abrir panel de moderación', data: 'Tus datos',
@@ -40,6 +42,7 @@ const PROFILE_COPY = {
     hidePassword: 'Ocultar contraseña', showPassword: 'Mostrar contraseña', hide: 'Ocultar', show: 'Mostrar',
     acceptPrefix: 'He leído y acepto la', privacy: 'política de privacidad', genericError: 'Algo salió mal. Intenta de nuevo.',
     sending: 'Enviando…', enter: 'Entrar', noAccount: '¿No tienes cuenta? Crea una', hasAccount: '¿Ya tienes cuenta? Inicia sesión',
+    business: 'Abrir panel del negocio',
   },
 };
 
@@ -134,6 +137,7 @@ function AccountPanel({ auth }) {
           {copy.admin}
         </Link>
       )}
+      <Link className="profile-business-link" to="/negocio">{copy.business}</Link>
 
       <h2 style={{ fontSize: '15px', marginBottom: '10px' }}>{copy.data}</h2>
 

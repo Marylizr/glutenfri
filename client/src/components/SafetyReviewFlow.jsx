@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { postReview } from '../services/establishments';
+import { loginUser } from '../services/auth';
 import { useLanguage } from '../i18n/index.jsx';
 
 const TOTAL_STEPS = 5;
@@ -15,6 +16,7 @@ const FLOW_COPY = {
     ratingTitle: 'Para terminar, como avalias esta experiência?', stars: 'estrelas',
     comment: 'Conta mais sobre a tua experiência (opcional)', authError: 'Precisas de iniciar sessão para publicar uma avaliação.',
     saveError: 'Não foi possível guardar a avaliação. Tenta novamente.', sending: 'A enviar…', update: 'Atualizar avaliação', submit: 'Publicar avaliação',
+    email: 'Email', password: 'Palavra-passe', login: 'Iniciar sessão', loginError: 'Não foi possível iniciar sessão. Confirma os teus dados.',
   },
   en: {
     back: 'Back', staffTitle: 'How did staff respond to your gluten-related needs?', staffSubtitle: 'Describe only your experience during this visit.',
@@ -26,6 +28,7 @@ const FLOW_COPY = {
     ratingTitle: 'Finally, how do you rate this experience?', stars: 'stars', comment: 'Tell us more about your experience (optional)',
     authError: 'You need to log in to publish a review.', saveError: 'We could not save the review. Please try again.',
     sending: 'Sending…', update: 'Update review', submit: 'Publish review',
+    email: 'Email', password: 'Password', login: 'Log in', loginError: 'We could not log you in. Check your details.',
   },
   es: {
     back: 'Atrás', staffTitle: '¿Cómo respondió el personal a tus necesidades relacionadas con el gluten?', staffSubtitle: 'Describe únicamente tu experiencia durante esta visita.',
@@ -37,6 +40,7 @@ const FLOW_COPY = {
     ratingTitle: 'Para terminar, ¿cómo valoras esta experiencia?', stars: 'estrellas', comment: 'Cuéntanos más sobre tu experiencia (opcional)',
     authError: 'Necesitas iniciar sesión para publicar una reseña.', saveError: 'No pudimos guardar la reseña. Intenta de nuevo.',
     sending: 'Enviando…', update: 'Actualizar reseña', submit: 'Publicar reseña',
+    email: 'Email', password: 'Contraseña', login: 'Iniciar sesión', loginError: 'No pudimos iniciar sesión. Revisa tus datos.',
   },
 };
 
@@ -111,7 +115,7 @@ function StepShell({ step, title, subtitle, onBack, backLabel, children }) {
   );
 }
 
-export default function SafetyReviewFlow({ establishmentId, existingReview, onCancel, onComplete }) {
+export default function SafetyReviewFlow({ establishmentId, existingReview, onCancel, onComplete, auth }) {
   const { language } = useLanguage();
   const copy = FLOW_COPY[language];
   const isEditing = !!existingReview;
@@ -124,6 +128,9 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
   const [comment, setComment] = useState(existingReview?.comment ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const goBack = () => {
     if (step === 1) return onCancel();
@@ -150,25 +157,52 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
     setStep(5);
   };
 
+  const reviewPayload = {
+    rating,
+    comment,
+    staffUnderstanding,
+    hasDedicatedMenu,
+    dedicatedKitchen,
+    riskLevel,
+  };
+
+  const publishReview = async () => {
+    await postReview(establishmentId, reviewPayload);
+    onComplete();
+  };
+
   const handleSubmit = async () => {
+    setError(null);
+    if (!auth?.user) {
+      setNeedsLogin(true);
+      setError(copy.authError);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await publishReview();
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setNeedsLogin(true);
+        setError(copy.authError);
+      } else {
+        setError(copy.saveError);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInlineLogin = async (event) => {
+    event.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await postReview(establishmentId, {
-        rating,
-        comment,
-        staffUnderstanding,
-        hasDedicatedMenu,
-        dedicatedKitchen,
-        riskLevel,
-      });
-      onComplete();
+      const session = await loginUser({ email, password });
+      auth.setSession(session);
+      await publishReview();
     } catch (err) {
-      setError(
-        err.response?.status === 401
-          ? copy.authError
-          : copy.saveError
-      );
+      setError(err.response?.status === 401 ? copy.loginError : copy.saveError);
     } finally {
       setSubmitting(false);
     }
@@ -307,27 +341,55 @@ export default function SafetyReviewFlow({ establishmentId, existingReview, onCa
       />
 
       {error && (
-        <div style={{ color: 'var(--color-warn)', fontSize: '13px', marginBottom: '12px' }}>
+        <div role="alert" style={{ color: 'var(--color-warn)', fontSize: '13px', marginBottom: '12px' }}>
           {error}
         </div>
       )}
 
-      <button
-        onClick={handleSubmit}
-        disabled={rating === 0 || submitting}
-        style={{
-          width: '100%',
-          padding: '14px',
-          borderRadius: 'var(--radius-input)',
-          border: 'none',
-          background: rating === 0 ? 'var(--color-border)' : 'var(--color-accent)',
-          color: '#fff',
-          fontSize: '16px',
-          fontWeight: 600,
-        }}
-      >
-        {submitting ? copy.sending : isEditing ? copy.update : copy.submit}
-      </button>
+      {needsLogin ? (
+        <form className="review-inline-login" onSubmit={handleInlineLogin}>
+          <label>
+            <span>{copy.email}</span>
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <span>{copy.password}</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </label>
+          <button type="submit" disabled={submitting}>
+            {submitting ? copy.sending : copy.login}
+          </button>
+        </form>
+      ) : (
+        <button
+          onClick={handleSubmit}
+          disabled={rating === 0 || submitting}
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: 'var(--radius-input)',
+            border: 'none',
+            background: rating === 0 ? 'var(--color-border)' : 'var(--color-accent)',
+            color: '#fff',
+            fontSize: '16px',
+            fontWeight: 600,
+          }}
+        >
+          {submitting ? copy.sending : isEditing ? copy.update : copy.submit}
+        </button>
+      )}
     </StepShell>
   );
 }

@@ -2,10 +2,16 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/index.jsx';
 import { getAdvancedFilterCount } from '../utils/establishmentFilters.js';
+import SortControl from './SortControl.jsx';
 
 export default function ExploreFiltersButton({
-  certifiedOnly,
-  onCertifiedChange,
+  filters,
+  onChange,
+  available,
+  sort,
+  onSortChange,
+  locationStatus,
+  onRequestLocation,
 }) {
   const { t } = useLanguage();
   const location = useLocation();
@@ -13,7 +19,7 @@ export default function ExploreFiltersButton({
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const panelId = useId();
-  const activeCount = getAdvancedFilterCount({ certifiedOnly });
+  const activeCount = getAdvancedFilterCount(filters);
 
   const close = useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -48,8 +54,22 @@ export default function ExploreFiltersButton({
   }, [location.pathname]);
 
   const clear = () => {
-    onCertifiedChange(false);
+    onChange({
+      certifiedOnly: false,
+      discountOnly: false,
+      deliveryOnly: false,
+      takeawayOnly: false,
+      openNowOnly: false,
+    });
   };
+
+  const options = [
+    ['certifiedOnly', 'certificationFilter', true],
+    ['discountOnly', 'discountFilter', available.discount],
+    ['deliveryOnly', 'deliveryFilter', available.delivery],
+    ['takeawayOnly', 'takeawayFilter', available.takeaway],
+    ['openNowOnly', 'openNowFilter', available.hours],
+  ];
 
   return (
     <div className="explore-filter" ref={rootRef}>
@@ -74,22 +94,31 @@ export default function ExploreFiltersButton({
           aria-labelledby={`${panelId}-title`}
         >
           <div className="explore-filter__heading">
-            <strong id={`${panelId}-title`}>{t('trustInformation')}</strong>
+            <strong id={`${panelId}-title`}>{t('filters')}</strong>
           </div>
 
-          <label className="explore-filter__check">
-            <input
-              type="checkbox"
-              checked={certifiedOnly}
-              onChange={(event) => onCertifiedChange(event.target.checked)}
-            />
-            <span className="explore-filter__option-copy">
-              <strong>{t('certificationFilter')}</strong>
-            </span>
-            <span className="explore-filter__switch" aria-hidden="true">
-              <span />
-            </span>
-          </label>
+          <SortControl
+            value={sort}
+            onChange={onSortChange}
+            locationStatus={locationStatus}
+            onRequestLocation={onRequestLocation}
+          />
+
+          {options.filter(([, , visible]) => visible).map(([key, labelKey]) => (
+            <label className="explore-filter__check" key={key}>
+              <input
+                type="checkbox"
+                checked={!!filters[key]}
+                onChange={(event) => onChange({ [key]: event.target.checked })}
+              />
+              <span className="explore-filter__option-copy">
+                <strong>{t(labelKey)}</strong>
+              </span>
+              <span className="explore-filter__switch" aria-hidden="true">
+                <span />
+              </span>
+            </label>
+          ))}
 
           {activeCount > 0 && (
             <div className="explore-filter__actions">

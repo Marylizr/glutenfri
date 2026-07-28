@@ -9,3 +9,10 @@ export function normalizeLanguage(value) {
 export function readStoredLanguage(storage) {
   return normalizeLanguage(storage?.getItem?.('gf_language'));
 }
+
+export function persistLanguage(language, storage, documentElement) {
+  const normalized = normalizeLanguage(language);
+  storage?.setItem?.('gf_language', normalized);
+  if (documentElement) documentElement.lang = normalized;
+  return normalized;
+}

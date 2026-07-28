@@ -11,17 +11,30 @@ import ReportButton from '../components/ReportButton';
 import { getReviews } from '../services/establishments';
 import TrustDetails from '../components/TrustDetails.jsx';
 import { useLanguage } from '../i18n/index.jsx';
+import SharePlaceButton from '../components/SharePlaceButton.jsx';
+import BusinessClaimDialog from '../components/BusinessClaimDialog.jsx';
+import { recordBusinessEvent } from '../services/business.js';
+import EstablishmentSeo from '../components/EstablishmentSeo.jsx';
+import {
+  getBooleanCommunityState,
+  getRiskCommunityState,
+} from '../utils/communitySignals.js';
 
 const DETAIL_COPY = {
   'pt-PT': {
     staff: { poor: 'Fraca', okay: 'Razoável', excellent: 'Excelente' },
-    risk: { none: 'Nenhum', low: 'Baixo', moderate: 'Moderado', high: 'Alto' },
-    communityTitle: 'Informação comunicada pela comunidade',
-    communityNotice: 'Estas respostas descrevem experiências individuais e não constituem uma verificação nem uma garantia.',
-    dedicatedKitchen: 'Cozinha dedicada declarada',
-    dedicatedMenu: 'Menu específico sem glúten declarado',
-    staffUnderstanding: 'Compreensão da equipa reportada',
-    riskLevel: 'Nível de risco reportado',
+    risk: { none: 'Nenhum', low: 'Baixo', moderate: 'Moderado', high: 'Elevado' },
+    communityTitle: 'O que a comunidade partilhou',
+    communityNotice: 'Estas informações refletem experiências individuais e não substituem a confirmação direta com o estabelecimento.',
+    dedicatedKitchen: 'Cozinha exclusiva sem glúten',
+    dedicatedMenu: 'Menu sem glúten disponível',
+    staffUnderstanding: 'Equipa preparada para atender',
+    riskLevel: 'Risco indicado pela comunidade',
+    communityStates: {
+      yes: 'Sim', no: 'Não', unreported: 'Não reportado',
+      'risk-none': 'Nenhum indicado', 'risk-low': 'Baixo',
+      'risk-moderate': 'Moderado', 'risk-high': 'Elevado',
+    },
     user: 'Utilizador',
     staffLabel: 'Equipa',
     yes: 'Sim',
@@ -33,16 +46,23 @@ const DETAIL_COPY = {
     noReviews: 'Ainda não existem experiências publicadas.',
     directions: 'Como chegar',
     call: 'Ligar',
+    sponsored: 'Patrocinado',
+    website: 'Website', menu: 'Menu', reserve: 'Reservar', order: 'Encomendar', whatsapp: 'WhatsApp',
   },
   en: {
     staff: { poor: 'Poor', okay: 'Fair', excellent: 'Excellent' },
     risk: { none: 'None', low: 'Low', moderate: 'Moderate', high: 'High' },
-    communityTitle: 'Information shared by the community',
-    communityNotice: 'These answers describe individual experiences and are not verification or a guarantee.',
-    dedicatedKitchen: 'Dedicated kitchen reported',
-    dedicatedMenu: 'Specific gluten-free menu reported',
-    staffUnderstanding: 'Staff understanding reported',
-    riskLevel: 'Reported risk level',
+    communityTitle: 'What the community shared',
+    communityNotice: 'This information reflects individual experiences and does not replace checking directly with the establishment.',
+    dedicatedKitchen: 'Dedicated gluten-free kitchen',
+    dedicatedMenu: 'Gluten-free menu available',
+    staffUnderstanding: 'Staff prepared to assist',
+    riskLevel: 'Risk indicated by the community',
+    communityStates: {
+      yes: 'Yes', no: 'No', unreported: 'Not reported',
+      'risk-none': 'None indicated', 'risk-low': 'Low',
+      'risk-moderate': 'Moderate', 'risk-high': 'High',
+    },
     user: 'User',
     staffLabel: 'Staff',
     yes: 'Yes',
@@ -54,16 +74,23 @@ const DETAIL_COPY = {
     noReviews: 'No community experiences have been published yet.',
     directions: 'Directions',
     call: 'Call',
+    sponsored: 'Sponsored',
+    website: 'Website', menu: 'Menu', reserve: 'Reserve', order: 'Order', whatsapp: 'WhatsApp',
   },
   es: {
     staff: { poor: 'Mala', okay: 'Regular', excellent: 'Excelente' },
-    risk: { none: 'Ninguno', low: 'Bajo', moderate: 'Moderado', high: 'Alto' },
-    communityTitle: 'Información comunicada por la comunidad',
-    communityNotice: 'Estas respuestas describen experiencias individuales y no constituyen una verificación ni una garantía.',
-    dedicatedKitchen: 'Cocina dedicada declarada',
-    dedicatedMenu: 'Menú específico sin gluten declarado',
-    staffUnderstanding: 'Comprensión del personal reportada',
-    riskLevel: 'Nivel de riesgo reportado',
+    risk: { none: 'Ninguno', low: 'Bajo', moderate: 'Moderado', high: 'Elevado' },
+    communityTitle: 'Lo que compartió la comunidad',
+    communityNotice: 'Esta información refleja experiencias individuales y no sustituye la confirmación directa con el establecimiento.',
+    dedicatedKitchen: 'Cocina exclusiva sin gluten',
+    dedicatedMenu: 'Menú sin gluten disponible',
+    staffUnderstanding: 'Equipo preparado para atender',
+    riskLevel: 'Riesgo indicado por la comunidad',
+    communityStates: {
+      yes: 'Sí', no: 'No', unreported: 'No reportado',
+      'risk-none': 'Ninguno indicado', 'risk-low': 'Bajo',
+      'risk-moderate': 'Moderado', 'risk-high': 'Elevado',
+    },
     user: 'Usuario',
     staffLabel: 'Personal',
     yes: 'Sí',
@@ -75,34 +102,25 @@ const DETAIL_COPY = {
     noReviews: 'Todavía no hay experiencias publicadas.',
     directions: 'Cómo llegar',
     call: 'Llamar',
+    sponsored: 'Patrocinado',
+    website: 'Web', menu: 'Menú', reserve: 'Reservar', order: 'Pedir', whatsapp: 'WhatsApp',
   },
 };
 
 const PROTOCOL_FIELDS = ['dedicatedKitchen', 'dedicatedGlutenFreeMenu', 'staffTrained', 'riskLevel'];
 
-function ProtocolRow({ icon, label, active }) {
-  if (active === undefined || active === null) return null;
+function CommunitySignalRow({ icon, label, state, stateLabel }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '10px 0',
-        borderBottom: '1px solid var(--color-border)',
-      }}
-    >
-      <span style={{ fontSize: '18px' }}>{icon}</span>
-      <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>{label}</span>
-      <span
-        style={{
-          marginLeft: 'auto',
-          color: active ? 'var(--color-accent)' : 'var(--color-warn)',
-          fontWeight: 700,
-        }}
-      >
-        {active ? '✓' : '✕'}
-      </span>
+    <div className="community-signal">
+      <dt>
+        <span className="material-symbols-outlined community-signal__icon" aria-hidden="true">
+          {icon}
+        </span>
+        <span>{label}</span>
+      </dt>
+      <dd>
+        <span className={`community-signal__status is-${state}`}>{stateLabel}</span>
+      </dd>
     </div>
   );
 }
@@ -111,27 +129,51 @@ function CommunityExperienceSignals({ establishment, copy }) {
   const hasAny = PROTOCOL_FIELDS.some((k) => establishment[k] !== undefined && establishment[k] !== null);
   if (!hasAny) return null;
 
+  const rows = [
+    {
+      key: 'kitchen',
+      icon: 'dining',
+      label: copy.dedicatedKitchen,
+      state: getBooleanCommunityState(establishment.dedicatedKitchen),
+    },
+    {
+      key: 'menu',
+      icon: 'menu_book_2',
+      label: copy.dedicatedMenu,
+      state: getBooleanCommunityState(establishment.dedicatedGlutenFreeMenu),
+    },
+    {
+      key: 'staff',
+      icon: 'chef_hat',
+      label: copy.staffUnderstanding,
+      state: getBooleanCommunityState(establishment.staffTrained),
+    },
+    {
+      key: 'risk',
+      icon: 'warning',
+      label: copy.riskLevel,
+      state: getRiskCommunityState(establishment.riskLevel),
+    },
+  ];
+
   return (
-    <>
-      <h2 style={{ fontSize: '16px', marginBottom: '4px' }}>{copy.communityTitle}</h2>
-      <p style={{ color: 'var(--color-text-muted)', fontSize: 12, lineHeight: 1.45 }}>
+    <section className="community-signals" aria-labelledby="community-signals-heading">
+      <h2 id="community-signals-heading">{copy.communityTitle}</h2>
+      <p className="community-signals__notice">
         {copy.communityNotice}
       </p>
-      <div style={{ marginBottom: '20px' }}>
-        <ProtocolRow icon="🍳" label={copy.dedicatedKitchen} active={establishment.dedicatedKitchen} />
-        <ProtocolRow icon="📋" label={copy.dedicatedMenu} active={establishment.dedicatedGlutenFreeMenu} />
-        <ProtocolRow icon="🎓" label={copy.staffUnderstanding} active={establishment.staffTrained} />
-        {establishment.riskLevel != null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0' }}>
-            <span style={{ fontSize: '18px' }}>⚠️</span>
-            <span style={{ fontSize: '14px', color: 'var(--color-text)' }}>{copy.riskLevel}</span>
-            <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--color-text)' }}>
-              {copy.risk[establishment.riskLevel] || establishment.riskLevel}
-            </span>
-          </div>
-        )}
-      </div>
-    </>
+      <dl className="community-signals__list">
+        {rows.map((row) => (
+          <CommunitySignalRow
+            key={row.key}
+            icon={row.icon}
+            label={row.label}
+            state={row.state}
+            stateLabel={copy.communityStates[row.state]}
+          />
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -163,50 +205,26 @@ function ReviewItem({ review, auth, copy }) {
         </p>
       )}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        <span
-          style={{
-            fontSize: '11px',
-            background: 'var(--color-accent-soft)',
-            color: 'var(--color-accent)',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
-          }}
-        >
-          {copy.staffLabel}: {copy.staff[review.staffUnderstanding] || '—'}
-        </span>
-        <span
-          style={{
-            fontSize: '11px',
-            background: 'var(--color-surface-alt)',
-            color: 'var(--color-text-muted)',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
-          }}
-        >
-          {copy.dedicatedMenu}: {review.hasDedicatedMenu ? copy.yes : copy.no}
-        </span>
-        <span
-          style={{
-            fontSize: '11px',
-            background: 'var(--color-surface-alt)',
-            color: 'var(--color-text-muted)',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
-          }}
-        >
-          {copy.dedicatedKitchen}: {review.dedicatedKitchen ? copy.yes : copy.no}
-        </span>
-        <span
-          style={{
-            fontSize: '11px',
-            background: 'var(--color-warn-soft)',
-            color: 'var(--color-warn)',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
-          }}
-        >
-          {copy.riskLevel}: {copy.risk[review.riskLevel] || '—'}
-        </span>
+        {copy.staff[review.staffUnderstanding] && (
+          <span style={{ fontSize: '11px', background: 'var(--color-accent-soft)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>
+            {copy.staffLabel}: {copy.staff[review.staffUnderstanding]}
+          </span>
+        )}
+        {typeof review.hasDedicatedMenu === 'boolean' && (
+          <span style={{ fontSize: '11px', background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>
+            {copy.dedicatedMenu}: {review.hasDedicatedMenu ? copy.yes : copy.no}
+          </span>
+        )}
+        {typeof review.dedicatedKitchen === 'boolean' && (
+          <span style={{ fontSize: '11px', background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>
+            {copy.dedicatedKitchen}: {review.dedicatedKitchen ? copy.yes : copy.no}
+          </span>
+        )}
+        {copy.risk[review.riskLevel] && (
+          <span style={{ fontSize: '11px', background: 'var(--color-warn-soft)', color: 'var(--color-warn)', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>
+            {copy.riskLevel}: {copy.risk[review.riskLevel]}
+          </span>
+        )}
       </div>
       <div style={{ marginTop: '10px', textAlign: 'right' }}>
         <ReportButton reviewId={review._id} auth={auth} />
@@ -256,6 +274,18 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
     loadReviews();
   }, [loadReviews]);
 
+  useEffect(() => {
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `gf:impression:${establishment._id}:${day}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    recordBusinessEvent(
+      establishment._id,
+      'detail_impression',
+      `detail:${establishment._id}:${day}:${crypto.randomUUID?.() || Date.now()}`
+    );
+  }, [establishment._id]);
+
   // Una reseña por usuario por establecimiento (el backend hace upsert) —
   // si ya dejó una, el Safety Review se abre precargado para editarla en
   // vez de arrancar en blanco.
@@ -268,6 +298,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
       <SafetyReviewFlow
         establishmentId={establishment._id}
         existingReview={myReview}
+        auth={auth}
         onCancel={() => setShowReview(false)}
         onComplete={() => {
           setShowReview(false);
@@ -283,13 +314,15 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
         ? `${establishment.lat},${establishment.lng}`
         : establishment.address;
     if (!query) return;
+    recordBusinessEvent(establishment._id, 'directions_click');
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
   };
 
   return (
     <div className="establishment-detail">
+      <EstablishmentSeo establishment={establishment} />
       <div className="establishment-detail__scroll">
-        <div className="establishment-detail__hero" style={{ position: 'relative' }}>
+        <div className="establishment-detail__hero">
           <PhotoPlaceholder
             type={establishment.type}
             establishmentId={establishment._id}
@@ -298,6 +331,8 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             height={220}
           />
           <button
+            type="button"
+            className="establishment-detail__back"
             onClick={onBack}
             style={{
               position: 'absolute',
@@ -316,7 +351,8 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           >
             ←
           </button>
-          <div style={{ position: 'absolute', top: 14, right: 14, display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="establishment-detail__hero-tools">
+            <SharePlaceButton establishment={establishment} onShared={() => recordBusinessEvent(establishment._id, 'share_click')} />
             {onToggleSaved && (
               <SaveButton saved={saved} onToggle={() => onToggleSaved(establishment._id)} />
             )}
@@ -331,6 +367,12 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
 
         <div className="establishment-detail__content" style={{ padding: '28px 16px 16px' }}>
           <h1 style={{ fontSize: '24px', marginBottom: '4px' }}>{establishment.name}</h1>
+          {establishment.sponsorship?.status === 'active' && (
+            <span className="sponsored-label">{copy.sponsored}</span>
+          )}
+          {establishment.businessDescription && (
+            <p className="establishment-detail__description">{establishment.businessDescription}</p>
+          )}
           {establishment.address && (
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '4px' }}>
               {establishment.address}
@@ -348,7 +390,41 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           )}
 
           <TrustDetails establishment={establishment} />
+          {(establishment.websiteUrl || establishment.menuUrl || establishment.reservationUrl ||
+            establishment.orderUrl || establishment.whatsapp) && (
+            <nav className="establishment-detail__commercial-links" aria-label={t('placeActions')}>
+              {[
+                ['websiteUrl', copy.website, 'website_click'],
+                ['menuUrl', copy.menu, 'menu_click'],
+                ['reservationUrl', copy.reserve, 'reservation_click'],
+                ['orderUrl', copy.order, 'order_click'],
+              ].map(([field, label, eventType]) => establishment[field] && (
+                <a
+                  key={field}
+                  className="establishment-detail__action"
+                  href={establishment[field]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => recordBusinessEvent(establishment._id, eventType)}
+                >
+                  {label}
+                </a>
+              ))}
+              {establishment.whatsapp && (
+                <a
+                  className="establishment-detail__action"
+                  href={`https://wa.me/${String(establishment.whatsapp).replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => recordBusinessEvent(establishment._id, 'whatsapp_click')}
+                >
+                  {copy.whatsapp}
+                </a>
+              )}
+            </nav>
+          )}
           <CommunityExperienceSignals establishment={establishment} copy={copy} />
+          <BusinessClaimDialog establishment={establishment} auth={auth} />
 
           <button
             onClick={() => setShowReview(true)}
@@ -398,7 +474,10 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             {copy.directions}
           </ActionButton>
           {establishment.phone && (
-            <ActionButton onClick={() => window.open(`tel:${establishment.phone}`, '_self')}>
+            <ActionButton onClick={() => {
+              recordBusinessEvent(establishment._id, 'phone_click');
+              window.open(`tel:${establishment.phone}`, '_self');
+            }}>
               {copy.call}
             </ActionButton>
           )}

@@ -15,8 +15,14 @@ import {
   setUserSuspension,
 } from '../../services/admin';
 import { formatRelativeTime } from '../../utils/time';
+import { useLanguage } from '../../i18n';
+import { ADMIN_COPY } from '../adminCopy';
 
 export default function ModerationView() {
+  const { language } = useLanguage();
+  const copy = ADMIN_COPY[language].moderation;
+  const common = ADMIN_COPY[language].common;
+  const riskLabels = ADMIN_COPY[language].establishments.risks;
   const [reasonFilter, setReasonFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [reviews, setReviews] = useState([]);
@@ -36,9 +42,9 @@ export default function ModerationView() {
         setReviews(items);
         setSelected((current) => items.find((item) => item._id === current?._id) || items[0] || null);
       })
-      .catch(() => setError('No pudimos cargar la cola de moderación.'))
+      .catch(() => setError(copy.loadError))
       .finally(() => setLoading(false));
-  }, [reasonFilter, statusFilter]);
+  }, [copy.loadError, reasonFilter, statusFilter]);
 
   useEffect(() => {
     load();
@@ -50,14 +56,14 @@ export default function ModerationView() {
     setError(null);
     try {
       const updated = selected.hidden
-        ? await restoreReview(selected._id, decisionNote || 'Restaurada desde moderación')
-        : await hideReview(selected._id, decisionNote || 'Ocultada tras revisión');
+        ? await restoreReview(selected._id, decisionNote || copy.restoredReason)
+        : await hideReview(selected._id, decisionNote || copy.hiddenReason);
       const next = { ...selected, hidden: updated.hidden };
       setSelected(next);
       setReviews((current) => current.map((item) => item._id === next._id ? next : item));
       setDecisionNote('');
     } catch {
-      setError('No pudimos registrar la decisión.');
+      setError(copy.decisionError);
     } finally {
       setUpdating(false);
     }
@@ -77,8 +83,8 @@ export default function ModerationView() {
         user: { ...current.user, suspendedAt: new Date().toISOString() },
       }));
       setDecisionNote('');
-    } catch (requestError) {
-      setError(requestError.response?.data?.error || 'No pudimos suspender la cuenta.');
+    } catch {
+      setError(copy.suspensionError);
     } finally {
       setUpdating(false);
     }
@@ -88,35 +94,31 @@ export default function ModerationView() {
     <>
       <div className="admin-page-header">
         <div>
-          <h1>Moderación de reseñas</h1>
-          <p>Revisa evidencia, motivos y contexto antes de tomar una decisión.</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.subtitle}</p>
         </div>
       </div>
 
       <div className="admin-filter-bar">
         <label className="admin-search-field">
           <MagnifyingGlass size={18} />
-          <input placeholder="Buscar en la cola…" disabled aria-label="Buscar en la cola" />
+          <input placeholder={copy.search} disabled aria-label={copy.search} />
         </label>
         <select className="admin-filter-select" value={reasonFilter} onChange={(event) => setReasonFilter(event.target.value)}>
-          <option value="">Todos los motivos</option>
-          <option value="incorrect_safety">Seguridad incorrecta</option>
-          <option value="offensive">Contenido ofensivo</option>
-          <option value="spam">Spam</option>
-          <option value="personal_data">Datos personales</option>
-          <option value="other">Otros</option>
+          <option value="">{copy.allReasons}</option>
+          {Object.entries(copy.reasons).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <select className="admin-filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-          <option value="">Todos los estados</option>
-          <option value="visible">Visibles</option>
-          <option value="hidden">Ocultas</option>
+          <option value="">{copy.allStatuses}</option>
+          <option value="visible">{copy.visiblePlural}</option>
+          <option value="hidden">{copy.hiddenPlural}</option>
         </select>
       </div>
 
       <div className="admin-review-layout">
         <section className="admin-panel admin-queue">
-          {loading && <div className="admin-loading">Cargando reportes…</div>}
-          {!loading && reviews.length === 0 && <div className="admin-empty">La cola está vacía.</div>}
+          {loading && <div className="admin-loading">{copy.loading}</div>}
+          {!loading && reviews.length === 0 && <div className="admin-empty">{copy.emptyQueue}</div>}
           {reviews.map((review) => (
             <button
               key={review._id}
@@ -127,26 +129,26 @@ export default function ModerationView() {
                 setDecisionNote('');
               }}
             >
-              <strong>{review.reports[0]?.reasonLabel || 'Reporte pendiente'}</strong>
+              <strong>{copy.reasons[review.reports[0]?.reason] || copy.pendingReport}</strong>
               <span>{review.user?.name} · {review.establishment?.name}</span>
-              <span>{review.reportsCount} {review.reportsCount === 1 ? 'reporte' : 'reportes'} · {formatRelativeTime(review.updatedAt)}</span>
+              <span>{review.reportsCount} {review.reportsCount === 1 ? copy.reportOne : copy.reportOther} · {formatRelativeTime(review.updatedAt, language)}</span>
             </button>
           ))}
         </section>
 
         <section className="admin-panel">
           {!selected ? (
-            <div className="admin-empty">Selecciona una reseña para revisar su contexto.</div>
+            <div className="admin-empty">{copy.selectReview}</div>
           ) : (
             <div className="admin-review-detail">
               <div className="admin-inline-actions" style={{ justifyContent: 'space-between' }}>
                 <span className={`admin-status-pill ${selected.hidden ? 'is-warning' : ''}`}>
                   {selected.hidden ? <EyeSlash size={14} /> : <Eye size={14} />}
-                  {selected.hidden ? 'Oculta' : 'Visible'}
+                  {selected.hidden ? copy.hidden : copy.visible}
                 </span>
                 <span className="admin-status-pill is-danger">
                   <Flag size={14} weight="fill" />
-                  {selected.reportsCount} reportes
+                  {selected.reportsCount} {selected.reportsCount === 1 ? copy.reportOne : copy.reportOther}
                 </span>
               </div>
 
@@ -156,34 +158,34 @@ export default function ModerationView() {
               </p>
 
               <div className="admin-review-copy">
-                {selected.comment || 'La reseña no contiene comentario escrito.'}
+                {selected.comment || copy.noComment}
               </div>
 
               <div className="admin-safety-summary">
-                <span><strong>Personal</strong>{selected.staffUnderstanding}</span>
-                <span><strong>Menú dedicado</strong>{selected.hasDedicatedMenu ? 'Sí' : 'No'}</span>
-                <span><strong>Cocina dedicada</strong>{selected.dedicatedKitchen ? 'Sí' : 'No'}</span>
-                <span><strong>Riesgo</strong>{selected.riskLevel}</span>
+                <span><strong>{copy.staff}</strong>{copy.staffLevels[selected.staffUnderstanding] || selected.staffUnderstanding}</span>
+                <span><strong>{copy.dedicatedMenu}</strong>{selected.hasDedicatedMenu ? common.yes : common.no}</span>
+                <span><strong>{copy.dedicatedKitchen}</strong>{selected.dedicatedKitchen ? common.yes : common.no}</span>
+                <span><strong>{copy.risk}</strong>{riskLabels[selected.riskLevel] || selected.riskLevel}</span>
               </div>
 
-              <h3>Motivos enviados</h3>
+              <h3>{copy.submittedReasons}</h3>
               <ul className="admin-report-reasons">
                 {selected.reports.map((report) => (
                   <li key={report._id || `${report.reason}-${report.createdAt}`}>
-                    <strong>{report.reasonLabel}</strong>
+                    <strong>{copy.reasons[report.reason] || copy.pendingReport}</strong>
                     {report.details && <span>{report.details}</span>}
-                    <small>{formatRelativeTime(report.createdAt)}</small>
+                    <small>{formatRelativeTime(report.createdAt, language)}</small>
                   </li>
                 ))}
               </ul>
 
               <div className="admin-decision-box">
-                <strong>Tomar decisión</strong>
-                <p>Toda acción quedará registrada con tu cuenta, fecha y motivo.</p>
+                <strong>{copy.decide}</strong>
+                <p>{copy.auditNotice}</p>
                 <textarea
                   value={decisionNote}
                   onChange={(event) => setDecisionNote(event.target.value)}
-                  placeholder="Nota interna o justificación de la decisión"
+                  placeholder={copy.notePlaceholder}
                   maxLength={500}
                 />
                 <div className="admin-inline-actions">
@@ -194,7 +196,7 @@ export default function ModerationView() {
                     onClick={decideVisibility}
                   >
                     {selected.hidden ? <CheckCircle size={16} /> : <EyeSlash size={16} />}
-                    {updating ? 'Guardando…' : selected.hidden ? 'Restaurar reseña' : 'Ocultar reseña'}
+                    {updating ? common.saving : selected.hidden ? copy.restoreReview : copy.hideReview}
                   </button>
                   <button
                     className="admin-secondary-button"
@@ -203,7 +205,7 @@ export default function ModerationView() {
                     onClick={suspendAuthor}
                   >
                     {selected.user?.suspendedAt ? <ShieldWarning size={16} /> : <UserMinus size={16} />}
-                    {selected.user?.suspendedAt ? 'Cuenta suspendida' : 'Suspender usuario'}
+                    {selected.user?.suspendedAt ? copy.accountSuspended : copy.suspendUser}
                   </button>
                 </div>
                 {error && <p className="admin-error">{error}</p>}

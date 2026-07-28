@@ -13,9 +13,9 @@ import { useLanguage } from '../i18n/index.jsx';
 export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved }) {
   const { language, t } = useLanguage();
   const copy = {
-    'pt-PT': { error: 'Não foi possível carregar este local. Tenta novamente.', missing: 'Não encontrámos este local.', home: 'Voltar ao início' },
-    en: { error: 'We could not load this place. Please try again.', missing: 'We could not find this place.', home: 'Back to home' },
-    es: { error: 'No pudimos cargar este lugar. Intenta de nuevo.', missing: 'No encontramos este lugar.', home: 'Volver al inicio' },
+    'pt-PT': { error: 'Não foi possível carregar este local. Tenta novamente.', missing: 'Não encontrámos este local.', home: 'Voltar a explorar' },
+    en: { error: 'We could not load this place. Please try again.', missing: 'We could not find this place.', home: 'Back to explore' },
+    es: { error: 'No pudimos cargar este lugar. Intenta de nuevo.', missing: 'No encontramos este lugar.', home: 'Volver a explorar' },
   }[language];
   const { id } = useParams();
   const location = useLocation();
@@ -49,33 +49,27 @@ export default function EstablishmentDetailRoute({ auth, savedIds, onToggleSaved
   // Si vinimos de dentro de la app (hay backgroundLocation en el state),
   // "atrás" saca del historial del navegador y vuelve exactamente a la
   // pantalla y estado de donde salimos. Si es carga directa (sin
-  // historial propio), no hay a dónde volver dentro de la app — Inicio.
+  // historial propio), no hay a dónde volver dentro de la app — Explorar.
   const handleBack = () => {
     if (location.state?.backgroundLocation) {
       navigate(-1);
     } else {
-      navigate('/');
+      navigate('/explorar', { replace: true });
     }
   };
 
   if (loading) {
-    return <div style={{ padding: 24, color: 'var(--color-text-muted)' }}>{t('loading')}</div>;
+    return <div className="establishment-detail-state" role="status">{t('loading')}</div>;
   }
 
   if (error || !establishment) {
     return (
-      <div style={{ padding: '16px' }}>
+      <div className="establishment-detail-state">
         <ErrorState message={error || copy.missing} onRetry={load} />
         <button
-          onClick={() => navigate('/')}
-          style={{
-            display: 'block',
-            margin: '12px auto 0',
-            background: 'none',
-            border: 'none',
-            color: 'var(--color-text-muted)',
-            fontSize: '14px',
-          }}
+          type="button"
+          className="establishment-detail-state__back"
+          onClick={() => navigate('/explorar', { replace: true })}
         >
           {copy.home}
         </button>

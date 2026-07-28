@@ -19,20 +19,13 @@ import {
   hideReview,
 } from '../../services/admin';
 import { formatRelativeTime } from '../../utils/time';
-
-const ACTION_LABELS = {
-  review_hidden: 'ocultó una reseña',
-  review_restored: 'restauró una reseña',
-  user_suspended: 'suspendió una cuenta',
-  user_restored: 'restauró una cuenta',
-  admin_granted: 'asignó un rol de admin',
-  admin_revoked: 'retiró un rol de admin',
-  establishment_created: 'creó un establecimiento',
-  establishment_updated: 'actualizó un establecimiento',
-  places_refresh_started: 'inició el refresco de Google Places',
-};
+import { useLanguage } from '../../i18n';
+import { ADMIN_COPY, formatAdminCopy } from '../adminCopy';
 
 export default function DashboardView({ auth, navigate }) {
+  const { language } = useLanguage();
+  const copy = ADMIN_COPY[language].dashboard;
+  const moderationCopy = ADMIN_COPY[language].moderation;
   const [data, setData] = useState(null);
   const [reports, setReports] = useState([]);
   const [system, setSystem] = useState(null);
@@ -49,9 +42,9 @@ export default function DashboardView({ auth, navigate }) {
         setReports(reported.slice(0, 5));
         setSystem(systemStatus);
       })
-      .catch(() => setError('No pudimos cargar el resumen operativo.'))
+      .catch(() => setError(copy.loadError))
       .finally(() => setLoading(false));
-  }, []);
+  }, [copy.loadError]);
 
   useEffect(() => {
     load();
@@ -60,7 +53,7 @@ export default function DashboardView({ auth, navigate }) {
   const quickHide = async (review) => {
     setUpdatingId(review._id);
     try {
-      await hideReview(review._id, 'Acción rápida desde el dashboard');
+      await hideReview(review._id, copy.quickActionReason);
       setReports((current) => current.map((item) => (
         item._id === review._id ? { ...item, hidden: true } : item
       )));
@@ -69,18 +62,18 @@ export default function DashboardView({ auth, navigate }) {
     }
   };
 
-  if (loading) return <div className="admin-loading">Preparando el resumen operativo…</div>;
+  if (loading) return <div className="admin-loading">{copy.loading}</div>;
   if (error) return <div className="admin-error">{error}</div>;
 
   const metrics = [
-    { label: 'Usuarios', value: data.metrics.users, icon: Users, detail: `${data.metrics.suspendedUsers} suspendidos` },
-    { label: 'Reseñas', value: data.metrics.reviews, icon: Star, detail: 'Actividad de la comunidad' },
-    { label: 'Establecimientos', value: data.metrics.establishments, icon: Buildings, detail: 'Directorio activo' },
+    { label: copy.users, value: data.metrics.users, icon: Users, detail: formatAdminCopy(copy.suspendedCount, { count: data.metrics.suspendedUsers }) },
+    { label: copy.reviews, value: data.metrics.reviews, icon: Star, detail: copy.communityActivity },
+    { label: copy.establishments, value: data.metrics.establishments, icon: Buildings, detail: copy.activeDirectory },
     {
-      label: 'Reportes pendientes',
+      label: copy.pendingReports,
       value: data.metrics.reportsPending,
       icon: Flag,
-      detail: 'Necesitan revisión',
+      detail: copy.needReview,
       warning: data.metrics.reportsPending > 0,
     },
   ];
@@ -89,8 +82,8 @@ export default function DashboardView({ auth, navigate }) {
     <>
       <div className="admin-page-header">
         <div>
-          <h1>Buenos días, {auth.user.name.split(' ')[0]}</h1>
-          <p>Resumen operativo de glutenfri</p>
+          <h1>{formatAdminCopy(copy.greeting, { name: auth.user.name.split(' ')[0] })}</h1>
+          <p>{copy.subtitle}</p>
         </div>
         <button
           className="admin-primary-button"
@@ -98,17 +91,17 @@ export default function DashboardView({ auth, navigate }) {
           onClick={() => navigate('/admin/establecimientos?new=1')}
         >
           <Plus size={17} weight="bold" />
-          Añadir establecimiento
+          {copy.addEstablishment}
         </button>
       </div>
 
-      <section className="admin-kpis" aria-label="Métricas principales">
+      <section className="admin-kpis" aria-label={copy.mainMetrics}>
         {metrics.map(({ label, value, icon: Icon, detail, warning }) => (
           <article key={label} className={`admin-kpi ${warning ? 'is-warning' : ''}`}>
             <span className="admin-kpi-icon"><Icon size={23} /></span>
             <span>
               <small>{label}</small>
-              <strong>{new Intl.NumberFormat('es-ES').format(value)}</strong>
+              <strong>{new Intl.NumberFormat(language).format(value)}</strong>
               <span>{detail}</span>
             </span>
           </article>
@@ -117,22 +110,22 @@ export default function DashboardView({ auth, navigate }) {
 
       <div className="admin-dashboard-grid">
         <section>
-          <h2 className="admin-section-title">Necesita atención</h2>
+          <h2 className="admin-section-title">{copy.needsAttention}</h2>
           <div className="admin-table-wrap">
             {reports.length === 0 ? (
               <div className="admin-empty">
                 <CheckCircle size={26} weight="fill" />
-                <p>No hay reseñas reportadas.</p>
+                <p>{copy.noReportedReviews}</p>
               </div>
             ) : (
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Motivo</th>
-                    <th>Establecimiento</th>
-                    <th>Autor</th>
-                    <th>Reportes</th>
-                    <th>Acciones</th>
+                    <th>{copy.reason}</th>
+                    <th>{copy.establishment}</th>
+                    <th>{copy.author}</th>
+                    <th>{copy.reports}</th>
+                    <th>{copy.actions}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -140,7 +133,7 @@ export default function DashboardView({ auth, navigate }) {
                     <tr key={review._id}>
                       <td>
                         <span className="admin-cell-title">
-                          {review.reports[0]?.reasonLabel || 'Sin motivo'}
+                          {moderationCopy.reasons[review.reports[0]?.reason] || copy.noReason}
                         </span>
                       </td>
                       <td>
@@ -164,7 +157,7 @@ export default function DashboardView({ auth, navigate }) {
                             className="admin-secondary-button"
                             onClick={() => navigate('/admin/moderacion')}
                           >
-                            Revisar
+                            {copy.review}
                           </button>
                           {!review.hidden && (
                             <button
@@ -173,7 +166,7 @@ export default function DashboardView({ auth, navigate }) {
                               disabled={updatingId === review._id}
                               onClick={() => quickHide(review)}
                             >
-                              {updatingId === review._id ? 'Ocultando…' : 'Ocultar'}
+                              {updatingId === review._id ? copy.hiding : copy.hide}
                             </button>
                           )}
                         </div>
@@ -185,53 +178,53 @@ export default function DashboardView({ auth, navigate }) {
             )}
             <div className="admin-pagination">
               <button className="admin-ghost-button" type="button" onClick={() => navigate('/admin/moderacion')}>
-                Ver todos los reportes pendientes
+                {copy.viewAllReports}
               </button>
             </div>
           </div>
         </section>
 
         <aside>
-          <h2 className="admin-section-title">Estado del sistema</h2>
+          <h2 className="admin-section-title">{copy.systemStatus}</h2>
           <div className="admin-panel admin-system-list">
             <SystemRow
               icon={CloudCheck}
               label="API"
               detail={
                 system.api.runtime === 'serverless'
-                  ? 'Serverless bajo demanda'
-                  : `${Math.floor((system.api.uptimeSeconds || 0) / 60)} min activa`
+                  ? copy.serverless
+                  : formatAdminCopy(copy.activeMinutes, { count: Math.floor((system.api.uptimeSeconds || 0) / 60) })
               }
               status={system.api.status}
             />
             <SystemRow
               icon={Database}
               label="MongoDB Atlas"
-              detail={system.mongo.database || 'Cluster principal'}
+              detail={system.mongo.database || copy.mainCluster}
               status={system.mongo.status}
             />
             <SystemRow
               icon={MapPin}
               label="Google Places"
-              detail={`${system.googlePlaces.stale} registros por refrescar`}
+              detail={formatAdminCopy(copy.placesToRefresh, { count: system.googlePlaces.stale })}
               status={system.googlePlaces.status}
             />
           </div>
 
-          <h2 className="admin-section-title" style={{ marginTop: 26 }}>Actividad reciente</h2>
+          <h2 className="admin-section-title" style={{ marginTop: 26 }}>{copy.recentActivity}</h2>
           <div className="admin-panel">
             <ul className="admin-activity-list">
               {data.recentActions.length === 0 && (
-                <li><Clock size={14} /> Todavía no hay acciones registradas.</li>
+                <li><Clock size={14} /> {copy.noActions}</li>
               )}
               {data.recentActions.map((action) => (
                 <li key={action._id}>
                   <Clock size={13} />
                   <span>
-                    <strong>{action.actor?.name || 'Administrador'}</strong>{' '}
-                    {ACTION_LABELS[action.action] || action.action}
-                    {action.targetLabel ? ` en “${action.targetLabel}”` : ''}.
-                    <small>{formatRelativeTime(action.createdAt)}</small>
+                    <strong>{action.actor?.name || copy.defaultAdmin}</strong>{' '}
+                    {copy.actionsMap[action.action] || action.action}
+                    {action.targetLabel ? formatAdminCopy(copy.targetAt, { target: action.targetLabel }) : ''}.
+                    <small>{formatRelativeTime(action.createdAt, language)}</small>
                   </span>
                 </li>
               ))}
@@ -244,6 +237,8 @@ export default function DashboardView({ auth, navigate }) {
 }
 
 function SystemRow({ icon: Icon, label, detail, status }) {
+  const { language } = useLanguage();
+  const labels = ADMIN_COPY[language].common;
   const healthy = status === 'operational';
   return (
     <div className="admin-system-row">
@@ -254,7 +249,7 @@ function SystemRow({ icon: Icon, label, detail, status }) {
       </span>
       <span className={`admin-status-pill ${healthy ? '' : 'is-warning'}`}>
         {healthy ? <CheckCircle size={13} weight="fill" /> : <WarningCircle size={13} weight="fill" />}
-        {healthy ? 'Operativo' : 'Atención'}
+        {healthy ? labels.operational : labels.attention}
       </span>
     </div>
   );

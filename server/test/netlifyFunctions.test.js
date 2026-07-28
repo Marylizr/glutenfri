@@ -69,3 +69,11 @@ test('los redirects de API se evalúan antes que el fallback de la SPA', () => {
   assert.match(config, /to = "\/\.netlify\/functions\/auth\/:splat"/);
   assert.match(config, /to = "\/\.netlify\/functions\/api\/:splat"/);
 });
+
+test('el sitemap dinámico se evalúa antes que el fallback de la SPA', () => {
+  const config = fs.readFileSync(path.join(__dirname, '../../netlify.toml'), 'utf8');
+  const sitemapIndex = config.indexOf('from = "/sitemap.xml"');
+  const spaIndex = config.indexOf('from = "/*"');
+  assert.ok(sitemapIndex >= 0);
+  assert.ok(spaIndex > sitemapIndex);
+});

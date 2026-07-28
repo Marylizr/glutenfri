@@ -1,6 +1,4 @@
 import HamburgerAssembly from '../components/HamburgerAssembly';
-import BrandLogo from '../components/BrandLogo';
-import LanguageSelector from '../components/LanguageSelector.jsx';
 import { useLanguage } from '../i18n/index.jsx';
 
 export default function OnboardingScreen({ onStart, onLogin }) {
@@ -9,11 +7,6 @@ export default function OnboardingScreen({ onStart, onLogin }) {
 
   return (
     <div className="onboarding-screen">
-      <div className="onboarding-screen__header">
-        <BrandLogo className="brand-logo--onboarding" priority />
-        <LanguageSelector />
-      </div>
-
       <div className="onboarding-screen__layout">
         <div className="onboarding-screen__visual">
           <HamburgerAssembly badge={t('heroBadge')} alt={t('animationAlt')} />

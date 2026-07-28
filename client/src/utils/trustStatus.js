@@ -1,3 +1,13 @@
+import {
+  normalizeCoordinate,
+  normalizePhone,
+  normalizeStringList,
+  normalizeWeeklyHours,
+  normalizeWhatsApp,
+  validHttpUrl,
+  validTimeZone,
+} from './establishmentData.js';
+
 export const TRUST_STATUS = Object.freeze({
   CERTIFIED_APC_BIOTRAB: 'CERTIFIED_APC_BIOTRAB',
   COMMUNITY_REPORTED: 'COMMUNITY_REPORTED',
@@ -42,6 +52,12 @@ export function normalizeEstablishmentRecord(record) {
       ? record.sourceUrl
       : null;
   const date = record.lastVerifiedAt ? new Date(record.lastVerifiedAt) : null;
+  const certificationDate = record.certificationDate ? new Date(record.certificationDate) : null;
+  const informationDate = record.lastInformationUpdate ? new Date(record.lastInformationUpdate) : null;
+  const phone = normalizePhone(record.phone);
+  const whatsapp = normalizeWhatsApp(record.whatsapp);
+  const lat = normalizeCoordinate(record.lat, -90, 90);
+  const lng = normalizeCoordinate(record.lng, -180, 180);
 
   return {
     ...record,
@@ -49,6 +65,59 @@ export function normalizeEstablishmentRecord(record) {
     sourceName,
     sourceUrl,
     lastVerifiedAt: date && !Number.isNaN(date.getTime()) ? record.lastVerifiedAt : null,
+    certificationDate:
+      certificationDate && !Number.isNaN(certificationDate.getTime())
+        ? record.certificationDate
+        : null,
+    lastInformationUpdate:
+      informationDate && !Number.isNaN(informationDate.getTime())
+        ? record.lastInformationUpdate
+        : null,
+    lat,
+    lng,
+    phone: phone?.display || null,
+    phoneHref: phone?.tel || null,
+    whatsapp,
+    images: normalizeStringList(record.images).map(validHttpUrl).filter(Boolean),
+    logoUrl: validHttpUrl(record.logoUrl),
+    websiteUrl: validHttpUrl(record.websiteUrl),
+    menuUrl: validHttpUrl(record.menuUrl),
+    reservationUrl: validHttpUrl(record.reservationUrl),
+    orderUrl: validHttpUrl(record.orderUrl),
+    timezone: validTimeZone(record.timezone),
+    weeklyHours: normalizeWeeklyHours(record.weeklyHours),
+    dedicatedKitchen:
+      typeof record.dedicatedKitchen === 'boolean' ? record.dedicatedKitchen : null,
+    dedicatedGlutenFreeMenu:
+      typeof record.dedicatedGlutenFreeMenu === 'boolean'
+        ? record.dedicatedGlutenFreeMenu
+        : null,
+    staffTrained: typeof record.staffTrained === 'boolean' ? record.staffTrained : null,
+    dedicatedArea: typeof record.dedicatedArea === 'boolean' ? record.dedicatedArea : null,
+    delivery: typeof record.delivery === 'boolean' ? record.delivery : null,
+    takeaway: typeof record.takeaway === 'boolean' ? record.takeaway : null,
+    riskLevel: ['none', 'low', 'moderate', 'high'].includes(record.riskLevel)
+      ? record.riskLevel
+      : null,
+    certificationBody:
+      typeof record.certificationBody === 'string' && record.certificationBody.trim()
+        ? record.certificationBody.trim()
+        : null,
+    glutenFreeScope:
+      typeof record.glutenFreeScope === 'string' && record.glutenFreeScope.trim()
+        ? record.glutenFreeScope.trim()
+        : null,
+    crossContactMeasures: normalizeStringList(record.crossContactMeasures),
+    accessibilityFeatures: normalizeStringList(record.accessibilityFeatures),
+    serviceLanguages: normalizeStringList(record.serviceLanguages),
+    informationSources: Array.isArray(record.informationSources)
+      ? record.informationSources
+          .map((source) => ({
+            label: typeof source?.label === 'string' ? source.label.trim() : '',
+            url: validHttpUrl(source?.url),
+          }))
+          .filter((source) => source.label && source.url)
+      : [],
   };
 }
 

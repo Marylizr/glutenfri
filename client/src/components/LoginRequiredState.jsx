@@ -7,7 +7,6 @@ export default function LoginRequiredState({ icon, title, message, onGoToProfile
     <div
       className="login-required-state"
       style={{
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -22,6 +21,7 @@ export default function LoginRequiredState({ icon, title, message, onGoToProfile
         {message}
       </p>
       <button
+        type="button"
         onClick={onGoToProfile}
         style={{
           padding: '12px 24px',

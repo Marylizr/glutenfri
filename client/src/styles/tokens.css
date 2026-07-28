@@ -4,7 +4,7 @@
   --color-surface: #ffffff;      /* cards */
   --color-surface-alt: #efe9db;  /* chips no activos, inputs */
   --color-text: #2b2620;         /* texto principal */
-  --color-text-muted: #8a8578;   /* texto secundario, metadata */
+  --color-text-muted: #686358;   /* texto secundario con contraste AA */
   --color-border: #e6dfcf;
 
   --color-accent: #3d5a45;       /* verde salvia — acciones y navegación activa */
@@ -21,7 +21,10 @@
 
   --content-max: 1440px;
   --page-gutter: clamp(16px, 3vw, 48px);
-  --desktop-header-height: 72px;
+  --app-header-height-mobile: 4.5rem;
+  --app-header-height-desktop: 4.5rem;
+  --app-header-height: var(--app-header-height-mobile);
+  --bottom-nav-height-mobile: 4rem;
 
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

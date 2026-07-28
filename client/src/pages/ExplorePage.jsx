@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import CategoryChips from '../components/CategoryChips';
 import PublicPageHeader from '../components/PublicPageHeader';
@@ -10,23 +11,65 @@ import PublicFooter from '../components/PublicFooter.jsx';
 import useEstablishmentList from '../hooks/useEstablishmentList.js';
 import { filterEstablishments } from '../utils/establishmentFilters.js';
 import ExploreFiltersButton from '../components/ExploreFiltersButton.jsx';
+import { getOpenStatus } from '../utils/openingHours.js';
+import {
+  parseExploreParams,
+  serializeExploreParams,
+  sortEstablishments,
+} from '../utils/establishmentFilters.js';
 
 export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleSaved }) {
-  const { language, t } = useLanguage();
+  const { language, t, tp } = useLanguage();
   const { establishments, loading, error, reload } = useEstablishmentList();
-  const [query, setQuery] = useState('');
-  const [type, setType] = useState(undefined);
-  const [certifiedOnly, setCertifiedOnly] = useState(false);
-  const { position } = useUserLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const state = useMemo(() => parseExploreParams(searchParams), [searchParams]);
+  const { position, status: locationStatus, requestLocation } = useUserLocation();
+  const available = useMemo(() => ({
+    discount: establishments.some(
+      (item) => Boolean(item.discount) && ['APC', 'APC+Google'].includes(item.source)
+    ),
+    delivery: establishments.some((item) => typeof item.delivery === 'boolean'),
+    takeaway: establishments.some((item) => typeof item.takeaway === 'boolean'),
+    hours: establishments.some((item) => item.weeklyHours && item.timezone),
+  }), [establishments]);
+
+  useEffect(() => {
+    const canonical = serializeExploreParams(state);
+    if (canonical.toString() !== searchParams.toString()) {
+      setSearchParams(canonical, { replace: true });
+    }
+  }, [searchParams, setSearchParams, state]);
+
+  useEffect(() => {
+    if (loading) return;
+    const patch = {};
+    if (state.discountOnly && !available.discount) patch.discountOnly = false;
+    if (state.deliveryOnly && !available.delivery) patch.deliveryOnly = false;
+    if (state.takeawayOnly && !available.takeaway) patch.takeawayOnly = false;
+    if (state.openNowOnly && !available.hours) patch.openNowOnly = false;
+    if (Object.keys(patch).length) {
+      setSearchParams(serializeExploreParams({ ...state, ...patch }), { replace: true });
+    }
+  }, [available, loading, setSearchParams, state]);
+  const openStatusById = useMemo(
+    () => Object.fromEntries(
+      establishments.map((item) => [item._id, getOpenStatus(item).status])
+    ),
+    [establishments]
+  );
+
+  const updateState = (patch, replace = false) => {
+    setSearchParams(serializeExploreParams({ ...state, ...patch }), { replace });
+  };
 
   const filtered = useMemo(() => {
-    return filterEstablishments(establishments, {
-      type,
-      query,
+    const matches = filterEstablishments(establishments, {
+      ...state,
       language,
-      certifiedOnly,
+      openStatusById,
     });
-  }, [establishments, type, query, language, certifiedOnly]);
+    return sortEstablishments(matches, state.sort, position);
+  }, [establishments, language, openStatusById, position, state]);
 
   return (
     <div className="explore-page">
@@ -35,28 +78,33 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
         className="explore-page__header"
         action={(
           <ExploreFiltersButton
-            certifiedOnly={certifiedOnly}
-            onCertifiedChange={setCertifiedOnly}
+            filters={state}
+            available={available}
+            onChange={(patch) => updateState(patch)}
+            sort={state.sort}
+            onSortChange={(sort) => updateState({ sort })}
+            locationStatus={locationStatus}
+            onRequestLocation={requestLocation}
           />
         )}
       >
         <SearchBar
-          value={query}
-          onChange={setQuery}
+          value={state.query}
+          onChange={(query) => updateState({ query }, true)}
           placeholder={t('search')}
         />
       </PublicPageHeader>
 
       <div className="explore-controls">
         <div className="explore-controls__categories">
-          <CategoryChips value={type} onChange={setType} />
+          <CategoryChips value={state.type} onChange={(type) => updateState({ type })} />
         </div>
       </div>
 
       <div className="explore-page__body">
         <main className="explore-results" aria-live="polite">
           {!loading && !error && (
-            <p className="explore-results__count">{t('resultsCount', { count: filtered.length })}</p>
+            <p className="explore-results__count">{tp('resultsCount', filtered.length)}</p>
           )}
 
           {loading && (

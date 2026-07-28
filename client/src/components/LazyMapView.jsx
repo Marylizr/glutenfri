@@ -1,16 +1,35 @@
-import { lazy, Suspense } from 'react';
+import { Component, lazy, Suspense } from 'react';
 import { useLanguage } from '../i18n/index.jsx';
 
 const MapView = lazy(() => import('./MapView.jsx'));
+
+class MapErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
 
 export default function LazyMapView(props) {
   const { t } = useLanguage();
 
   return (
-    <Suspense
-      fallback={<div className="map-loading" role="status">{t('loading')}</div>}
+    <MapErrorBoundary
+      fallback={<div className="map-loading" role="status">{t('mapUnavailable')}</div>}
     >
-      <MapView {...props} />
-    </Suspense>
+      <Suspense
+        fallback={<div className="map-loading" role="status">{t('loading')}</div>}
+      >
+        <MapView {...props} />
+      </Suspense>
+    </MapErrorBoundary>
   );
 }

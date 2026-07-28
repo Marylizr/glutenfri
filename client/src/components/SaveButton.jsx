@@ -1,11 +1,16 @@
+import { useLanguage } from '../i18n/index.jsx';
+
 export default function SaveButton({ saved, onToggle, size = 34 }) {
+  const { t } = useLanguage();
+
   return (
     <button
+      type="button"
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
       }}
-      aria-label={saved ? 'Quitar de guardados' : 'Guardar'}
+      aria-label={saved ? t('removeSaved') : t('savePlace')}
       style={{
         width: size,
         height: size,

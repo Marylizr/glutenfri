@@ -6,11 +6,13 @@ const {
   getEstablishment,
   listReviews,
   createReview,
+  createInformationReport,
   getEstablishmentPhoto,
 } = require('../controllers/establishmentsController');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { reviewLimiter } = require('../middleware/rateLimiters');
+const { reviewLimiter, informationReportLimiter } = require('../middleware/rateLimiters');
+const { REPORT_REASONS } = require('../models/EstablishmentReport');
 
 const ESTABLISHMENT_TYPES = ['restaurant', 'store', 'pharmacy', 'bakery', 'supermarket'];
 const STAFF_UNDERSTANDING_VALUES = ['poor', 'okay', 'excellent'];
@@ -70,6 +72,34 @@ router.post(
   ],
   validate,
   createReview
+);
+
+router.post(
+  '/:id/reports',
+  informationReportLimiter,
+  [
+    param('id').isMongoId().withMessage('id inválido'),
+    body('reason').isIn(REPORT_REASONS).withMessage('reason inválido'),
+    body('comment')
+      .optional({ values: 'falsy' })
+      .isString()
+      .trim()
+      .isLength({ max: 800 })
+      .withMessage('comment demasiado largo'),
+    body('contact')
+      .optional({ values: 'falsy' })
+      .isString()
+      .trim()
+      .isLength({ max: 254 })
+      .withMessage('contact demasiado largo'),
+    body('submissionId')
+      .isString()
+      .trim()
+      .matches(/^[a-zA-Z0-9-]{16,80}$/)
+      .withMessage('submissionId inválido'),
+  ],
+  validate,
+  createInformationReport
 );
 
 module.exports = router;

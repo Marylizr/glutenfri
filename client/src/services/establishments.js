@@ -2,6 +2,7 @@ import api from './api';
 import API_URL from './apiConfig';
 import { requireList } from './responseValidation';
 import { createEstablishmentsLoader } from './establishmentsLoader.js';
+import { normalizeEstablishmentRecord } from '../utils/trustStatus.js';
 
 // El backend pagina (page/limit) y devuelve { data, page, limit, total,
 // totalPages }. El frontend hoy no tiene UI de paginación — con el default
@@ -15,7 +16,10 @@ export const getEstablishments = (params = {}, options = {}) =>
   loadEstablishments(params, options);
 
 export const getEstablishmentById = (id) =>
-  api.get(`/establishments/${id}`).then((res) => res.data);
+  api.get(`/establishments/${id}`).then((res) => normalizeEstablishmentRecord(res.data));
+
+export const reportEstablishmentInformation = (id, report) =>
+  api.post(`/establishments/${id}/reports`, report).then((res) => res.data);
 
 export const getReviews = (establishmentId) =>
   api

@@ -52,16 +52,17 @@ test('las rutas públicas, el disclaimer y los fallbacks visuales están conecta
   assert.match(css, /prefers-reduced-motion/);
 });
 
-test('las tarjetas y el detalle muestran fuente, fecha y sus fallbacks localizados', () => {
+test('las tarjetas omiten metadata ausente y el detalle conserva los fallbacks informativos', () => {
   const card = fs.readFileSync(new URL('../src/components/RestaurantCard.jsx', import.meta.url), 'utf8');
   const details = fs.readFileSync(new URL('../src/components/TrustDetails.jsx', import.meta.url), 'utf8');
   const translations = fs.readFileSync(new URL('../src/i18n/index.jsx', import.meta.url), 'utf8');
 
-  for (const source of [card, details]) {
-    assert.match(source, /sourceMissing/);
-    assert.match(source, /dateMissing/);
-    assert.match(source, /lastChecked/);
-  }
+  assert.match(card, /hasTrustMetadata/);
+  assert.match(card, /hasSource &&/);
+  assert.match(card, /lastChecked &&/);
+  assert.doesNotMatch(card, /sourceMissing/);
+  assert.match(details, /sourceName \|\| t\('sourceMissing'\)/);
+  assert.match(details, /date \|\| t\('dateMissing'\)/);
   assert.match(translations, /Data de verificação indisponível/);
   assert.match(translations, /Verification date unavailable/);
   assert.match(translations, /Fecha de verificación no disponible/);
@@ -99,7 +100,7 @@ test('el logo oficial está centralizado y se muestra en las superficies de marc
   const logo = fs.readFileSync(new URL('../src/components/BrandLogo.jsx', import.meta.url), 'utf8');
   const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
-  assert.match(brand, /v1784991659\/logo-glutenFri_mxse6m\.webp/);
+  assert.match(brand, /v\d+\/logo-glutenFri_mxse6m\.webp/);
   assert.match(brand, /v1784991668\/icon-glutenFri_ilsloa\.webp/);
   assert.match(logo, /APP_LOGO_URL/);
   assert.match(logo, /onError/);
@@ -108,7 +109,7 @@ test('el logo oficial está centralizado y se muestra en las superficies de marc
   assert.match(index, /property="og:image"[\s\S]*v1784991659\/logo-glutenFri_mxse6m\.webp/);
 
   for (const file of [
-    '../src/pages/OnboardingScreen.jsx',
+    '../src/components/DesktopHeader.jsx',
     '../src/admin/AdminShell.jsx',
   ]) {
     const source = fs.readFileSync(new URL(file, import.meta.url), 'utf8');
@@ -116,7 +117,8 @@ test('el logo oficial está centralizado y se muestra en las superficies de marc
   }
 
   const publicHeader = fs.readFileSync(new URL('../src/components/PublicPageHeader.jsx', import.meta.url), 'utf8');
-  assert.match(publicHeader, /BrandLogo/);
+  assert.doesNotMatch(publicHeader, /BrandLogo/);
+  assert.match(publicHeader, /REGION_NAME/);
   for (const file of [
     '../src/pages/ExplorePage.jsx',
     '../src/pages/HomePage.jsx',
@@ -159,6 +161,8 @@ test('Explorar ubica el filtro con contador en la fila del título', () => {
 
   assert.match(page, /<PublicPageHeader[\s\S]*action=/);
   assert.match(page, /action=\{\([\s\S]*<ExploreFiltersButton/);
+  assert.doesNotMatch(page, /<SortControl/);
+  assert.match(button, /<SortControl/);
   assert.match(button, /explore-filter__count/);
   assert.match(button, /activeCount > 0/);
 });

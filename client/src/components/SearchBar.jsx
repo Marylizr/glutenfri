@@ -1,4 +1,7 @@
+import { useLanguage } from '../i18n';
+
 export default function SearchBar({ value, onChange, placeholder }) {
+  const { t } = useLanguage();
   return (
     <div
       style={{
@@ -15,7 +18,7 @@ export default function SearchBar({ value, onChange, placeholder }) {
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || 'Buscar restaurantes sin gluten…'}
+        placeholder={placeholder || t('search')}
         style={{
           border: 'none',
           outline: 'none',

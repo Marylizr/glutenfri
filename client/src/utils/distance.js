@@ -11,7 +11,13 @@ export function distanceKm(a, b) {
   return R * (2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
 }
 
-export function formatDistance(km) {
+export function formatDistance(km, locale = 'pt-PT') {
   if (km == null) return null;
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+  if (km < 1) {
+    return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(km * 1000)} m`;
+  }
+  return `${new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(km)} km`;
 }

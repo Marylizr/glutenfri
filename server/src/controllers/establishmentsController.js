@@ -3,6 +3,22 @@ const Review = require('../models/Review');
 const { toPublicReview, visibilityFilter } = require('../utils/reviewFormatting');
 const { getPlacePhotoName, fetchPlacePhotoMedia } = require('../services/googlePlaces');
 const { TRUST_STATUS, normalizeEstablishmentTrust } = require('../utils/trustStatus');
+const { EstablishmentReport } = require('../models/EstablishmentReport');
+const { sponsoredNow } = require('./businessController');
+
+function toPublicEstablishment(establishment) {
+  const normalized = normalizeEstablishmentTrust(establishment);
+  return {
+    ...normalized,
+    sponsorship: normalized.sponsorship
+      ? {
+          status: sponsoredNow(normalized) ? 'active' : 'inactive',
+          startsAt: normalized.sponsorship.startsAt,
+          endsAt: normalized.sponsorship.endsAt,
+        }
+      : undefined,
+  };
+}
 
 // Cache en memoria de proceso (nunca en Mongo) del nombre de recurso de la
 // foto por placeId — evita pegarle a Place Details en cada request de
@@ -40,7 +56,7 @@ async function listEstablishments(req, res) {
   ]);
 
   res.json({
-    data: data.map(normalizeEstablishmentTrust),
+    data: data.map(toPublicEstablishment),
     page,
     limit,
     total,
@@ -51,7 +67,7 @@ async function listEstablishments(req, res) {
 async function getEstablishment(req, res) {
   const establishment = await Establishment.findById(req.params.id).lean();
   if (!establishment) return res.status(404).json({ error: 'No encontrado' });
-  res.json(normalizeEstablishmentTrust(establishment));
+  res.json(toPublicEstablishment(establishment));
 }
 
 async function listReviews(req, res) {
@@ -115,6 +131,27 @@ async function createReview(req, res) {
   res.status(existing ? 200 : 201).json(review);
 }
 
+async function createInformationReport(req, res) {
+  const establishmentExists = await Establishment.exists({ _id: req.params.id });
+  if (!establishmentExists) return res.status(404).json({ error: 'No encontrado' });
+
+  try {
+    const report = await EstablishmentReport.create({
+      establishment: req.params.id,
+      reason: req.body.reason,
+      comment: req.body.comment || undefined,
+      contact: req.body.contact || undefined,
+      submissionId: req.body.submissionId,
+    });
+    return res.status(201).json({ id: report._id, status: report.status });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(200).json({ duplicate: true, status: 'pending' });
+    }
+    throw error;
+  }
+}
+
 // Foto real de Google, resuelta en vivo — nunca persistimos photos[].name
 // en Mongo (ver nota de compliance en el modelo Establishment). Si no hay
 // placeId o la foto no se puede resolver, 404 — el frontend cae al ícono
@@ -156,5 +193,6 @@ module.exports = {
   getEstablishment,
   listReviews,
   createReview,
+  createInformationReport,
   getEstablishmentPhoto,
 };

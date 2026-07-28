@@ -10,7 +10,7 @@ import {
 import { useLanguage } from '../i18n/index.jsx';
 import 'leaflet/dist/leaflet.css';
 
-function pinIcon(status) {
+function pinIcon(status, selected = false) {
   const color = {
     [TRUST_STATUS.CERTIFIED_APC_BIOTRAB]: '#3d5a45',
     [TRUST_STATUS.COMMUNITY_REPORTED]: '#9a6828',
@@ -18,17 +18,23 @@ function pinIcon(status) {
   }[status];
   return divIcon({
     className: '',
-    html: `<svg width="28" height="36" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 22 14 22s14-11.5 14-22c0-7.7-6.3-14-14-14z" fill="${color}"/>
+    html: `<svg width="${selected ? 34 : 28}" height="${selected ? 44 : 36}" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M14 1C6.8 1 1 6.8 1 14c0 9.7 13 20.5 13 20.5S27 23.7 27 14C27 6.8 21.2 1 14 1z" fill="${color}" stroke="${selected ? '#2b2620' : '#fff'}" stroke-width="${selected ? 2.5 : 1}"/>
       <circle cx="14" cy="14" r="6" fill="#fff"/>
     </svg>`,
-    iconSize: [28, 36],
-    iconAnchor: [14, 36],
+    iconSize: selected ? [34, 44] : [28, 36],
+    iconAnchor: selected ? [17, 44] : [14, 36],
     popupAnchor: [0, -32],
   });
 }
 
-export default function MapView({ establishments = [], center, onSelectEstablishment }) {
+export default function MapView({
+  establishments = [],
+  center,
+  onSelectEstablishment,
+  selectedId,
+  onHighlightEstablishment,
+}) {
   const { t } = useLanguage();
   const withCoords = getMappableEstablishments(establishments);
   const hasGoogleData = withCoords.some(isGoogleSourced);
@@ -53,11 +59,24 @@ export default function MapView({ establishments = [], center, onSelectEstablish
       {withCoords.map((e) => {
         const trust = getTrustPresentation(e, t);
         return (
-        <Marker key={e._id || e.name} position={[Number(e.lat), Number(e.lng)]} icon={pinIcon(normalizeTrustStatus(e))}>
+        <Marker
+          key={e._id || e.name}
+          position={[Number(e.lat), Number(e.lng)]}
+          icon={pinIcon(normalizeTrustStatus(e), selectedId === e._id)}
+          alt={t(selectedId === e._id ? 'selectedMapMarkerLabel' : 'mapMarkerLabel', { name: e.name })}
+          title={t(selectedId === e._id ? 'selectedMapMarkerLabel' : 'mapMarkerLabel', { name: e.name })}
+          keyboard
+          riseOnHover
+          eventHandlers={{ click: () => onHighlightEstablishment?.(e) }}
+        >
           <Popup>
             <strong>{e.name}</strong>
-            <br />
-            {e.address}
+            {e.address && (
+              <>
+                <br />
+                {e.address}
+              </>
+            )}
             <br />
             <span style={{ color: trust.color, fontWeight: 700 }}>{trust.icon} {trust.label}</span>
             {e.discount && (
@@ -69,7 +88,7 @@ export default function MapView({ establishments = [], center, onSelectEstablish
             {isGoogleSourced(e) && (
               <>
                 <br />
-                <span style={{ fontSize: '10px', color: '#8a8578' }}>{t('googleAttribution')}</span>
+                <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>{t('googleAttribution')}</span>
               </>
             )}
             {onSelectEstablishment && (

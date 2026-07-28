@@ -31,4 +31,26 @@ const reviewLimiter = rateLimit({
   message: { error: 'Has alcanzado el límite de reseñas por hora. Intenta más tarde.' },
 });
 
-module.exports = { apiLimiter, authLimiter, reviewLimiter };
+const informationReportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has alcanzado el límite de reportes por hora. Intenta más tarde.' },
+});
+
+const businessSensitiveLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Has alcanzado el límite de solicitudes. Intenta más tarde.' },
+});
+
+module.exports = {
+  apiLimiter,
+  authLimiter,
+  reviewLimiter,
+  informationReportLimiter,
+  businessSensitiveLimiter,
+};

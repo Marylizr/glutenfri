@@ -18,21 +18,27 @@ export default function RestaurantCard({
   onSelect,
   saved,
   onToggleSaved,
+  selected = false,
+  onHighlight,
 }) {
   const { language, t } = useLanguage();
   const km = distanceKm(userPosition, establishment);
   const lastChecked = formatVerificationDate(establishment.lastVerifiedAt, language);
+  const hasSource = Boolean(establishment.sourceName);
+  const hasTrustMetadata = hasSource || Boolean(lastChecked);
 
   return (
     <div
-      className="restaurant-card"
+      className={`restaurant-card${selected ? ' is-selected' : ''}`}
+      data-establishment-id={establishment._id}
+      aria-current={selected ? 'true' : undefined}
       onClick={() => onSelect?.(establishment)}
+      onMouseEnter={() => onHighlight?.(establishment)}
       style={{
         background: 'var(--color-surface)',
         borderRadius: 'var(--radius-card)',
         boxShadow: 'var(--shadow-card)',
         overflow: 'hidden',
-        cursor: 'pointer',
         flexShrink: 0,
       }}
     >
@@ -66,6 +72,7 @@ export default function RestaurantCard({
             event.stopPropagation();
             onSelect?.(establishment);
           }}
+          onFocus={() => onHighlight?.(establishment)}
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 600,
@@ -85,7 +92,7 @@ export default function RestaurantCard({
             color: 'var(--color-text-muted)',
           }}
         >
-          {km != null && <span>{formatDistance(km)}</span>}
+          {km != null && <span>{formatDistance(km, language)}</span>}
           {establishment.discount && (
             <>
               {km != null && <span>·</span>}
@@ -99,10 +106,12 @@ export default function RestaurantCard({
             <GoogleAttribution compact />
           </div>
         )}
-        <div style={{ marginTop: 8, color: 'var(--color-text-muted)', fontSize: 11, lineHeight: 1.45 }}>
-          <div><strong>{t('source')}:</strong> {establishment.sourceName || t('sourceMissing')}</div>
-          <div><strong>{t('lastChecked')}:</strong> {lastChecked || t('dateMissing')}</div>
-        </div>
+        {hasTrustMetadata && (
+          <div className="restaurant-card__metadata">
+            {hasSource && <div><strong>{t('source')}:</strong> {establishment.sourceName}</div>}
+            {lastChecked && <div><strong>{t('lastChecked')}:</strong> {lastChecked}</div>}
+          </div>
+        )}
         <Link
           to="/informacion-sin-gluten"
           onClick={(event) => event.stopPropagation()}

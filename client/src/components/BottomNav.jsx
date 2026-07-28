@@ -5,7 +5,7 @@ import { PUBLIC_NAV_ITEMS } from '../config/publicNavigation.js';
 export default function BottomNav() {
   const { t } = useLanguage();
   const iconByPath = {
-    '/': 'home',
+    '/explorar': 'home',
     '/mapa': 'distance',
     '/guardados': 'favorite',
     '/reseñas': 'edit_square',

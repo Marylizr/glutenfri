@@ -146,12 +146,14 @@ test('Explorar usa el botón instant_mix para abrir tipo y certificación', asyn
   assert.match(html, /icon_names=[^"]*instant_mix/);
   assert.match(button, />instant_mix</);
   assert.match(button, /certificationFilter/);
-  assert.doesNotMatch(button, /filterOptions|placeType|<select/);
+  assert.doesNotMatch(button, /filterOptions|placeType/);
+  assert.match(button, /<SortControl/);
   assert.match(button, /aria-expanded/);
   assert.match(button, /aria-controls/);
   assert.match(button, /event\.key === 'Escape'/);
   assert.match(button, /contains\(event\.target\)/);
   assert.match(page, /ExploreFiltersButton/);
+  assert.doesNotMatch(page, /<SortControl/);
 });
 
 test('el contador avanzado ignora la categoría y cuenta solo certificación', () => {
@@ -159,7 +161,7 @@ test('el contador avanzado ignora la categoría y cuenta solo certificación', (
   assert.equal(getAdvancedFilterCount({ certifiedOnly: true, type: 'restaurant' }), 1);
 });
 
-test('una tarjeta heredada se renderiza con estado y fallbacks sin excepción', async () => {
+test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async () => {
   globalThis.localStorage = {
     getItem: () => null,
     setItem: () => {},
@@ -200,8 +202,8 @@ test('una tarjeta heredada se renderiza con estado y fallbacks sin excepción', 
 
     assert.match(html, /Restaurante legado/);
     assert.match(html, /Informação pendente de validação/);
-    assert.match(html, /Fonte não indicada/);
-    assert.match(html, /Data de verificação indisponível/);
+    assert.doesNotMatch(html, /Fonte não indicada/);
+    assert.doesNotMatch(html, /Data de verificação indisponível/);
     assert.match(html, /restaurant\.jpg/);
   } finally {
     await vite.close();

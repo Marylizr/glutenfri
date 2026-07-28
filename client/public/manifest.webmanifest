@@ -1,0 +1,25 @@
+{
+  "name": "GlutenFri",
+  "short_name": "GlutenFri",
+  "description": "Información clara sobre opciones sin gluten en el norte de Portugal.",
+  "start_url": "/explorar",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f2e9",
+  "theme_color": "#3d5a45",
+  "lang": "pt-PT",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

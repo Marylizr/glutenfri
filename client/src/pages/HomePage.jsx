@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import LazyMapView from '../components/LazyMapView';
 import RestaurantCard from '../components/RestaurantCard';
 import Filters from '../components/Filters';
@@ -16,11 +16,19 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
   const { t } = useLanguage();
   const { establishments, loading, error, reload } = useEstablishmentList();
   const [filters, setFilters] = useState({});
-  const { position } = useUserLocation();
+  const [selectedId, setSelectedId] = useState(null);
+  const { position, mapCenter } = useUserLocation();
 
   const filtered = useMemo(() => {
     return filterEstablishments(establishments, filters);
   }, [establishments, filters]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    document
+      .querySelector(`[data-establishment-id="${CSS.escape(selectedId)}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [selectedId]);
 
   if (loading) return <div role="status" style={{ padding: 24 }}>{t('loading')}</div>;
 
@@ -34,11 +42,13 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
         className="map-page__header"
       />
 
-      <div className="map-page__surface">
+      <div className="map-page__surface" role="region" aria-label={t('mapRegionLabel')}>
         <LazyMapView
           establishments={filtered}
-          center={position}
+          center={mapCenter}
           onSelectEstablishment={onSelectEstablishment}
+          selectedId={selectedId}
+          onHighlightEstablishment={(establishment) => setSelectedId(establishment._id)}
         />
       </div>
 
@@ -51,6 +61,8 @@ export default function HomePage({ onSelectEstablishment, savedIds, onToggleSave
             onSelect={onSelectEstablishment}
             saved={savedIds?.has(e._id)}
             onToggleSaved={onToggleSaved}
+            selected={selectedId === e._id}
+            onHighlight={(establishment) => setSelectedId(establishment._id)}
           />
         ))}
         {filtered.length === 0 && (

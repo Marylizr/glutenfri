@@ -12,6 +12,8 @@ import {
   getAdminEstablishments,
   updateAdminEstablishment,
 } from '../../services/admin';
+import { useLanguage } from '../../i18n';
+import { ADMIN_COPY, formatAdminCopy } from '../adminCopy';
 
 const EMPTY_ESTABLISHMENT = {
   name: '',
@@ -31,28 +33,13 @@ const EMPTY_ESTABLISHMENT = {
   notes: '',
 };
 
-const TYPE_LABELS = {
-  restaurant: 'Restaurante',
-  store: 'Tienda',
-  pharmacy: 'Farmacia',
-  bakery: 'Pastelería',
-  supermarket: 'Supermercado',
-};
-
-const RISK_LABELS = {
-  none: 'Sin evaluar',
-  low: 'Bajo',
-  moderate: 'Moderado',
-  high: 'Alto',
-};
-
-const TRUST_LABELS = {
-  CERTIFIED_APC_BIOTRAB: 'Certificado APC/Biotrab',
-  COMMUNITY_REPORTED: 'Reportado por la comunidad — no certificado',
-  PENDING_VALIDATION: 'Información pendiente de validación',
-};
-
 export default function EstablishmentsView() {
+  const { language } = useLanguage();
+  const copy = ADMIN_COPY[language].establishments;
+  const common = ADMIN_COPY[language].common;
+  const TYPE_LABELS = copy.types;
+  const RISK_LABELS = copy.risks;
+  const TRUST_LABELS = copy.trust;
   const initialQuery = useMemo(() => new URLSearchParams(window.location.search), []);
   const [search, setSearch] = useState(initialQuery.get('q') || '');
   const [type, setType] = useState('');
@@ -124,10 +111,10 @@ export default function EstablishmentsView() {
         : await updateAdminEstablishment(selected._id, payload);
       setSelected(saved);
       setDraft(saved);
-      setMessage('Cambios guardados');
+      setMessage(copy.saved);
       load(result.page);
-    } catch (error) {
-      setMessage(error.response?.data?.error || 'No pudimos guardar los cambios');
+    } catch {
+      setMessage(copy.saveError);
     } finally {
       setSaving(false);
     }
@@ -137,12 +124,12 @@ export default function EstablishmentsView() {
     <>
       <div className="admin-page-header">
         <div>
-          <h1>Establecimientos</h1>
-          <p>Gestiona la calidad y seguridad del directorio.</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.subtitle}</p>
         </div>
         <button className="admin-primary-button" type="button" onClick={openNew}>
           <Plus size={17} weight="bold" />
-          Nuevo establecimiento
+          {copy.newEstablishment}
         </button>
       </div>
 
@@ -154,41 +141,41 @@ export default function EstablishmentsView() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar por nombre o dirección…"
+                placeholder={copy.search}
               />
             </label>
             <select className="admin-filter-select" value={type} onChange={(event) => setType(event.target.value)}>
-              <option value="">Todos los tipos</option>
+              <option value="">{copy.allTypes}</option>
               {Object.entries(TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             <select className="admin-filter-select" value={trustStatus} onChange={(event) => setTrustStatus(event.target.value)}>
-              <option value="">Estado de confianza</option>
+              <option value="">{copy.trustStatus}</option>
               {Object.entries(TRUST_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             <select className="admin-filter-select" value={riskLevel} onChange={(event) => setRiskLevel(event.target.value)}>
-              <option value="">Todos los riesgos</option>
+              <option value="">{copy.allRisks}</option>
               {Object.entries(RISK_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             <select className="admin-filter-select" value={source} onChange={(event) => setSource(event.target.value)}>
-              <option value="">Todas las fuentes</option>
+              <option value="">{copy.allSources}</option>
               {['APC', 'Google', 'APC+Google', 'user'].map((value) => <option key={value}>{value}</option>)}
             </select>
           </div>
 
           <div className="admin-table-wrap">
             {loading ? (
-              <div className="admin-loading">Buscando establecimientos…</div>
+              <div className="admin-loading">{copy.searching}</div>
             ) : (
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Establecimiento</th>
-                    <th>Tipo</th>
-                    <th>Estado de confianza</th>
-                    <th>Riesgo</th>
-                    <th>Fuente</th>
-                    <th>Actualizado</th>
-                    <th aria-label="Editar" />
+                    <th>{copy.establishment}</th>
+                    <th>{copy.type}</th>
+                    <th>{copy.trustStatus}</th>
+                    <th>{copy.risk}</th>
+                    <th>{copy.source}</th>
+                    <th>{copy.updated}</th>
+                    <th aria-label={copy.edit} />
                   </tr>
                 </thead>
                 <tbody>
@@ -200,7 +187,7 @@ export default function EstablishmentsView() {
                     >
                       <td>
                         <span className="admin-cell-title">{establishment.name}</span>
-                        <span className="admin-cell-subtitle">{establishment.address || 'Sin dirección'}</span>
+                        <span className="admin-cell-subtitle">{establishment.address || copy.noAddress}</span>
                       </td>
                       <td>{TYPE_LABELS[establishment.type]}</td>
                       <td>
@@ -217,9 +204,9 @@ export default function EstablishmentsView() {
                         </span>
                       </td>
                       <td>{establishment.source}</td>
-                      <td>{new Date(establishment.updatedAt).toLocaleDateString('es-ES')}</td>
+                      <td>{new Date(establishment.updatedAt).toLocaleDateString(language)}</td>
                       <td>
-                        <button className="admin-icon-button" type="button" onClick={() => openEditor(establishment)} aria-label={`Editar ${establishment.name}`}>
+                        <button className="admin-icon-button" type="button" onClick={() => openEditor(establishment)} aria-label={formatAdminCopy(common.editNamed, { name: establishment.name })}>
                           <PencilSimple size={16} />
                         </button>
                       </td>
@@ -228,13 +215,13 @@ export default function EstablishmentsView() {
                 </tbody>
               </table>
             )}
-            {!loading && result.data.length === 0 && <div className="admin-empty">No encontramos resultados con esos filtros.</div>}
+            {!loading && result.data.length === 0 && <div className="admin-empty">{copy.noResults}</div>}
             <div className="admin-pagination">
-              <span>{result.total} establecimientos</span>
+              <span>{formatAdminCopy(copy.total, { count: result.total })}</span>
               <div className="admin-inline-actions">
-                <button className="admin-secondary-button" type="button" disabled={result.page <= 1} onClick={() => load(result.page - 1)}>Anterior</button>
-                <span>Página {result.page} de {Math.max(result.totalPages, 1)}</span>
-                <button className="admin-secondary-button" type="button" disabled={result.page >= result.totalPages} onClick={() => load(result.page + 1)}>Siguiente</button>
+                <button className="admin-secondary-button" type="button" disabled={result.page <= 1} onClick={() => load(result.page - 1)}>{common.previous}</button>
+                <span>{formatAdminCopy(common.page, { page: result.page, total: Math.max(result.totalPages, 1) })}</span>
+                <button className="admin-secondary-button" type="button" disabled={result.page >= result.totalPages} onClick={() => load(result.page + 1)}>{common.next}</button>
               </div>
             </div>
           </div>
@@ -244,49 +231,49 @@ export default function EstablishmentsView() {
           <aside className="admin-drawer">
             <div className="admin-drawer-header">
               <div>
-                <h2>{selected.isNew ? 'Nuevo establecimiento' : 'Editar establecimiento'}</h2>
-                <p>{message || (selected.isNew ? 'Completa los datos mínimos.' : 'Los cambios quedan registrados.')}</p>
+                <h2>{selected.isNew ? copy.newEstablishment : copy.editEstablishment}</h2>
+                <p>{message || (selected.isNew ? copy.minimumData : copy.auditNotice)}</p>
               </div>
-              <button className="admin-icon-button" type="button" onClick={() => setSelected(null)} aria-label="Cerrar editor">
+              <button className="admin-icon-button" type="button" onClick={() => setSelected(null)} aria-label={copy.closeEditor}>
                 <X size={16} />
               </button>
             </div>
             <div className="admin-drawer-body">
-              <Field wide label="Nombre" value={draft.name} onChange={(value) => updateDraft('name', value)} />
-              <Field wide label="Dirección" value={draft.address || ''} onChange={(value) => updateDraft('address', value)} />
-              <SelectField label="Tipo" value={draft.type} options={TYPE_LABELS} onChange={(value) => updateDraft('type', value)} />
-              <SelectField label="Riesgo" value={draft.riskLevel || 'none'} options={RISK_LABELS} onChange={(value) => updateDraft('riskLevel', value)} />
-              <Field label="Teléfono" value={draft.phone || ''} onChange={(value) => updateDraft('phone', value)} />
-              <Field label="Email" value={draft.email || ''} onChange={(value) => updateDraft('email', value)} type="email" />
+              <Field wide label={copy.name} value={draft.name} onChange={(value) => updateDraft('name', value)} />
+              <Field wide label={copy.address} value={draft.address || ''} onChange={(value) => updateDraft('address', value)} />
+              <SelectField label={copy.type} value={draft.type} options={TYPE_LABELS} onChange={(value) => updateDraft('type', value)} />
+              <SelectField label={copy.risk} value={draft.riskLevel || 'none'} options={RISK_LABELS} onChange={(value) => updateDraft('riskLevel', value)} />
+              <Field label={copy.phone} value={draft.phone || ''} onChange={(value) => updateDraft('phone', value)} />
+              <Field label={copy.email} value={draft.email || ''} onChange={(value) => updateDraft('email', value)} type="email" />
               <SelectField
-                label="Fuente"
+                label={copy.source}
                 value={draft.source}
-                options={{ APC: 'APC', Google: 'Google', 'APC+Google': 'APC + Google', user: 'Equipo interno' }}
+                options={{ APC: 'APC', Google: 'Google', 'APC+Google': 'APC + Google', user: copy.internalTeam }}
                 onChange={(value) => updateDraft('source', value)}
               />
               <SelectField
-                label="Estado de confianza"
+                label={copy.trustStatus}
                 value={draft.trustStatus || 'PENDING_VALIDATION'}
                 options={TRUST_LABELS}
                 onChange={(value) => updateDraft('trustStatus', value)}
               />
-              <Field wide label="Nombre de la fuente" value={draft.sourceName || ''} onChange={(value) => updateDraft('sourceName', value)} />
-              <Field wide label="URL HTTPS de la fuente" value={draft.sourceUrl || ''} onChange={(value) => updateDraft('sourceUrl', value)} type="url" />
-              <Field wide label="Última verificación" value={draft.lastVerifiedAt ? String(draft.lastVerifiedAt).slice(0, 10) : ''} onChange={(value) => updateDraft('lastVerifiedAt', value || null)} type="date" />
+              <Field wide label={copy.sourceName} value={draft.sourceName || ''} onChange={(value) => updateDraft('sourceName', value)} />
+              <Field wide label={copy.sourceUrl} value={draft.sourceUrl || ''} onChange={(value) => updateDraft('sourceUrl', value)} type="url" />
+              <Field wide label={copy.lastVerified} value={draft.lastVerifiedAt ? String(draft.lastVerifiedAt).slice(0, 10) : ''} onChange={(value) => updateDraft('lastVerifiedAt', value || null)} type="date" />
               <div className="admin-checkbox-row">
-                <Checkbox label="Cocina dedicada" checked={draft.dedicatedKitchen || false} onChange={(value) => updateDraft('dedicatedKitchen', value)} />
-                <Checkbox label="Menú dedicado" checked={draft.dedicatedGlutenFreeMenu || false} onChange={(value) => updateDraft('dedicatedGlutenFreeMenu', value)} />
-                <Checkbox label="Personal capacitado" checked={draft.staffTrained || false} onChange={(value) => updateDraft('staffTrained', value)} />
+                <Checkbox label={copy.dedicatedKitchen} checked={draft.dedicatedKitchen || false} onChange={(value) => updateDraft('dedicatedKitchen', value)} />
+                <Checkbox label={copy.dedicatedMenu} checked={draft.dedicatedGlutenFreeMenu || false} onChange={(value) => updateDraft('dedicatedGlutenFreeMenu', value)} />
+                <Checkbox label={copy.trainedStaff} checked={draft.staffTrained || false} onChange={(value) => updateDraft('staffTrained', value)} />
               </div>
               <label className="admin-form-field is-wide">
-                Notas internas
+                {copy.internalNotes}
                 <textarea value={draft.notes || ''} onChange={(event) => updateDraft('notes', event.target.value)} maxLength={2000} />
               </label>
             </div>
             <div className="admin-drawer-footer">
-              <button className="admin-secondary-button" type="button" onClick={() => setSelected(null)}>Cancelar</button>
+              <button className="admin-secondary-button" type="button" onClick={() => setSelected(null)}>{common.cancel}</button>
               <button className="admin-primary-button" type="button" disabled={saving || !draft.name.trim()} onClick={save}>
-                {saving ? 'Guardando…' : 'Guardar cambios'}
+                {saving ? common.saving : copy.saveChanges}
               </button>
             </div>
           </aside>

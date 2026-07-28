@@ -28,6 +28,12 @@ export const setUserAdmin = (userId, isAdmin) =>
 export const setUserSuspension = (userId, data) =>
   api.patch(`/admin/users/${userId}/suspension`, data).then((response) => response.data.user);
 
+export const updateAdminUser = (userId, data) =>
+  api.patch(`/admin/users/${userId}`, data).then((response) => response.data.user);
+
+export const deleteAdminUser = (userId, data) =>
+  api.delete(`/admin/users/${userId}`, { data });
+
 export const getAdminEstablishments = (params = {}) =>
   api.get('/admin/establishments', { params }).then((response) => response.data);
 

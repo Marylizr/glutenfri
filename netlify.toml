@@ -21,6 +21,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/api/sitemap.xml"
+  status = 200
+  force = true
+
 # SPA: sin esto, refrescar cualquier ruta que no sea "/" da 404 en
 # Netlify porque no hay archivos físicos para esas rutas — todo el
 # routing lo maneja React en el cliente.

@@ -9,8 +9,13 @@ import {
 } from '@phosphor-icons/react';
 import { getSystemStatus, triggerGooglePlacesRefresh } from '../../services/admin';
 import { formatRelativeTime } from '../../utils/time';
+import { useLanguage } from '../../i18n';
+import { ADMIN_COPY, formatAdminCopy } from '../adminCopy';
 
 export default function SystemView() {
+  const { language } = useLanguage();
+  const copy = ADMIN_COPY[language].system;
+  const common = ADMIN_COPY[language].common;
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
@@ -33,16 +38,16 @@ export default function SystemView() {
     setMessage(null);
     try {
       await triggerGooglePlacesRefresh();
-      setMessage('Refresco iniciado. Esta pantalla se actualizará automáticamente.');
+      setMessage(copy.refreshStarted);
       load();
-    } catch (error) {
-      setMessage(error.response?.data?.error || 'No pudimos iniciar el refresco.');
+    } catch {
+      setMessage(copy.refreshError);
     } finally {
       setTriggering(false);
     }
   };
 
-  if (loading || !status) return <div className="admin-loading">Comprobando servicios…</div>;
+  if (loading || !status) return <div className="admin-loading">{copy.loading}</div>;
 
   const services = [
     {
@@ -51,20 +56,20 @@ export default function SystemView() {
       state: status.api.status,
       detail:
         status.api.runtime === 'serverless'
-          ? 'Función serverless bajo demanda'
-          : `Activa durante ${Math.floor(status.api.uptimeSeconds / 60)} minutos`,
+          ? copy.serverless
+          : formatAdminCopy(copy.activeMinutes, { count: Math.floor(status.api.uptimeSeconds / 60) }),
     },
     {
       icon: Database,
       name: 'MongoDB Atlas',
       state: status.mongo.status,
-      detail: status.mongo.database || 'Base principal',
+      detail: status.mongo.database || copy.mainDatabase,
     },
     {
       icon: MapPin,
       name: 'Google Places',
       state: status.googlePlaces.status,
-      detail: `${status.googlePlaces.total} vinculados · ${status.googlePlaces.stale} por refrescar`,
+      detail: formatAdminCopy(copy.linkedAndStale, { total: status.googlePlaces.total, stale: status.googlePlaces.stale }),
     },
   ];
 
@@ -72,8 +77,8 @@ export default function SystemView() {
     <>
       <div className="admin-page-header">
         <div>
-          <h1>Estado del sistema</h1>
-          <p>Disponibilidad del backend, Atlas y ciclo de datos de Google Places.</p>
+          <h1>{copy.title}</h1>
+          <p>{copy.subtitle}</p>
         </div>
         <button
           className="admin-primary-button"
@@ -82,7 +87,7 @@ export default function SystemView() {
           onClick={refresh}
         >
           <ArrowsClockwise size={17} className={status.googlePlaces.job.status === 'running' ? 'is-spinning' : ''} />
-          {status.googlePlaces.job.status === 'running' ? 'Refrescando…' : triggering ? 'Iniciando…' : 'Refrescar Places'}
+          {status.googlePlaces.job.status === 'running' ? copy.refreshing : triggering ? copy.starting : copy.refreshPlaces}
         </button>
       </div>
 
@@ -98,7 +103,7 @@ export default function SystemView() {
               </div>
               <span className={`admin-status-pill ${healthy ? '' : 'is-warning'}`}>
                 {healthy ? <CheckCircle size={14} weight="fill" /> : <WarningCircle size={14} weight="fill" />}
-                {healthy ? 'Operativo' : 'Atención'}
+                {healthy ? common.operational : common.attention}
               </span>
             </article>
           );
@@ -107,19 +112,16 @@ export default function SystemView() {
 
       <section className="admin-panel admin-refresh-detail">
         <div>
-          <h2>Ciclo de refresco de Google Places</h2>
-          <p>
-            El workflow semanal actualiza coordenadas con 23 días de antigüedad, dejando margen
-            antes del límite de 30 días. También puedes iniciarlo manualmente desde aquí.
-          </p>
+          <h2>{copy.cycleTitle}</h2>
+          <p>{copy.cycleDescription}</p>
         </div>
         <dl>
-          <div><dt>Último refresco</dt><dd>{status.googlePlaces.lastRefreshAt ? formatRelativeTime(status.googlePlaces.lastRefreshAt) : 'Sin datos'}</dd></div>
-          <div><dt>Estado del proceso</dt><dd>{status.googlePlaces.job.status}</dd></div>
-          <div><dt>Procesados</dt><dd>{status.googlePlaces.job.updated} / {status.googlePlaces.job.total}</dd></div>
-          <div><dt>Errores</dt><dd>{status.googlePlaces.job.errors}</dd></div>
+          <div><dt>{copy.lastRefresh}</dt><dd>{status.googlePlaces.lastRefreshAt ? formatRelativeTime(status.googlePlaces.lastRefreshAt, language) : common.noData}</dd></div>
+          <div><dt>{copy.processStatus}</dt><dd>{copy.jobStatuses[status.googlePlaces.job.status] || status.googlePlaces.job.status}</dd></div>
+          <div><dt>{copy.processed}</dt><dd>{status.googlePlaces.job.updated} / {status.googlePlaces.job.total}</dd></div>
+          <div><dt>{copy.errors}</dt><dd>{status.googlePlaces.job.errors}</dd></div>
         </dl>
-        {message && <p className={message.includes('iniciado') ? 'admin-success-message' : 'admin-error'}>{message}</p>}
+        {message && <p className={message === copy.refreshStarted ? 'admin-success-message' : 'admin-error'}>{message}</p>}
       </section>
     </>
   );

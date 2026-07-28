@@ -8,8 +8,11 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const reviewsRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
+const businessRoutes = require('./routes/business');
 const { apiLimiter } = require('./middleware/rateLimiters');
 const { errorHandler } = require('./middleware/errorHandler');
+const Establishment = require('./models/Establishment');
+const { buildSitemapXml } = require('./utils/sitemap');
 
 function resolveTrustProxy(environment, rawValue) {
   if (rawValue === undefined || rawValue === '') {
@@ -85,6 +88,13 @@ function createApp({
   app.use('/api/users', usersRoutes);
   app.use('/api/reviews', reviewsRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/business', businessRoutes);
+
+  app.get('/api/sitemap.xml', async (req, res) => {
+    const establishments = await Establishment.find({}, '_id updatedAt').lean();
+    const origin = process.env.PUBLIC_SITE_URL || 'https://glutenfri.netlify.app';
+    res.type('application/xml').send(buildSitemapXml(establishments, origin));
+  });
 
   app.get('/api/health', (req, res) => {
     const mongoConnected = mongoose.connection.readyState === 1;

@@ -127,3 +127,22 @@ test('un id de establecimiento inválido devuelve 400', async () => {
     assert.equal((await response.json()).error, 'Datos inválidos');
   });
 });
+
+test('un reporte de información inválido se rechaza antes de acceder a Mongo', async () => {
+  const app = createApp({ corsOrigins: 'https://app.example', environment: 'test' });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/establishments/no-es-un-id/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reason: 'inventado',
+        submissionId: 'corto',
+        comment: 'x'.repeat(801),
+      }),
+    });
+    assert.equal(response.status, 400);
+    const body = await response.json();
+    assert.equal(body.error, 'Datos inválidos');
+    assert.ok(body.details.length >= 4);
+  });
+});

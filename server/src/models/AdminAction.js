@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const adminActionSchema = new mongoose.Schema(
   {
-    actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    actorDeleted: { type: Boolean, default: false },
     action: {
       type: String,
       enum: [
@@ -10,6 +11,8 @@ const adminActionSchema = new mongoose.Schema(
         'review_restored',
         'user_suspended',
         'user_restored',
+        'user_updated',
+        'user_deleted',
         'admin_granted',
         'admin_revoked',
         'establishment_created',

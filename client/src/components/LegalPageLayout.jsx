@@ -7,7 +7,7 @@ export default function LegalPageLayout({ title, children }) {
   return (
     <main className="legal-page">
       <header className="legal-header">
-        <Link to="/" aria-label={t('back')}>← {t('back')}</Link>
+        <Link to="/explorar" aria-label={t('back')}>← {t('back')}</Link>
         <label className="language-picker">
           <span aria-hidden="true">🌐</span>
           <select aria-label={t('language')} value={language} onChange={(event) => setLanguage(event.target.value)}>

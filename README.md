@@ -3,6 +3,36 @@
 Guía comunitaria de establecimientos con información sobre oferta sin gluten
 en Braga, Porto, Maia, Matosinhos y el norte de Portugal.
 
+## Gestión comercial (Prioridad 2)
+
+El producto incluye un flujo separado para que un negocio reclame y gestione
+información comercial sin poder modificar certificación, reseñas, riesgo ni
+señales comunitarias:
+
+- Solicitudes con revisión administrativa y estados `pending`,
+  `needs_information`, `approved`, `rejected`, `revoked` y `cancelled`.
+- Relación de gestores por establecimiento y autorización comprobada en el
+  backend en cada acceso a `/api/business/establishments/:id/*`.
+- Borradores/solicitudes de cambio con allowlist, comparación administrativa,
+  historial y publicación únicamente tras aprobación.
+- Analítica first-party de impresiones y acciones con identificadores
+  deduplicados, exclusión básica de bots y sin guardar IP o User-Agent.
+- Recordatorios internos calculados desde fechas reales, sello SVG enlazable y
+  kit de preparación de perfil comercial.
+- Patrocinio manual administrado y siempre etiquetado como `Patrocinado`.
+
+Las rutas de interfaz son `/negocio/*` y la gestión administrativa está en
+`/admin/negocios`. No se ejecuta ninguna migración: las nuevas colecciones y
+campos son aditivos y los 72 registros existentes continúan siendo válidos.
+
+No existe actualmente infraestructura segura de uploads, email transaccional
+ni pagos. En consecuencia, logo/fotos/menú se gestionan mediante URLs HTTPS,
+los recordatorios son internos y el patrocinio solo puede activarlo un
+administrador. No se muestra checkout ni se afirma que se hayan enviado
+emails. Para habilitar archivos, notificaciones o suscripciones habrá que
+añadir primero almacenamiento privado con política de borrado, un proveedor
+de email con preferencias/bajas y Stripe con webhooks idempotentes.
+
 > **Importante:** GlutenFri es un proyecto independiente desarrollado por
 > PixelTrend Studio. No representa ni está afiliado a APC, Biotrab o entidades
 > certificadoras. La aplicación no certifica establecimientos ni garantiza la
@@ -632,3 +662,29 @@ sesión. Cuentas y reseñas de prueba borradas al terminar (mismo
 - **Token de auth** guardado en `localStorage` por ahora; migrar a Capacitor Preferences en Fase 4 (mismo playbook que SweatMate).
 - **CORS**: `CORS_ORIGINS` es obligatorio (el server no arranca sin él). En producción debe incluir el dominio real del frontend y, cuando lleguemos a Fase 4, el origen de Capacitor (`capacitor://localhost` en iOS, `http://localhost` en Android).
 - **Atribución Google Places**: los 42 establecimientos con `source: "Google"` (43 originales, uno se fusionó con un registro APC) necesitan atribución visible ("Powered by Google") en cualquier vista de mapa/lista antes de producción — pendiente, requisito de sus ToS.
+
+## Prioridad 1: descubrimiento y ficha útil (2026-07-28)
+
+- `/explorar` conserva búsqueda, categoría, filtros compatibles y orden mediante
+  query parameters con códigos internos. Cercanía solicita ubicación únicamente
+  después de explicar el uso y pulsar la acción correspondiente.
+- `Establishment` admite de forma aditiva horarios por intervalos y zona
+  horaria, enlaces prácticos, servicios, accesibilidad, idiomas, fuentes y
+  medidas declaradas. Todos son opcionales; no se migraron ni completaron los
+  72 documentos heredados.
+- La ficha solo renderiza acciones con valores normalizados. Certificación
+  oficial, información declarada y señales comunitarias conservan categorías
+  separadas.
+- Los reportes de información usan una colección independiente y nunca
+  actualizan automáticamente el establecimiento. `submissionId` evita reenvíos
+  accidentales.
+- El sitemap de producción se genera en `/api/sitemap.xml` con los IDs reales y
+  Netlify sirve esa respuesta en `/sitemap.xml`. La metadata de cada ficha se
+  actualiza en cliente con canonical, Open Graph y JSON-LD defensivo.
+- La aplicación sigue siendo una SPA. La metadata por ficha se genera después
+  de ejecutar JavaScript; para indexación garantizada en rastreadores sin
+  JavaScript haría falta prerender o SSR, no incorporado porque supondría una
+  migración de arquitectura.
+- La PWA cachea únicamente el app shell y assets estáticos del mismo origen.
+  Nunca intercepta `/api/*`; offline muestra un aviso explícito y no presenta
+  respuestas dinámicas antiguas como actuales.

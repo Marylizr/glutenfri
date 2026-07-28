@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ExplorePage from './pages/ExplorePage';
 import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
@@ -16,16 +16,18 @@ import BottomNav from './components/BottomNav';
 import DesktopHeader from './components/DesktopHeader';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
+import { useLanguage } from './i18n';
 import './index.css';
 
 const AdminShell = lazy(() => import('./admin/AdminShell'));
+const BusinessShell = lazy(() => import('./business/BusinessShell'));
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [onboarded, setOnboarded] = useState(false);
   const auth = useAuth();
   const saved = useSaved(auth.user);
+  const { t } = useLanguage();
 
   // "Background location": si /lugar/:id se abrió desde un click dentro de
   // la app (no una carga directa por URL), la pantalla de origen sigue
@@ -48,10 +50,6 @@ function App() {
     saved.toggle(establishmentId);
   };
 
-  const finishOnboarding = () => {
-    setOnboarded(true);
-  };
-
   // Si el JWT venció, useAuth ya limpió la sesión (evento
   // 'gf:session-expired' desde services/api.js) — acá mandamos a la
   // pantalla de login con el mensaje que muestra ProfilePage. `replace`
@@ -62,9 +60,6 @@ function App() {
     }
   }, [auth.sessionExpired, navigate]);
 
-  // La portada es la entrada de cada carga nueva de la app pública y solo
-  // avanza cuando la persona pulsa uno de sus CTA. No se persiste el estado
-  // "visto"; /admin y /privacidad permanecen accesibles por URL directa.
   const publicInformationRoutes = [
     '/privacidad',
     '/terminos',
@@ -73,35 +68,27 @@ function App() {
     '/informacion-sin-gluten',
   ];
   const isInformationRoute = publicInformationRoutes.includes(location.pathname);
-  const isPublicEntry = !location.pathname.startsWith('/admin') && !isInformationRoute;
-
-  if (!onboarded && isPublicEntry) {
-    return (
-      <div className="onboarding-shell">
-        <OnboardingScreen
-          onStart={() => {
-            finishOnboarding();
-            navigate('/');
-          }}
-          onLogin={() => {
-            finishOnboarding();
-            navigate('/perfil');
-          }}
-        />
-      </div>
-    );
-  }
-
-  const isDetailRoute = location.pathname.startsWith('/lugar/');
+  const isDetailRoute =
+    location.pathname.startsWith('/lugar/') || location.pathname.startsWith('/empresa/');
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isBusinessRoute = location.pathname.startsWith('/negocio');
 
   return (
     <div className={`app-shell${isAdminRoute ? ' app-shell--admin' : ''}`}>
-      {!isAdminRoute && <DesktopHeader />}
+      <DesktopHeader />
       <div className="app-shell__content">
         <Routes location={backgroundLocation || location}>
           <Route
             path="/"
+            element={
+              <OnboardingScreen
+                onStart={() => navigate('/explorar')}
+                onLogin={() => navigate('/perfil')}
+              />
+            }
+          />
+          <Route
+            path="/explorar"
             element={
               <ExplorePage
                 onSelectEstablishment={openEstablishment}
@@ -138,7 +125,7 @@ function App() {
                 auth={auth}
                 onSelectEstablishment={openEstablishment}
                 onGoToProfile={() => navigate('/perfil')}
-                onGoToExplore={() => navigate('/')}
+                onGoToExplore={() => navigate('/explorar')}
               />
             }
           />
@@ -152,8 +139,20 @@ function App() {
             path="/admin/*"
             element={
               auth.user?.isAdmin ? (
-                <Suspense fallback={<div style={{ padding: '32px' }}>Cargando backoffice…</div>}>
+                <Suspense fallback={<div style={{ padding: '32px' }}>{t('panelLoading')}</div>}>
                   <AdminShell auth={auth} />
+                </Suspense>
+              ) : (
+                <Navigate to="/perfil" replace />
+              )
+            }
+          />
+          <Route
+            path="/negocio/*"
+            element={
+              auth.user ? (
+                <Suspense fallback={<div style={{ padding: '32px' }}>{t('panelLoading')}</div>}>
+                  <BusinessShell />
                 </Suspense>
               ) : (
                 <Navigate to="/perfil" replace />
@@ -170,11 +169,21 @@ function App() {
               />
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="/empresa/:id"
+            element={
+              <EstablishmentDetailRoute
+                auth={auth}
+                savedIds={saved.savedIds}
+                onToggleSaved={handleToggleSaved}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/explorar" replace />} />
         </Routes>
 
         {backgroundLocation && (
-          <div style={{ position: 'absolute', inset: 0, background: 'var(--color-bg)' }}>
+          <div className="detail-route-overlay">
             <Routes>
               <Route
                 path="/lugar/:id"
@@ -192,6 +201,8 @@ function App() {
       </div>
       {!isDetailRoute &&
         !isAdminRoute &&
+        !isBusinessRoute &&
+        location.pathname !== '/' &&
         !isInformationRoute && <BottomNav />}
     </div>
   );

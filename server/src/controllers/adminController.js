@@ -4,7 +4,9 @@ const Review = require('../models/Review');
 const User = require('../models/User');
 const Establishment = require('../models/Establishment');
 const AdminAction = require('../models/AdminAction');
+const { EstablishmentReport } = require('../models/EstablishmentReport');
 const { recordAdminAction } = require('../services/adminAudit');
+const { deleteUserData } = require('./usersController');
 const {
   claimGooglePlacesRefresh,
   getRefreshJobState,
@@ -240,6 +242,80 @@ async function setUserSuspension(req, res) {
   });
 }
 
+async function updateUserProfile(req, res) {
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  const changedFields = [];
+  if (req.body.name !== undefined && req.body.name !== user.name) {
+    user.name = req.body.name;
+    changedFields.push('name');
+  }
+  if (req.body.email !== undefined) {
+    const email = req.body.email.trim().toLowerCase();
+    if (email !== user.email) {
+      const duplicate = await User.exists({ _id: { $ne: user._id }, email });
+      if (duplicate) return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
+      user.email = email;
+      changedFields.push('email');
+    }
+  }
+
+  if (changedFields.length === 0) {
+    return res.json({
+      user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+    });
+  }
+
+  try {
+    await user.save();
+  } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ error: 'Ya existe una cuenta con ese email' });
+    }
+    throw error;
+  }
+  await recordAdminAction({
+    actorId: req.user.id,
+    action: 'user_updated',
+    targetType: 'user',
+    targetId: user._id,
+    targetLabel: user.email,
+    metadata: { changedFields },
+  });
+  res.json({
+    user: { id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin },
+  });
+}
+
+async function deleteUser(req, res) {
+  const user = await User.findById(req.params.id).select('email isAdmin');
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (user._id.toString() === req.user.id) {
+    return res.status(409).json({ error: 'No puedes eliminar tu propia cuenta desde el panel' });
+  }
+  if (req.body.confirmEmail.trim().toLowerCase() !== user.email) {
+    return res.status(400).json({ error: 'El email de confirmación no coincide' });
+  }
+  if (user.isAdmin) {
+    const adminCount = await User.countDocuments({ isAdmin: true });
+    if (adminCount <= 1) {
+      return res.status(409).json({ error: 'No se puede eliminar el último administrador' });
+    }
+  }
+
+  await deleteUserData(user._id);
+  await recordAdminAction({
+    actorId: req.user.id,
+    action: 'user_deleted',
+    targetType: 'user',
+    targetLabel: 'Cuenta eliminada',
+    reason: req.body.reason,
+    metadata: { wasAdmin: user.isAdmin },
+  });
+  res.status(204).end();
+}
+
 async function listAdminEstablishments(req, res) {
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 100);
@@ -295,6 +371,26 @@ function establishmentPayload(body) {
     'dedicatedGlutenFreeMenu',
     'staffTrained',
     'riskLevel',
+    'images',
+    'logoUrl',
+    'certificationBody',
+    'certificationDate',
+    'websiteUrl',
+    'menuUrl',
+    'reservationUrl',
+    'orderUrl',
+    'whatsapp',
+    'timezone',
+    'weeklyHours',
+    'crossContactMeasures',
+    'dedicatedArea',
+    'delivery',
+    'takeaway',
+    'accessibilityFeatures',
+    'serviceLanguages',
+    'glutenFreeScope',
+    'informationSources',
+    'lastInformationUpdate',
   ];
   const payload = Object.fromEntries(
     allowed.filter((key) => body[key] !== undefined).map((key) => [key, body[key]])
@@ -303,6 +399,16 @@ function establishmentPayload(body) {
     payload.certified = body.trustStatus === 'CERTIFIED_APC_BIOTRAB';
   }
   return payload;
+}
+
+async function listEstablishmentReports(req, res) {
+  const query = req.query.status ? { status: req.query.status } : {};
+  const reports = await EstablishmentReport.find(query)
+    .populate('establishment', 'name type address')
+    .sort('-createdAt')
+    .limit(200)
+    .lean();
+  res.json(reports);
 }
 
 async function createEstablishment(req, res) {
@@ -446,10 +552,13 @@ module.exports = {
   listUsers,
   setAdminRole,
   setUserSuspension,
+  updateUserProfile,
+  deleteUser,
   listAdminEstablishments,
   createEstablishment,
   updateEstablishment,
   listAuditLog,
   systemStatus,
   triggerPlacesRefresh,
+  listEstablishmentReports,
 };
