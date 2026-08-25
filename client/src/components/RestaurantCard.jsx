@@ -23,7 +23,10 @@ export default function RestaurantCard({
 }) {
   const { language, t } = useLanguage();
   const km = distanceKm(userPosition, establishment);
-  const lastChecked = formatVerificationDate(establishment.lastVerifiedAt, language);
+  const lastChecked = formatVerificationDate(
+    establishment.informationUpdatedAt || establishment.lastInformationUpdate || establishment.lastVerifiedAt,
+    language
+  );
   const hasSource = Boolean(establishment.sourceName);
   const hasTrustMetadata = hasSource || Boolean(lastChecked);
 
@@ -109,7 +112,7 @@ export default function RestaurantCard({
         {hasTrustMetadata && (
           <div className="restaurant-card__metadata">
             {hasSource && <div><strong>{t('source')}:</strong> {establishment.sourceName}</div>}
-            {lastChecked && <div><strong>{t('lastChecked')}:</strong> {lastChecked}</div>}
+            {lastChecked && <div><strong>{t('lastInformationUpdate')}:</strong> {lastChecked}</div>}
           </div>
         )}
         <Link

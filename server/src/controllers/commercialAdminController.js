@@ -66,6 +66,16 @@ async function updateClaimStatus(req, res) {
       },
       { upsert: true, returnDocument: 'after', runValidators: true }
     );
+    await Establishment.findByIdAndUpdate(claim.establishment, {
+      commercialProfile: {
+        status: 'managed',
+        tier: 'managed',
+        claimedBy: claim.claimant,
+        claimedAt: new Date(),
+        reviewStatus: 'verified',
+        updatedAt: new Date(),
+      },
+    }, { runValidators: true });
   }
   if (status === 'revoked') {
     await EstablishmentManager.updateMany(
@@ -77,6 +87,23 @@ async function updateClaimStatus(req, res) {
         revocationReason: req.body.reason,
       }
     );
+    await Establishment.findByIdAndUpdate(claim.establishment, {
+      $set: {
+        'commercialProfile.status': 'suspended',
+        'commercialProfile.reviewStatus': 'revoked',
+        'commercialProfile.updatedAt': new Date(),
+      },
+      $unset: { 'commercialProfile.claimedBy': 1, 'commercialProfile.claimedAt': 1 },
+    }, { runValidators: true });
+  }
+  if (status === 'rejected') {
+    await Establishment.findByIdAndUpdate(claim.establishment, {
+      $set: {
+        'commercialProfile.status': 'basic',
+        'commercialProfile.reviewStatus': 'rejected',
+        'commercialProfile.updatedAt': new Date(),
+      },
+    }, { runValidators: true });
   }
   claim.status = status;
   claim.adminReason = req.body.reason;
@@ -133,6 +160,8 @@ async function reviewChangeRequest(req, res) {
         nextReviewDueAt: new Date(
           now.getTime() + BUSINESS_REVIEW_DAYS.nextReview * 24 * 60 * 60 * 1000
         ),
+        'commercialProfile.reviewStatus': 'verified',
+        'commercialProfile.updatedAt': now,
       },
       { runValidators: true }
     );
@@ -181,6 +210,7 @@ async function setSponsorship(req, res) {
     {
       sponsorship: {
         status: req.body.active ? 'active' : 'inactive',
+        label: req.body.active ? 'Patrocinado' : undefined,
         startsAt: req.body.active ? req.body.startsAt || new Date() : undefined,
         endsAt: req.body.active ? req.body.endsAt || undefined : undefined,
         updatedBy: req.user.id,

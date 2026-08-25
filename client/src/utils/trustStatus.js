@@ -14,6 +14,66 @@ export const TRUST_STATUS = Object.freeze({
   PENDING_VALIDATION: 'PENDING_VALIDATION',
 });
 
+export const INFORMATION_CATEGORY = Object.freeze({
+  BUSINESS_DECLARED: 'business_declared_gluten_free',
+  SPECIALIZED_BUSINESS: 'specialized_gluten_free_business',
+  POINT_OF_SALE: 'point_of_sale',
+  RETAIL_STORE: 'retail_store',
+  COMMUNITY_INFORMATION: 'community_information',
+  EXTERNAL_CERTIFICATION: 'external_certification',
+});
+export const SOURCE_TYPE = Object.freeze({
+  BUSINESS_PROVIDED: 'business_provided',
+  PUBLIC_SOURCE: 'public_source',
+  COMMUNITY_EXPERIENCE: 'community_experience',
+  NOT_IDENTIFIED: 'source_not_identified',
+});
+export const CONFIDENCE_LEVEL = Object.freeze({
+  PENDING: 'source_pending_review',
+  VERIFIED: 'source_verified',
+  OUTDATED: 'source_outdated',
+});
+
+function deriveInformationCategory(record = {}) {
+  if (Object.values(INFORMATION_CATEGORY).includes(record.informationCategory)) {
+    if (record.informationCategory === INFORMATION_CATEGORY.EXTERNAL_CERTIFICATION) {
+      const authorized =
+        Boolean(record.sourceName) &&
+        /^https:\/\//i.test(record.sourceUrl || '');
+      return authorized
+        ? INFORMATION_CATEGORY.EXTERNAL_CERTIFICATION
+        : INFORMATION_CATEGORY.COMMUNITY_INFORMATION;
+    }
+    return record.informationCategory;
+  }
+  if (record.source === 'user') return INFORMATION_CATEGORY.COMMUNITY_INFORMATION;
+  if (['pharmacy', 'supermarket'].includes(record.type)) return INFORMATION_CATEGORY.POINT_OF_SALE;
+  if (record.type === 'store') return INFORMATION_CATEGORY.RETAIL_STORE;
+  return INFORMATION_CATEGORY.COMMUNITY_INFORMATION;
+}
+
+function deriveSourceType(record = {}) {
+  if (Object.values(SOURCE_TYPE).includes(record.sourceType)) return record.sourceType;
+  if (record.source === 'user') return SOURCE_TYPE.COMMUNITY_EXPERIENCE;
+  if (record.sourceName || ['APC', 'Google', 'APC+Google'].includes(record.source)) {
+    return SOURCE_TYPE.PUBLIC_SOURCE;
+  }
+  return SOURCE_TYPE.NOT_IDENTIFIED;
+}
+
+function deriveConfidenceLevel(record = {}) {
+  if (Object.values(CONFIDENCE_LEVEL).includes(record.confidenceLevel)) {
+    return record.confidenceLevel;
+  }
+  const rawDate = record.informationUpdatedAt || record.lastInformationUpdate || record.lastVerifiedAt;
+  if (!rawDate) return CONFIDENCE_LEVEL.PENDING;
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) return CONFIDENCE_LEVEL.PENDING;
+  return Date.now() - date.getTime() > 365 * 86_400_000
+    ? CONFIDENCE_LEVEL.OUTDATED
+    : CONFIDENCE_LEVEL.VERIFIED;
+}
+
 export function normalizeTrustStatus(establishment = {}) {
   if (Object.values(TRUST_STATUS).includes(establishment.trustStatus)) {
     if (
@@ -62,6 +122,12 @@ export function normalizeEstablishmentRecord(record) {
   return {
     ...record,
     trustStatus: normalizeTrustStatus({ ...record, sourceName }),
+    informationCategory: deriveInformationCategory(record),
+    sourceType: deriveSourceType({ ...record, sourceName }),
+    confidenceLevel: deriveConfidenceLevel(record),
+    informationStatus: record.informationStatus === 'closed_or_removed'
+      ? 'closed_or_removed'
+      : 'active',
     sourceName,
     sourceUrl,
     lastVerifiedAt: date && !Number.isNaN(date.getTime()) ? record.lastVerifiedAt : null,
@@ -140,22 +206,22 @@ export function getMappableEstablishments(establishments) {
 }
 
 export function getTrustPresentation(establishment, t) {
-  const status = normalizeTrustStatus(establishment);
+  const status = deriveConfidenceLevel(establishment);
   const presentations = {
-    [TRUST_STATUS.CERTIFIED_APC_BIOTRAB]: {
-      label: t('trustCertified'),
+    [CONFIDENCE_LEVEL.VERIFIED]: {
+      label: t('trustVerifiedSource'),
       background: '#e3ead9',
       color: '#31513b',
-      icon: '◆',
+      icon: '✓',
     },
-    [TRUST_STATUS.COMMUNITY_REPORTED]: {
-      label: t('trustCommunity'),
+    [CONFIDENCE_LEVEL.OUTDATED]: {
+      label: t('trustOutdatedSource'),
       background: '#f6ead8',
       color: '#7a5420',
-      icon: '●',
+      icon: '◷',
     },
-    [TRUST_STATUS.PENDING_VALIDATION]: {
-      label: t('trustPending'),
+    [CONFIDENCE_LEVEL.PENDING]: {
+      label: t('trustPendingSource'),
       background: '#ece9e2',
       color: '#5f5a50',
       icon: '◷',

@@ -4,8 +4,10 @@ const Review = require('../models/Review');
 const User = require('../models/User');
 const Establishment = require('../models/Establishment');
 const AdminAction = require('../models/AdminAction');
+const EstablishmentAuditLog = require('../models/EstablishmentAuditLog');
 const { EstablishmentReport } = require('../models/EstablishmentReport');
 const { recordAdminAction } = require('../services/adminAudit');
+const { findDuplicateCandidates } = require('../utils/dataQuality');
 const { deleteUserData } = require('./usersController');
 const {
   claimGooglePlacesRefresh,
@@ -37,12 +39,13 @@ async function dashboard(req, res) {
   const reportQuery = {
     $or: [{ 'reports.0': { $exists: true } }, { 'reportedBy.0': { $exists: true } }],
   };
-  const [users, reviews, establishments, reportsPending, suspendedUsers, recentActions] =
+  const [users, reviews, establishments, reviewReportsPending, establishmentReportsPending, suspendedUsers, recentActions] =
     await Promise.all([
       User.countDocuments(),
       Review.countDocuments(),
       Establishment.countDocuments(),
       Review.countDocuments(reportQuery),
+      EstablishmentReport.countDocuments({ status: { $in: ['pending', 'reviewing'] } }),
       User.countDocuments(activeSuspensionQuery()),
       AdminAction.find()
         .sort('-createdAt')
@@ -52,7 +55,13 @@ async function dashboard(req, res) {
     ]);
 
   res.json({
-    metrics: { users, reviews, establishments, reportsPending, suspendedUsers },
+    metrics: {
+      users,
+      reviews,
+      establishments,
+      reportsPending: reviewReportsPending + establishmentReportsPending,
+      suspendedUsers,
+    },
     recentActions,
   });
 }
@@ -330,6 +339,9 @@ async function listAdminEstablishments(req, res) {
   if (req.query.certified === 'true') query.certified = true;
   if (req.query.certified === 'false') query.certified = false;
   if (req.query.trustStatus) query.trustStatus = req.query.trustStatus;
+  if (req.query.qualityReviewStatus) query.qualityReviewStatus = req.query.qualityReviewStatus;
+  if (req.query.informationStatus) query.informationStatus = req.query.informationStatus;
+  if (req.query.confidenceLevel) query.confidenceLevel = req.query.confidenceLevel;
 
   const [data, total] = await Promise.all([
     Establishment.find(query)
@@ -391,6 +403,10 @@ function establishmentPayload(body) {
     'glutenFreeScope',
     'informationSources',
     'lastInformationUpdate',
+    'informationCategory',
+    'sourceType',
+    'confidenceLevel',
+    'informationStatus',
   ];
   const payload = Object.fromEntries(
     allowed.filter((key) => body[key] !== undefined).map((key) => [key, body[key]])
@@ -405,10 +421,155 @@ async function listEstablishmentReports(req, res) {
   const query = req.query.status ? { status: req.query.status } : {};
   const reports = await EstablishmentReport.find(query)
     .populate('establishment', 'name type address')
+    .populate('reviewedBy', 'name email')
     .sort('-createdAt')
     .limit(200)
     .lean();
   res.json(reports);
+}
+
+const QUALITY_FIELDS = [
+  'informationCategory',
+  'sourceType',
+  'confidenceLevel',
+  'informationStatus',
+  'sourceName',
+  'sourceUrl',
+  'qualityReviewStatus',
+  'duplicateOf',
+];
+
+function valueForAudit(value) {
+  if (value === undefined || value === null || value === '') return null;
+  return value instanceof mongoose.Types.ObjectId ? value.toString() : value;
+}
+
+function fieldChanges(before, after, fields = QUALITY_FIELDS) {
+  return fields.flatMap((field) => {
+    const previous = valueForAudit(before?.[field]);
+    const next = valueForAudit(after?.[field]);
+    return JSON.stringify(previous) === JSON.stringify(next)
+      ? []
+      : [{ field, previous, next }];
+  });
+}
+
+async function listDuplicateCandidates(req, res) {
+  const establishments = await Establishment.find({ duplicateOf: { $exists: false } })
+    .select('name type address lat lng informationStatus qualityReviewStatus')
+    .sort('name')
+    .lean();
+  res.json(findDuplicateCandidates(establishments));
+}
+
+async function reviewEstablishmentQuality(req, res) {
+  const establishment = await Establishment.findById(req.params.id);
+  if (!establishment) return res.status(404).json({ error: 'Establecimiento no encontrado' });
+
+  const payload = Object.fromEntries(
+    QUALITY_FIELDS.filter((field) => req.body[field] !== undefined).map((field) => [field, req.body[field]])
+  );
+  if (payload.informationCategory === 'external_certification' && !establishment.externalCertificationAuthorized) {
+    return res.status(409).json({
+      error: 'La certificación externa requiere una autorización escrita registrada previamente',
+    });
+  }
+  if (payload.duplicateOf) {
+    if (String(payload.duplicateOf) === String(establishment._id)) {
+      return res.status(409).json({ error: 'Un establecimiento no puede ser duplicado de sí mismo' });
+    }
+    const primaryExists = await Establishment.exists({ _id: payload.duplicateOf });
+    if (!primaryExists) return res.status(404).json({ error: 'Establecimiento principal no encontrado' });
+  }
+
+  const before = establishment.toObject();
+  Object.assign(establishment, payload);
+  if (payload.qualityReviewStatus === 'reviewed') {
+    establishment.qualityReviewedAt = new Date();
+    establishment.qualityReviewedBy = req.user.id;
+  }
+  if (['sourceName', 'sourceUrl', 'sourceType', 'confidenceLevel'].some((field) => payload[field] !== undefined)) {
+    establishment.sourceReviewedAt = new Date();
+    establishment.sourceReviewedBy = req.user.id;
+  }
+  await establishment.save();
+  const changes = fieldChanges(before, establishment.toObject());
+  const action = payload.duplicateOf
+    ? 'establishment_duplicate_marked'
+    : payload.informationStatus === 'closed_or_removed'
+      ? 'establishment_closed'
+      : 'establishment_quality_reviewed';
+  await recordAdminAction({
+    actorId: req.user.id,
+    action,
+    targetType: 'establishment',
+    targetId: establishment._id,
+    targetLabel: establishment.name,
+    reason: req.body.reason,
+    metadata: { changes },
+  });
+  res.json(normalizeEstablishmentTrust(establishment.toObject()));
+}
+
+async function reviewEstablishmentReport(req, res) {
+  const report = await EstablishmentReport.findById(req.params.reportId);
+  if (!report) return res.status(404).json({ error: 'Reporte no encontrado' });
+  let establishment = null;
+  if (req.body.markClosed === true) {
+    establishment = await Establishment.findById(report.establishment);
+    if (!establishment) return res.status(404).json({ error: 'Establecimiento no encontrado' });
+  }
+  report.status = req.body.status;
+  report.reviewedBy = req.user.id;
+  report.reviewedAt = new Date();
+  report.resolutionNote = req.body.reason;
+  await report.save();
+
+  if (req.body.markClosed === true) {
+    const before = establishment.toObject();
+    establishment.informationStatus = 'closed_or_removed';
+    establishment.qualityReviewStatus = 'reviewed';
+    establishment.qualityReviewedAt = new Date();
+    establishment.qualityReviewedBy = req.user.id;
+    await establishment.save();
+    await recordAdminAction({
+      actorId: req.user.id,
+      action: 'establishment_closed',
+      targetType: 'establishment',
+      targetId: establishment._id,
+      targetLabel: establishment.name,
+      reason: req.body.reason,
+      metadata: { reportId: report._id, changes: fieldChanges(before, establishment.toObject()) },
+    });
+  }
+  await recordAdminAction({
+    actorId: req.user.id,
+    action: 'establishment_report_reviewed',
+    targetType: 'establishment',
+    targetId: report.establishment,
+    targetLabel: establishment?.name || report.reason,
+    reason: req.body.reason,
+    metadata: { reportId: report._id, status: report.status, markClosed: req.body.markClosed === true },
+  });
+  res.json(report);
+}
+
+async function listEstablishmentHistory(req, res) {
+  const [administrative, commercial] = await Promise.all([
+    AdminAction.find({ targetType: 'establishment', targetId: req.params.id })
+      .populate('actor', 'name email')
+      .sort('-createdAt')
+      .lean(),
+    EstablishmentAuditLog.find({ establishment: req.params.id })
+      .populate('actor', 'name email')
+      .sort('-createdAt')
+      .lean(),
+  ]);
+  const history = [
+    ...administrative.map((item) => ({ ...item, channel: 'administrative' })),
+    ...commercial.map((item) => ({ ...item, channel: 'commercial' })),
+  ].sort((first, second) => new Date(second.createdAt) - new Date(first.createdAt));
+  res.json(history.slice(0, 200));
 }
 
 async function createEstablishment(req, res) {
@@ -561,4 +722,8 @@ module.exports = {
   systemStatus,
   triggerPlacesRefresh,
   listEstablishmentReports,
+  reviewEstablishmentReport,
+  listDuplicateCandidates,
+  reviewEstablishmentQuality,
+  listEstablishmentHistory,
 };

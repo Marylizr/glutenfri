@@ -1,7 +1,8 @@
 import HamburgerAssembly from '../components/HamburgerAssembly';
 import { useLanguage } from '../i18n/index.jsx';
+import { recordCommercialAnalyticsEvent } from '../utils/commercialAnalytics.js';
 
-export default function OnboardingScreen({ onStart, onLogin }) {
+export default function OnboardingScreen({ onStart, onOwner }) {
   const { t } = useLanguage();
   const features = [t('heroFeature1'), t('heroFeature2'), t('heroFeature3')];
 
@@ -32,8 +33,8 @@ export default function OnboardingScreen({ onStart, onLogin }) {
             <button onClick={onStart} className="onboarding-primary">
               {t('start')} &nbsp;→
             </button>
-            <button onClick={onLogin} className="onboarding-login">
-              {t('loginPrompt')}
+            <button onClick={() => { recordCommercialAnalyticsEvent('commercial_cta_clicked'); onOwner(); }} className="onboarding-login">
+              {t('ownerCta')}
             </button>
           </div>
         </div>

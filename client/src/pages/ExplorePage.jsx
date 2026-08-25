@@ -25,9 +25,7 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
   const state = useMemo(() => parseExploreParams(searchParams), [searchParams]);
   const { position, status: locationStatus, requestLocation } = useUserLocation();
   const available = useMemo(() => ({
-    discount: establishments.some(
-      (item) => Boolean(item.discount) && ['APC', 'APC+Google'].includes(item.source)
-    ),
+    discount: establishments.some((item) => Boolean(item.discount)),
     delivery: establishments.some((item) => typeof item.delivery === 'boolean'),
     takeaway: establishments.some((item) => typeof item.takeaway === 'boolean'),
     hours: establishments.some((item) => item.weeklyHours && item.timezone),

@@ -16,7 +16,7 @@ export default function Filters({ filters, onChange }) {
     { value: 'pharmacy', label: t('pharmacies') },
     { value: 'supermarket', label: t('supermarkets') },
   ];
-  const activeCount = [filters.type, filters.certifiedOnly, filters.discountOnly].filter(Boolean).length;
+  const activeCount = [filters.type, filters.sourceVerifiedOnly, filters.discountOnly].filter(Boolean).length;
 
   const close = useCallback((restoreFocus = false) => {
     setOpen(false);
@@ -90,8 +90,8 @@ export default function Filters({ filters, onChange }) {
           <label className="explore-filter__check">
             <input
               type="checkbox"
-              checked={!!filters.certifiedOnly}
-              onChange={(event) => onChange({ ...filters, certifiedOnly: event.target.checked })}
+              checked={!!filters.sourceVerifiedOnly}
+              onChange={(event) => onChange({ ...filters, sourceVerifiedOnly: event.target.checked })}
             />
             <span className="explore-filter__option-copy">
               <strong>{t('certificationFilter')}</strong>

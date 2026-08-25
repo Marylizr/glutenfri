@@ -30,6 +30,7 @@ export default function PublicFooter() {
             <Link to="/terminos">{t('terms')}</Link>
             <Link to="/contacto">{t('contact')}</Link>
             <Link to="/proyecto">{t('about')}</Link>
+            <Link to="/servicios-digitales">{t('digitalServices')}</Link>
           </nav>
         </div>
 

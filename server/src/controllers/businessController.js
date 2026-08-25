@@ -84,6 +84,7 @@ function businessEstablishmentView(establishment) {
     sponsorship: establishment.sponsorship
       ? {
           status: sponsoredNow(establishment) ? 'active' : 'inactive',
+          label: sponsoredNow(establishment) ? establishment.sponsorship.label || 'Patrocinado' : undefined,
           startsAt: establishment.sponsorship.startsAt,
           endsAt: establishment.sponsorship.endsAt,
         }
@@ -119,6 +120,13 @@ async function createClaim(req, res) {
       consentAt: new Date(),
       activeKey,
     });
+    await Establishment.findByIdAndUpdate(establishment._id, {
+      $set: {
+        'commercialProfile.status': 'pending_review',
+        'commercialProfile.reviewStatus': 'pending',
+        'commercialProfile.updatedAt': new Date(),
+      },
+    }, { runValidators: true });
     await EstablishmentAuditLog.create({
       establishment: establishment._id,
       actor: req.user.id,

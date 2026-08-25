@@ -4,7 +4,10 @@ import TrustBadge from './TrustBadge.jsx';
 
 export default function TrustDetails({ establishment }) {
   const { language, t } = useLanguage();
-  const date = formatVerificationDate(establishment.lastVerifiedAt, language);
+  const date = formatVerificationDate(
+    establishment.informationUpdatedAt || establishment.lastInformationUpdate || establishment.lastVerifiedAt,
+    language
+  );
   const source = establishment.sourceName || t('sourceMissing');
   const validSourceUrl = /^https:\/\//i.test(establishment.sourceUrl || '');
 
@@ -13,6 +16,14 @@ export default function TrustDetails({ establishment }) {
       <h2 id="trust-heading" style={{ fontSize: 17, marginBottom: 10 }}>{t('safetyPageTitle')}</h2>
       <TrustBadge establishment={establishment} />
       <dl className="trust-metadata">
+        <div>
+          <dt>{t('informationCategory')}</dt>
+          <dd>{t(`category_${establishment.informationCategory}`)}</dd>
+        </div>
+        <div>
+          <dt>{t('sourceType')}</dt>
+          <dd>{t(`sourceType_${establishment.sourceType}`)}</dd>
+        </div>
         <div>
           <dt>{t('source')}</dt>
           <dd>
@@ -24,11 +35,15 @@ export default function TrustDetails({ establishment }) {
           </dd>
         </div>
         <div>
-          <dt>{t('lastChecked')}</dt>
+          <dt>{t('lastInformationUpdate')}</dt>
           <dd>{date || t('dateMissing')}</dd>
         </div>
+        <div>
+          <dt>{t('informationStatus')}</dt>
+          <dd>{t(`informationStatus_${establishment.informationStatus}`)}</dd>
+        </div>
       </dl>
-      <p className="trust-notice">{t('informationNotice')}</p>
+      <p className="trust-notice">{t('noCertificationNotice')}</p>
       <Link to="/informacion-sin-gluten" className="trust-learn-link">
         {t('understandCategory')}
       </Link>

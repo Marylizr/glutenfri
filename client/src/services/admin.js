@@ -43,6 +43,27 @@ export const createAdminEstablishment = (data) =>
 export const updateAdminEstablishment = (establishmentId, data) =>
   api.patch(`/admin/establishments/${establishmentId}`, data).then((response) => response.data);
 
+export const getEstablishmentReports = (params = {}) =>
+  api
+    .get('/admin/establishment-reports', { params })
+    .then((response) => requireList(response.data, 'lista de reportes de establecimientos'));
+
+export const reviewEstablishmentReport = (reportId, data) =>
+  api.patch(`/admin/establishment-reports/${reportId}`, data).then((response) => response.data);
+
+export const getDuplicateCandidates = () =>
+  api
+    .get('/admin/data-quality/duplicates')
+    .then((response) => requireList(response.data, 'lista de posibles duplicados'));
+
+export const reviewEstablishmentQuality = (establishmentId, data) =>
+  api.patch(`/admin/establishments/${establishmentId}/quality`, data).then((response) => response.data);
+
+export const getEstablishmentHistory = (establishmentId) =>
+  api
+    .get(`/admin/establishments/${establishmentId}/history`)
+    .then((response) => requireList(response.data, 'historial del establecimiento'));
+
 export const getAuditLog = (params = {}) =>
   api.get('/admin/audit', { params }).then((response) => response.data);
 

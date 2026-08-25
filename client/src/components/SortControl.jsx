@@ -10,7 +10,7 @@ export default function SortControl({ value, onChange, locationStatus, onRequest
         <select value={value} onChange={(event) => onChange(event.target.value)}>
           <option value={SORT_OPTIONS.DEFAULT}>{t('sortDefault')}</option>
           <option value={SORT_OPTIONS.DISTANCE}>{t('sortDistance')}</option>
-          <option value={SORT_OPTIONS.CERTIFICATION}>{t('sortCertification')}</option>
+          <option value={SORT_OPTIONS.SOURCE_STATUS}>{t('sortCertification')}</option>
           <option value={SORT_OPTIONS.CATEGORY}>{t('sortCategory')}</option>
         </select>
       </label>

@@ -4,6 +4,7 @@ const STATIC_PATHS = [
   '/mapa',
   '/informacion-sin-gluten',
   '/proyecto',
+  '/servicios-digitales',
   '/contacto',
   '/privacidad',
   '/terminos',

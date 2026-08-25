@@ -13,6 +13,7 @@ import {
   Star,
   Users,
   X,
+  Database,
 } from '@phosphor-icons/react';
 import DashboardView from './views/DashboardView';
 import EstablishmentsView from './views/EstablishmentsView';
@@ -21,6 +22,7 @@ import UsersView from './views/UsersView';
 import AuditView from './views/AuditView';
 import SystemView from './views/SystemView';
 import CommercialView from './views/CommercialView';
+import DataQualityView from './views/DataQualityView';
 import BrandLogo from '../components/BrandLogo';
 import { useLanguage } from '../i18n';
 import { ADMIN_COPY } from './adminCopy';
@@ -29,6 +31,7 @@ import './admin.css';
 const NAV_ITEMS = [
   { key: 'dashboard', icon: House, path: '/admin' },
   { key: 'establishments', icon: Buildings, path: '/admin/establecimientos' },
+  { key: 'dataQuality', icon: Database, path: '/admin/data-quality' },
   { key: 'commercial', icon: Briefcase, path: '/admin/negocios' },
   { key: 'moderation', icon: Star, path: '/admin/moderacion' },
   { key: 'users', icon: Users, path: '/admin/usuarios' },
@@ -41,6 +44,7 @@ const MOBILE_MORE_ITEMS = NAV_ITEMS.slice(4);
 
 function activeSection(pathname) {
   if (pathname.includes('/establecimientos')) return 'establishments';
+  if (pathname.includes('/data-quality') || pathname.includes('/calidad')) return 'dataQuality';
   if (pathname.includes('/negocios')) return 'commercial';
   if (pathname.includes('/moderacion')) return 'moderation';
   if (pathname.includes('/usuarios')) return 'users';
@@ -186,6 +190,7 @@ export default function AdminShell({ auth }) {
         <div className="admin-content">
           {active === 'dashboard' && <DashboardView auth={auth} navigate={navigate} />}
           {active === 'establishments' && <EstablishmentsView />}
+          {active === 'dataQuality' && <DataQualityView />}
           {active === 'commercial' && <CommercialView />}
           {active === 'moderation' && <ModerationView />}
           {active === 'users' && <UsersView currentUser={auth.user} />}

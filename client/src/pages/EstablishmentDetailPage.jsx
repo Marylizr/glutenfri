@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '../components/RestaurantCard';
 import PhotoPlaceholder from '../components/PhotoPlaceholder';
 import ScoreBadge from '../components/ScoreBadge';
@@ -14,6 +15,7 @@ import { useLanguage } from '../i18n/index.jsx';
 import SharePlaceButton from '../components/SharePlaceButton.jsx';
 import BusinessClaimDialog from '../components/BusinessClaimDialog.jsx';
 import { recordBusinessEvent } from '../services/business.js';
+import { recordCommercialAnalyticsEvent } from '../utils/commercialAnalytics.js';
 import EstablishmentSeo from '../components/EstablishmentSeo.jsx';
 import {
   getBooleanCommunityState,
@@ -286,6 +288,14 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
     );
   }, [establishment._id]);
 
+  useEffect(() => {
+    const source = establishment.sponsorship?.status === 'active' ? 'sponsored' : 'organic';
+    recordCommercialAnalyticsEvent('commercial_profile_viewed', { establishmentId: establishment._id, source });
+    if (source === 'sponsored') {
+      recordCommercialAnalyticsEvent('sponsored_content_viewed', { establishmentId: establishment._id, source });
+    }
+  }, [establishment._id, establishment.sponsorship?.status]);
+
   // Una reseña por usuario por establecimiento (el backend hace upsert) —
   // si ya dejó una, el Safety Review se abre precargado para editarla en
   // vez de arrancar en blanco.
@@ -405,7 +415,12 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
                   href={establishment[field]}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => recordBusinessEvent(establishment._id, eventType)}
+                  onClick={() => {
+                    recordBusinessEvent(establishment._id, eventType);
+                    if (establishment.sponsorship?.status === 'active') {
+                      recordCommercialAnalyticsEvent('sponsored_content_clicked', { establishmentId: establishment._id, source: 'sponsored' });
+                    }
+                  }}
                 >
                   {label}
                 </a>
@@ -416,7 +431,12 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
                   href={`https://wa.me/${String(establishment.whatsapp).replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => recordBusinessEvent(establishment._id, 'whatsapp_click')}
+                  onClick={() => {
+                    recordBusinessEvent(establishment._id, 'whatsapp_click');
+                    if (establishment.sponsorship?.status === 'active') {
+                      recordCommercialAnalyticsEvent('sponsored_content_clicked', { establishmentId: establishment._id, source: 'sponsored' });
+                    }
+                  }}
                 >
                   {copy.whatsapp}
                 </a>
@@ -425,6 +445,10 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           )}
           <CommunityExperienceSignals establishment={establishment} copy={copy} />
           <BusinessClaimDialog establishment={establishment} auth={auth} />
+          <section className="business-claim-card">
+            <p>{t('digitalServices')}</p>
+            <Link className="button-secondary" to="/servicios-digitales" onClick={() => recordCommercialAnalyticsEvent('commercial_cta_clicked', { establishmentId: establishment._id })}>{t('ownerCta')}</Link>
+          </section>
 
           <button
             onClick={() => setShowReview(true)}

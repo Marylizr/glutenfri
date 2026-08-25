@@ -4,6 +4,7 @@ import { createEstablishmentsLoader } from '../src/services/establishmentsLoader
 import {
   getMappableEstablishments,
   normalizeEstablishmentPayload,
+  CONFIDENCE_LEVEL,
   TRUST_STATUS,
 } from '../src/utils/trustStatus.js';
 import {
@@ -107,34 +108,34 @@ test('los marcadores ignoran registros o coordenadas defectuosas sin lanzar exce
   assert.equal(result[0].name, 'Válido heredado');
 });
 
-test('el filtro certificado excluye pendientes, comunitarios y falsos certificados heredados', () => {
+test('el filtro de fuente revisada usa confianza neutral y no certificación heredada', () => {
   const result = filterEstablishments(
     [
-      complete,
-      { name: 'APC heredado', certified: true, source: 'APC' },
+      { ...complete, confidenceLevel: CONFIDENCE_LEVEL.VERIFIED },
+      { name: 'APC heredado', certified: true, source: 'APC', confidenceLevel: CONFIDENCE_LEVEL.PENDING },
       { name: 'Google no basta', certified: true, source: 'Google' },
       { name: 'Comunidad', trustStatus: TRUST_STATUS.COMMUNITY_REPORTED },
       { name: 'Pendiente', trustStatus: null },
     ],
-    { certifiedOnly: true }
+    { sourceVerifiedOnly: true }
   );
 
-  assert.deepEqual(result.map((item) => item.name), ['Local certificado', 'APC heredado']);
+  assert.deepEqual(result.map((item) => item.name), ['Local certificado']);
 });
 
-test('el filtro certificado se combina con categoría y búsqueda', () => {
+test('el filtro de fuente revisada se combina con categoría y búsqueda', () => {
   const result = filterEstablishments(
     [
-      { ...complete, name: 'Pastelaria Porto', type: 'bakery' },
-      { ...complete, _id: '2', name: 'Restaurante Porto', type: 'restaurant' },
-      { ...complete, _id: '3', name: 'Pastelaria Braga', type: 'bakery' },
+      { ...complete, name: 'Pastelaria Porto', type: 'bakery', confidenceLevel: CONFIDENCE_LEVEL.VERIFIED },
+      { ...complete, _id: '2', name: 'Restaurante Porto', type: 'restaurant', confidenceLevel: CONFIDENCE_LEVEL.VERIFIED },
+      { ...complete, _id: '3', name: 'Pastelaria Braga', type: 'bakery', confidenceLevel: CONFIDENCE_LEVEL.VERIFIED },
     ],
-    { certifiedOnly: true, type: 'bakery', query: 'porto', language: 'pt-PT' }
+    { sourceVerifiedOnly: true, type: 'bakery', query: 'porto', language: 'pt-PT' }
   );
   assert.deepEqual(result.map((item) => item.name), ['Pastelaria Porto']);
 });
 
-test('Explorar usa el botón instant_mix para abrir tipo y certificación', async () => {
+test('Explorar usa el botón instant_mix para abrir tipo y estado de fuente', async () => {
   const fs = await import('node:fs');
   const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const button = fs.readFileSync(
@@ -156,9 +157,9 @@ test('Explorar usa el botón instant_mix para abrir tipo y certificación', asyn
   assert.doesNotMatch(page, /<SortControl/);
 });
 
-test('el contador avanzado ignora la categoría y cuenta solo certificación', () => {
-  assert.equal(getAdvancedFilterCount({ certifiedOnly: false, type: 'restaurant' }), 0);
-  assert.equal(getAdvancedFilterCount({ certifiedOnly: true, type: 'restaurant' }), 1);
+test('el contador avanzado ignora la categoría y cuenta el estado de fuente', () => {
+  assert.equal(getAdvancedFilterCount({ sourceVerifiedOnly: false, type: 'restaurant' }), 0);
+  assert.equal(getAdvancedFilterCount({ sourceVerifiedOnly: true, type: 'restaurant' }), 1);
 });
 
 test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async () => {
@@ -201,7 +202,7 @@ test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async ()
     );
 
     assert.match(html, /Restaurante legado/);
-    assert.match(html, /Informação pendente de validação/);
+    assert.match(html, /Fonte pendente de revisão/);
     assert.doesNotMatch(html, /Fonte não indicada/);
     assert.doesNotMatch(html, /Data de verificação indisponível/);
     assert.match(html, /restaurant\.jpg/);

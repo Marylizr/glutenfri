@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {
   normalizeEstablishmentPayload,
   normalizeEstablishmentRecord,
-  TRUST_STATUS,
+  CONFIDENCE_LEVEL,
 } from '../src/utils/trustStatus.js';
 import { getOpenStatus } from '../src/utils/openingHours.js';
 import {
@@ -122,25 +122,25 @@ test('abierto ahora distingue intervalos normales, días cerrados y cruce de med
 
 test('filtros combinados, orden estable y query parameters usan códigos internos', () => {
   const places = [
-    { _id: 'a', name: 'A', type: 'restaurant', trustStatus: TRUST_STATUS.PENDING_VALIDATION, delivery: true, lat: 41, lng: -8 },
-    { _id: 'b', name: 'B', type: 'bakery', trustStatus: TRUST_STATUS.CERTIFIED_APC_BIOTRAB, sourceName: 'APC', sourceUrl: 'https://apc.test', delivery: true, lat: 42, lng: -8 },
-    { _id: 'c', name: 'C', type: 'bakery', trustStatus: TRUST_STATUS.CERTIFIED_APC_BIOTRAB, sourceName: 'APC', sourceUrl: 'https://apc.test', delivery: false },
+    { _id: 'a', name: 'A', type: 'restaurant', confidenceLevel: CONFIDENCE_LEVEL.PENDING, delivery: true, lat: 41, lng: -8 },
+    { _id: 'b', name: 'B', type: 'bakery', confidenceLevel: CONFIDENCE_LEVEL.VERIFIED, sourceName: 'APC', sourceUrl: 'https://apc.test', delivery: true, lat: 42, lng: -8 },
+    { _id: 'c', name: 'C', type: 'bakery', confidenceLevel: CONFIDENCE_LEVEL.OUTDATED, sourceName: 'APC', sourceUrl: 'https://apc.test', delivery: false },
   ];
-  const matches = filterEstablishments(places, { certifiedOnly: true, deliveryOnly: true });
+  const matches = filterEstablishments(places, { sourceVerifiedOnly: true, deliveryOnly: true });
   assert.deepEqual(matches.map(({ _id }) => _id), ['b']);
   assert.deepEqual(
-    sortEstablishments(places, SORT_OPTIONS.CERTIFICATION).map(({ _id }) => _id),
-    ['b', 'c', 'a']
+    sortEstablishments(places, SORT_OPTIONS.SOURCE_STATUS).map(({ _id }) => _id),
+    ['b', 'a', 'c']
   );
   assert.deepEqual(
     sortEstablishments(places, SORT_OPTIONS.DISTANCE, { lat: 41, lng: -8 }).map(({ _id }) => _id),
     ['a', 'b', 'c']
   );
 
-  const state = parseExploreParams(new URLSearchParams('categoria=bakery&certificado=true&orden=certification&desconocido=x'));
+  const state = parseExploreParams(new URLSearchParams('categoria=bakery&fuente_revisada=true&orden=source-status&desconocido=x'));
   assert.equal(state.type, 'bakery');
-  assert.equal(state.certifiedOnly, true);
-  assert.equal(state.sort, SORT_OPTIONS.CERTIFICATION);
+  assert.equal(state.sourceVerifiedOnly, true);
+  assert.equal(state.sort, SORT_OPTIONS.SOURCE_STATUS);
   assert.equal(serializeExploreParams(state).get('categoria'), 'bakery');
   assert.equal(parseExploreParams(new URLSearchParams('categoria=traducida&orden=mal')).type, undefined);
 });

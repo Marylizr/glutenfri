@@ -2,19 +2,18 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { divIcon } from 'leaflet';
 import { isGoogleSourced } from '../utils/googlePlaces';
 import {
+  CONFIDENCE_LEVEL,
   getMappableEstablishments,
   getTrustPresentation,
-  normalizeTrustStatus,
-  TRUST_STATUS,
 } from '../utils/trustStatus.js';
 import { useLanguage } from '../i18n/index.jsx';
 import 'leaflet/dist/leaflet.css';
 
 function pinIcon(status, selected = false) {
   const color = {
-    [TRUST_STATUS.CERTIFIED_APC_BIOTRAB]: '#3d5a45',
-    [TRUST_STATUS.COMMUNITY_REPORTED]: '#9a6828',
-    [TRUST_STATUS.PENDING_VALIDATION]: '#6f6a60',
+    [CONFIDENCE_LEVEL.VERIFIED]: '#3d5a45',
+    [CONFIDENCE_LEVEL.OUTDATED]: '#9a6828',
+    [CONFIDENCE_LEVEL.PENDING]: '#6f6a60',
   }[status];
   return divIcon({
     className: '',
@@ -62,7 +61,7 @@ export default function MapView({
         <Marker
           key={e._id || e.name}
           position={[Number(e.lat), Number(e.lng)]}
-          icon={pinIcon(normalizeTrustStatus(e), selectedId === e._id)}
+          icon={pinIcon(e.confidenceLevel, selectedId === e._id)}
           alt={t(selectedId === e._id ? 'selectedMapMarkerLabel' : 'mapMarkerLabel', { name: e.name })}
           title={t(selectedId === e._id ? 'selectedMapMarkerLabel' : 'mapMarkerLabel', { name: e.name })}
           keyboard

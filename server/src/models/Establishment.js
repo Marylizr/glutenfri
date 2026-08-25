@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 const { TRUST_STATUSES } = require('../utils/trustStatus');
+const {
+  INFORMATION_CATEGORIES,
+  SOURCE_TYPES,
+  CONFIDENCE_LEVELS,
+  INFORMATION_STATUSES,
+} = require('../utils/trustStatus');
 
 const HTTP_URL = /^https?:\/\/[^\s]+$/i;
 const TIME_VALUE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -125,6 +131,30 @@ const establishmentSchema = new mongoose.Schema(
     informationSources: [informationSourceSchema],
     lastInformationUpdate: { type: Date },
 
+    // Taxonomía pública propia de GlutenFri. Es independiente de cualquier
+    // certificación heredada y puede incorporarse gradualmente sin migración.
+    informationCategory: { type: String, enum: INFORMATION_CATEGORIES },
+    sourceType: { type: String, enum: SOURCE_TYPES },
+    confidenceLevel: { type: String, enum: CONFIDENCE_LEVELS },
+    informationStatus: { type: String, enum: INFORMATION_STATUSES, default: 'active' },
+    // Solo procesos internos con evidencia documental pueden activar este
+    // indicador. No forma parte de los payloads editables públicos o comerciales.
+    externalCertificationAuthorized: { type: Boolean, default: false },
+
+    // Estado operativo de calidad. Estos campos solo se modifican desde el
+    // backoffice y no alteran por sí solos la confianza pública.
+    qualityReviewStatus: {
+      type: String,
+      enum: ['pending', 'in_review', 'reviewed'],
+      default: 'pending',
+      index: true,
+    },
+    qualityReviewedAt: { type: Date },
+    qualityReviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    sourceReviewedAt: { type: Date },
+    sourceReviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    duplicateOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Establishment', index: true },
+
     // Contenido comercial publicado. Solo se actualiza desde una solicitud
     // aprobada; nunca reemplaza certificación, reseñas o señales comunitarias.
     businessDescription: { type: String, trim: true, maxlength: 2000 },
@@ -137,8 +167,35 @@ const establishmentSchema = new mongoose.Schema(
     lastBusinessReviewAt: { type: Date },
     lastPublishedUpdateAt: { type: Date },
     nextReviewDueAt: { type: Date },
+    // Metadatos de gestión comercial. Son deliberadamente independientes de
+    // source*, trust*, certification* y de las señales de la comunidad.
+    // Los defaults permiten adoptar el contrato sin migrar fichas existentes.
+    commercialProfile: {
+      status: {
+        type: String,
+        enum: ['basic', 'managed', 'premium', 'suspended', 'pending_review'],
+        default: 'basic',
+        index: true,
+      },
+      tier: { type: String, enum: ['basic', 'managed', 'premium'], default: 'basic' },
+      claimedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      claimedAt: { type: Date },
+      reviewStatus: {
+        type: String,
+        enum: ['unclaimed', 'pending', 'verified', 'rejected', 'revoked'],
+        default: 'unclaimed',
+      },
+      updatedAt: { type: Date },
+    },
     sponsorship: {
-      status: { type: String, enum: ['inactive', 'active'], default: 'inactive' },
+      // `inactive` se conserva por compatibilidad; los nuevos estados sirven
+      // para revisión interna sin activar ningún cobro o checkout.
+      status: {
+        type: String,
+        enum: ['inactive', 'none', 'pending_review', 'active', 'expired', 'suspended'],
+        default: 'inactive',
+      },
+      label: { type: String, trim: true, maxlength: 80 },
       startsAt: { type: Date },
       endsAt: { type: Date },
       updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -153,6 +210,7 @@ establishmentSchema.index({ type: 1 });
 // de las sesiones recientes que corre sobre un campo no indexado.
 establishmentSchema.index({ certified: 1 });
 establishmentSchema.index({ trustStatus: 1 });
+establishmentSchema.index({ informationStatus: 1, qualityReviewStatus: 1 });
 
 // dedicatedKitchen/dedicatedGlutenFreeMenu/staffTrained/riskLevel NO tienen
 // índice: hoy solo se leen (detail page), nada los usa como filtro de

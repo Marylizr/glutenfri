@@ -18,10 +18,20 @@ const {
   systemStatus,
   triggerPlacesRefresh,
   listEstablishmentReports,
+  reviewEstablishmentReport,
+  listDuplicateCandidates,
+  reviewEstablishmentQuality,
+  listEstablishmentHistory,
 } = require('../controllers/adminController');
 const { requireAdmin } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const { TRUST_STATUSES } = require('../utils/trustStatus');
+const {
+  TRUST_STATUSES,
+  INFORMATION_CATEGORIES,
+  SOURCE_TYPES,
+  CONFIDENCE_LEVELS,
+  INFORMATION_STATUSES,
+} = require('../utils/trustStatus');
 const {
   listChangeRequests,
   listClaims,
@@ -148,6 +158,24 @@ router.get(
   ],
   validate,
   listClaims
+);
+
+router.patch(
+  '/establishment-reports/:reportId',
+  [
+    param('reportId').isMongoId(),
+    body('status').isIn(['reviewing', 'resolved', 'dismissed']),
+    body('reason').trim().isLength({ min: 3, max: 1000 }),
+    body('markClosed').optional().isBoolean(),
+    body().custom((_, { req }) => {
+      if (req.body.markClosed === true && req.body.status !== 'resolved') {
+        throw new Error('El cierre solo puede aplicarse al resolver el reporte');
+      }
+      return true;
+    }),
+  ],
+  validate,
+  reviewEstablishmentReport
 );
 router.patch(
   '/business/claims/:claimId',
@@ -315,11 +343,46 @@ router.get(
     query('riskLevel').optional().isIn(RISK_LEVELS).withMessage('Riesgo inválido'),
     query('certified').optional().isBoolean().withMessage('Certificación inválida'),
     query('trustStatus').optional().isIn(TRUST_STATUSES).withMessage('Estado de confianza inválido'),
+    query('qualityReviewStatus').optional().isIn(['pending', 'in_review', 'reviewed']),
+    query('informationStatus').optional().isIn(INFORMATION_STATUSES),
+    query('confidenceLevel').optional().isIn(CONFIDENCE_LEVELS),
     query('page').optional().isInt({ min: 1 }),
     query('limit').optional().isInt({ min: 1, max: 100 }),
   ],
   validate,
   listAdminEstablishments
+);
+
+router.get('/data-quality/duplicates', listDuplicateCandidates);
+
+router.get(
+  '/establishments/:id/history',
+  [param('id').isMongoId().withMessage('id inválido')],
+  validate,
+  listEstablishmentHistory
+);
+
+router.patch(
+  '/establishments/:id/quality',
+  [
+    param('id').isMongoId().withMessage('id inválido'),
+    body('informationCategory').optional().isIn(INFORMATION_CATEGORIES),
+    body('sourceType').optional().isIn(SOURCE_TYPES),
+    body('confidenceLevel').optional().isIn(CONFIDENCE_LEVELS),
+    body('informationStatus').optional().isIn(INFORMATION_STATUSES),
+    body('qualityReviewStatus').optional().isIn(['pending', 'in_review', 'reviewed']),
+    body('sourceName').optional({ nullable: true }).trim().isLength({ max: 200 }),
+    body('sourceUrl').optional({ nullable: true }).isURL({ protocols: ['https'], require_protocol: true }),
+    body('duplicateOf').optional({ nullable: true }).isMongoId(),
+    body('reason').trim().isLength({ min: 3, max: 1000 }),
+    body().custom((value) => {
+      const editable = ['informationCategory', 'sourceType', 'confidenceLevel', 'informationStatus', 'qualityReviewStatus', 'sourceName', 'sourceUrl', 'duplicateOf'];
+      if (!editable.some((field) => value[field] !== undefined)) throw new Error('Indica al menos un campo de calidad');
+      return true;
+    }),
+  ],
+  validate,
+  reviewEstablishmentQuality
 );
 
 router.post(

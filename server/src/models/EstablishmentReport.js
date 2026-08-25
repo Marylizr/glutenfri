@@ -28,9 +28,14 @@ const establishmentReportSchema = new mongoose.Schema(
       enum: ['pending', 'reviewing', 'resolved', 'dismissed'],
       default: 'pending',
     },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reviewedAt: { type: Date },
+    resolutionNote: { type: String, trim: true, maxlength: 1000 },
   },
   { timestamps: true }
 );
+
+establishmentReportSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = {
   EstablishmentReport: mongoose.model('EstablishmentReport', establishmentReportSchema),

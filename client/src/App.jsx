@@ -12,6 +12,7 @@ import SafetyInformationPage from './pages/SafetyInformationPage.jsx';
 import TermsPage from './pages/TermsPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
+import ServicesPage from './pages/ServicesPage.jsx';
 import BottomNav from './components/BottomNav';
 import DesktopHeader from './components/DesktopHeader';
 import { useAuth } from './hooks/useAuth';
@@ -66,6 +67,7 @@ function App() {
     '/contacto',
     '/proyecto',
     '/informacion-sin-gluten',
+    '/servicios-digitales',
   ];
   const isInformationRoute = publicInformationRoutes.includes(location.pathname);
   const isDetailRoute =
@@ -83,7 +85,7 @@ function App() {
             element={
               <OnboardingScreen
                 onStart={() => navigate('/explorar')}
-                onLogin={() => navigate('/perfil')}
+                onOwner={() => navigate('/servicios-digitales')}
               />
             }
           />
@@ -134,6 +136,7 @@ function App() {
           <Route path="/terminos" element={<TermsPage />} />
           <Route path="/contacto" element={<ContactPage />} />
           <Route path="/proyecto" element={<AboutPage />} />
+          <Route path="/servicios-digitales" element={<ServicesPage />} />
           <Route path="/informacion-sin-gluten" element={<SafetyInformationPage />} />
           <Route
             path="/admin/*"

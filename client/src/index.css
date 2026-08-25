@@ -1413,6 +1413,7 @@ button {
 
 .onboarding-login {
   width: 100%;
+  min-height: 44px;
   padding: 8px;
   background: none;
   border: none;
@@ -2636,5 +2637,121 @@ button {
 
   .business-dialog__actions {
     flex-direction: column-reverse;
+  }
+}
+
+.services-lead {
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.services-request {
+  margin-top: 28px;
+  padding: clamp(18px, 4vw, 30px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-alt);
+}
+
+.services-request form {
+  display: grid;
+  gap: 14px;
+}
+
+.services-request label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.services-request input,
+.services-request textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.services-request select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.services-request__consent {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  font-weight: 400 !important;
+}
+
+.services-request__consent input {
+  width: auto;
+  margin-top: 4px;
+}
+
+.services-request textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.services-request__prepared {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+}
+
+.services-request__prepared pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+
+.commercial-packages,
+.commercial-faq {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.commercial-packages article,
+.commercial-faq article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+}
+
+.commercial-packages h3,
+.commercial-faq h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.commercial-faq {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.commercial-faq a {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .commercial-packages,
+  .commercial-faq {
+    grid-template-columns: 1fr;
   }
 }

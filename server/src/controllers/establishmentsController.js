@@ -2,17 +2,35 @@ const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
 const { toPublicReview, visibilityFilter } = require('../utils/reviewFormatting');
 const { getPlacePhotoName, fetchPlacePhotoMedia } = require('../services/googlePlaces');
-const { TRUST_STATUS, normalizeEstablishmentTrust } = require('../utils/trustStatus');
+const {
+  TRUST_STATUS,
+  normalizeEstablishmentTrust,
+  normalizePublicInformation,
+} = require('../utils/trustStatus');
 const { EstablishmentReport } = require('../models/EstablishmentReport');
 const { sponsoredNow } = require('./businessController');
 
 function toPublicEstablishment(establishment) {
   const normalized = normalizeEstablishmentTrust(establishment);
+  const {
+    certified: _certified,
+    trustStatus: _trustStatus,
+    certificationBody: _certificationBody,
+    certificationDate: _certificationDate,
+    externalCertificationAuthorized: _externalCertificationAuthorized,
+    ...publicRecord
+  } = normalized;
+  const discount = /\b(?:APC|Biotrab)\b/i.test(normalized.discount || '')
+    ? undefined
+    : normalized.discount;
   return {
-    ...normalized,
+    ...publicRecord,
+    ...normalizePublicInformation(normalized),
+    discount,
     sponsorship: normalized.sponsorship
       ? {
           status: sponsoredNow(normalized) ? 'active' : 'inactive',
+          label: sponsoredNow(normalized) ? normalized.sponsorship.label || 'Patrocinado' : undefined,
           startsAt: normalized.sponsorship.startsAt,
           endsAt: normalized.sponsorship.endsAt,
         }
@@ -189,6 +207,7 @@ async function getEstablishmentPhoto(req, res) {
 }
 
 module.exports = {
+  toPublicEstablishment,
   listEstablishments,
   getEstablishment,
   listReviews,

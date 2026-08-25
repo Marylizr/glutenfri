@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { createBusinessClaim } from '../services/business';
 import { useLanguage } from '../i18n';
+import { recordCommercialAnalyticsEvent } from '../utils/commercialAnalytics.js';
 
 const COPY = {
   'pt-PT': {
     eyebrow: 'É o proprietário deste estabelecimento?',
     action: 'Reclamar este estabelecimento',
     title: 'Gerir esta ficha no GlutenFri',
-    intro: 'A reclamação permite propor informação comercial. Não permite alterar certificação, avaliações ou dados da comunidade.',
+    intro: 'A reclamação permite propor informação comercial. Não concede certificação, não altera a fonte, a confiança, a classificação, as avaliações ou os dados da comunidade.',
     login: 'Iniciar sessão para reclamar',
     name: 'Nome da pessoa responsável', relation: 'Cargo ou relação com o local',
     email: 'Email profissional', phone: 'Telefone (opcional)', url: 'Website ou rede social oficial',
@@ -28,7 +29,7 @@ const COPY = {
   en: {
     eyebrow: 'Do you own this establishment?', action: 'Claim this establishment',
     title: 'Manage this listing on GlutenFri',
-    intro: 'A claim lets you propose business information. It does not allow changes to certification, reviews or community data.',
+    intro: 'A claim lets you propose business information. It does not grant certification or allow changes to source, confidence, classification, reviews or community data.',
     login: 'Log in to claim', name: 'Responsible person’s name', relation: 'Role or relationship',
     email: 'Professional email', phone: 'Phone (optional)', url: 'Official website or social profile',
     method: 'Verification method', evidence: 'Explain how we can verify the relationship',
@@ -47,7 +48,7 @@ const COPY = {
   es: {
     eyebrow: '¿Eres propietario de este establecimiento?', action: 'Reclamar este establecimiento',
     title: 'Gestionar esta ficha en GlutenFri',
-    intro: 'La reclamación permite proponer información comercial. No permite cambiar certificación, reseñas ni datos comunitarios.',
+    intro: 'La reclamación permite proponer información comercial. No concede certificación ni permite cambiar fuente, confianza, clasificación, reseñas o datos comunitarios.',
     login: 'Iniciar sesión para reclamar', name: 'Nombre de la persona responsable', relation: 'Cargo o relación con el local',
     email: 'Email profesional', phone: 'Teléfono (opcional)', url: 'Web o red social oficial',
     method: 'Método de verificación', evidence: 'Explica cómo podemos confirmar la relación',
@@ -115,6 +116,7 @@ export default function BusinessClaimDialog({ establishment, auth }) {
     setError('');
     try {
       await createBusinessClaim(establishment._id, form);
+      recordCommercialAnalyticsEvent('business_claim_submitted', { establishmentId: establishment._id });
       setStatus('success');
     } catch {
       setError(copy.error);
@@ -125,7 +127,10 @@ export default function BusinessClaimDialog({ establishment, auth }) {
   return (
     <section className="business-claim-card">
       <p>{copy.eyebrow}</p>
-      <button ref={triggerRef} type="button" className="button-secondary" onClick={() => setOpen(true)}>{copy.action}</button>
+      <button ref={triggerRef} type="button" className="button-secondary" onClick={() => {
+        recordCommercialAnalyticsEvent('business_claim_started', { establishmentId: establishment._id });
+        setOpen(true);
+      }}>{copy.action}</button>
       {open && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && close()}>
           <div ref={dialogRef} className="business-dialog" role="dialog" aria-modal="true" aria-labelledby="claim-title" tabIndex="-1">

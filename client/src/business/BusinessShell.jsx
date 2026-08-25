@@ -22,8 +22,8 @@ const COPY = {
     addInfoPrompt: 'Adicione a informação ou evidência solicitada:', addInfo: 'Adicionar informação',
     loadPlaceError: 'Não foi possível carregar esta ficha.', loading: 'A carregar…',
     completeness: 'Completude', pendingChanges: 'alterações pendentes',
-    labels: { name: 'Nome comercial', description: 'Descrição', address: 'Morada', lat: 'Latitude', lng: 'Longitude', phone: 'Telefone', email: 'Email público', logoUrl: 'URL do logótipo', websiteUrl: 'URL do website', menuUrl: 'URL do menu', reservationUrl: 'URL de reservas', orderUrl: 'URL de pedidos', whatsapp: 'WhatsApp' },
-    note: 'Fotos, logótipo e menu usam URLs HTTPS porque o projeto ainda não dispõe de armazenamento privado seguro. Certificação e dados da comunidade não são editáveis.',
+    labels: { name: 'Nome comercial', description: 'Descrição', address: 'Morada', lat: 'Latitude', lng: 'Longitude', phone: 'Telefone', email: 'Email público', logoUrl: 'URL do logótipo', websiteUrl: 'URL do website', menuUrl: 'URL do menu', reservationUrl: 'URL de reservas', orderUrl: 'URL de pedidos', whatsapp: 'WhatsApp', photoUrls: 'Fotografias (um URL HTTPS por linha)', services: 'Serviços (um por linha)' },
+    note: 'Fotos, logótipo e menu usam URLs HTTPS porque o projeto ainda não dispõe de armazenamento privado seguro. Fonte, confiança, classificação e dados da comunidade não são editáveis.',
     submitted: 'Alterações enviadas para revisão. A informação pública ainda não foi modificada.',
     unsaved: 'Existem alterações por guardar. Deseja sair desta página?',
     saveError: 'Não foi possível guardar.', sending: 'A enviar…', submit: 'Enviar para revisão',
@@ -50,8 +50,8 @@ const COPY = {
     addInfoPrompt: 'Add the requested information or evidence:', addInfo: 'Add information',
     loadPlaceError: 'We could not load this listing.', loading: 'Loading…',
     completeness: 'Completeness', pendingChanges: 'pending changes',
-    labels: { name: 'Business name', description: 'Description', address: 'Address', lat: 'Latitude', lng: 'Longitude', phone: 'Phone', email: 'Public email', logoUrl: 'Logo URL', websiteUrl: 'Website URL', menuUrl: 'Menu URL', reservationUrl: 'Reservation URL', orderUrl: 'Ordering URL', whatsapp: 'WhatsApp' },
-    note: 'Photos, logo and menu use HTTPS URLs because the project has no secure private storage yet. Certification and community data cannot be edited.',
+    labels: { name: 'Business name', description: 'Description', address: 'Address', lat: 'Latitude', lng: 'Longitude', phone: 'Phone', email: 'Public email', logoUrl: 'Logo URL', websiteUrl: 'Website URL', menuUrl: 'Menu URL', reservationUrl: 'Reservation URL', orderUrl: 'Ordering URL', whatsapp: 'WhatsApp', photoUrls: 'Photos (one HTTPS URL per line)', services: 'Services (one per line)' },
+    note: 'Photos, logo and menu use HTTPS URLs because the project has no secure private storage yet. Source, confidence, classification and community data cannot be edited.',
     submitted: 'Changes sent for review. Public information has not been modified yet.',
     unsaved: 'You have unsaved changes. Do you want to leave this page?',
     saveError: 'We could not save the changes.', sending: 'Sending…', submit: 'Send for review',
@@ -78,8 +78,8 @@ const COPY = {
     addInfoPrompt: 'Añade la información o evidencia solicitada:', addInfo: 'Añadir información',
     loadPlaceError: 'No se pudo cargar esta ficha.', loading: 'Cargando…',
     completeness: 'Completitud', pendingChanges: 'cambios pendientes',
-    labels: { name: 'Nombre comercial', description: 'Descripción', address: 'Dirección', lat: 'Latitud', lng: 'Longitud', phone: 'Teléfono', email: 'Email público', logoUrl: 'URL del logo', websiteUrl: 'URL del sitio web', menuUrl: 'URL del menú', reservationUrl: 'URL de reservas', orderUrl: 'URL de pedidos', whatsapp: 'WhatsApp' },
-    note: 'Las fotos, el logo y el menú usan URLs HTTPS porque el proyecto todavía no dispone de almacenamiento privado seguro. La certificación y los datos comunitarios no son editables.',
+    labels: { name: 'Nombre comercial', description: 'Descripción', address: 'Dirección', lat: 'Latitud', lng: 'Longitud', phone: 'Teléfono', email: 'Email público', logoUrl: 'URL del logo', websiteUrl: 'URL del sitio web', menuUrl: 'URL del menú', reservationUrl: 'URL de reservas', orderUrl: 'URL de pedidos', whatsapp: 'WhatsApp', photoUrls: 'Fotos (una URL HTTPS por línea)', services: 'Servicios (uno por línea)' },
+    note: 'Las fotos, el logo y el menú usan URLs HTTPS porque el proyecto todavía no dispone de almacenamiento privado seguro. La fuente, confianza, clasificación y los datos comunitarios no son editables.',
     submitted: 'Cambios enviados a revisión. La información pública todavía no se ha modificado.',
     unsaved: 'Hay cambios sin guardar. ¿Quieres salir de esta página?',
     saveError: 'No se pudieron guardar los cambios.', sending: 'Enviando…', submit: 'Enviar a revisión',
@@ -159,6 +159,8 @@ function BusinessEditor({ copy }) {
         logoUrl: place.logoUrl || '', lat: place.lat ?? '', lng: place.lng ?? '',
         menuUrl: place.menuUrl || '', reservationUrl: place.reservationUrl || '',
         orderUrl: place.orderUrl || '', whatsapp: place.whatsapp || '',
+        photoUrls: (place.businessImages || []).map((image) => image.url).join('\n'),
+        services: (place.services || []).join('\n'),
       });
     }).catch(() => setError(copy.loadPlaceError));
   }, [copy.loadPlaceError, id]);
@@ -181,10 +183,13 @@ function BusinessEditor({ copy }) {
   const submit = async (event) => {
     event.preventDefault(); setMessage(''); setError(''); setSaving(true);
     try {
+      const { photoUrls, services, ...basicFields } = form;
       await createBusinessChange(id, {
-        ...form,
+        ...basicFields,
         lat: form.lat === '' ? null : Number(form.lat),
         lng: form.lng === '' ? null : Number(form.lng),
+        businessImages: photoUrls.split('\n').map((url) => url.trim()).filter(Boolean).slice(0, 10).map((url, index) => ({ url, alt: `${form.name} ${index + 1}` })),
+        services: services.split('\n').map((service) => service.trim()).filter(Boolean).slice(0, 30),
       }, true);
       setDirty(false);
       setMessage(copy.submitted);
@@ -213,6 +218,8 @@ function BusinessEditor({ copy }) {
           {['logoUrl', 'websiteUrl', 'menuUrl', 'reservationUrl', 'orderUrl'].map((field) => <label key={field}>{copy.labels[field]}<input type="url" placeholder="https://" value={form[field]} onChange={(e) => update(field, e.target.value)} /></label>)}
           <label>{copy.labels.whatsapp}<input value={form.whatsapp} onChange={(e) => update('whatsapp', e.target.value)} /></label>
         </div>
+        <label>{copy.labels.photoUrls}<textarea value={form.photoUrls} onChange={(e) => update('photoUrls', e.target.value)} placeholder="https://" /></label>
+        <label>{copy.labels.services}<textarea value={form.services} onChange={(e) => update('services', e.target.value)} /></label>
         <p className="business-note">{copy.note}</p>
         {message && <p className="business-success" role="status">{message}</p>}
         {error && <p className="form-error" role="alert">{error}</p>}

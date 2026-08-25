@@ -26,13 +26,12 @@ test('los estados desconocidos y legacy sin evidencia caen de forma segura', () 
   );
 });
 
-test('las tres traducciones públicas de confianza están presentes', () => {
+test('las tres traducciones públicas usan procedencia y confianza neutrales', () => {
   const source = fs.readFileSync(new URL('../src/i18n/index.jsx', import.meta.url), 'utf8');
-  assert.match(source, /Certificado APC\/Biotrab/);
-  assert.match(source, /APC\/Biotrab certified/);
-  assert.match(source, /Reportado pela comunidade — não certificado/);
-  assert.match(source, /Information pending validation/);
-  assert.match(source, /Información pendiente de validación/);
+  assert.match(source, /Fonte pública consultada/);
+  assert.match(source, /Public source consulted/);
+  assert.match(source, /Fuente pública consultada/);
+  assert.doesNotMatch(source, /Certificado APC\/Biotrab|APC\/Biotrab certified/);
 });
 
 test('las rutas públicas, el disclaimer y los fallbacks visuales están conectados', () => {
@@ -42,7 +41,7 @@ test('las rutas públicas, el disclaimer y los fallbacks visuales están conecta
   const animation = fs.readFileSync(new URL('../src/components/HamburgerAssembly.jsx', import.meta.url), 'utf8');
   const css = fs.readFileSync(new URL('../src/components/HamburgerAssembly.jsx', import.meta.url), 'utf8');
 
-  for (const route of ['/privacidad', '/terminos', '/contacto', '/proyecto', '/informacion-sin-gluten']) {
+  for (const route of ['/privacidad', '/terminos', '/contacto', '/proyecto', '/informacion-sin-gluten', '/servicios-digitales']) {
     assert.match(app, new RegExp(route.replaceAll('/', '\\/')));
   }
   assert.match(footer, /footerDisclaimer/);
@@ -84,6 +83,22 @@ test('la interfaz pública no contiene garantías absolutas prohibidas', () => {
   for (const forbidden of ['100% seguro', 'safe for celiacs', 'celiac-safe', 'seguro para celíacos']) {
     assert.doesNotMatch(source, new RegExp(forbidden));
   }
+});
+
+test('las superficies públicas no presentan APC o Biotrab como badge o clasificación', () => {
+  const files = [
+    '../src/pages/OnboardingScreen.jsx',
+    '../src/components/RestaurantCard.jsx',
+    '../src/components/TrustBadge.jsx',
+    '../src/components/TrustDetails.jsx',
+    '../src/pages/SafetyInformationPage.jsx',
+    '../src/components/Filters.jsx',
+  ];
+  const source = files
+    .map((file) => fs.readFileSync(new URL(file, import.meta.url), 'utf8'))
+    .join('\n');
+  assert.doesNotMatch(source, /Certificado APC|APC\/Biotrab certified|certificados pela APC/i);
+  assert.match(source, /noCertificationNotice/);
 });
 
 test('la animación conserva una composición estática y evita recursos infinitos', () => {
@@ -150,7 +165,7 @@ test('el mapa tiene cabecera de marca y filtros visuales accesibles', () => {
   assert.match(page, /map-page__surface/);
   assert.match(filters, /instant_mix/);
   assert.match(filters, /explore-filter__panel/);
-  assert.match(filters, /certifiedOnly/);
+  assert.match(filters, /sourceVerifiedOnly/);
   assert.match(filters, /discountOnly/);
   assert.match(filters, /aria-label/);
 });

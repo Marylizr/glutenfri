@@ -4,7 +4,9 @@ const {
   TRUST_STATUS,
   normalizeTrustStatus,
   normalizeEstablishmentTrust,
+  normalizePublicInformation,
 } = require('../src/utils/trustStatus');
+const { toPublicEstablishment } = require('../src/controllers/establishmentsController');
 
 test('un estado desconocido cae en PENDING_VALIDATION', () => {
   assert.equal(
@@ -33,4 +35,68 @@ test('un alta comunitaria queda explícitamente como no certificada', () => {
     normalizeTrustStatus({ source: 'user' }),
     TRUST_STATUS.COMMUNITY_REPORTED
   );
+});
+
+test('la taxonomía pública separa categoría, fuente, confianza y estado', () => {
+  const current = normalizePublicInformation(
+    {
+      type: 'store',
+      source: 'Google',
+      lastInformationUpdate: '2026-08-01T00:00:00Z',
+    },
+    new Date('2026-08-23T00:00:00Z')
+  );
+  assert.deepEqual(current, {
+    informationCategory: 'retail_store',
+    sourceType: 'public_source',
+    confidenceLevel: 'source_verified',
+    informationStatus: 'active',
+    informationUpdatedAt: '2026-08-01T00:00:00Z',
+  });
+
+  assert.equal(
+    normalizePublicInformation(
+      { source: 'user', lastVerifiedAt: '2024-01-01T00:00:00Z' },
+      new Date('2026-08-23T00:00:00Z')
+    ).confidenceLevel,
+    'source_outdated'
+  );
+  assert.equal(normalizePublicInformation({}).confidenceLevel, 'source_pending_review');
+  assert.equal(
+    normalizePublicInformation({ temporarilyClosed: true }).informationStatus,
+    'closed_or_removed'
+  );
+  assert.equal(
+    normalizePublicInformation({ informationCategory: 'external_certification' }).informationCategory,
+    'community_information'
+  );
+  assert.equal(
+    normalizePublicInformation({
+      informationCategory: 'external_certification',
+      externalCertificationAuthorized: true,
+      sourceName: 'Entidade externa',
+      sourceUrl: 'https://example.test/source',
+    }).informationCategory,
+    'external_certification'
+  );
+});
+
+test('la respuesta pública no expone clasificación institucional heredada', () => {
+  const record = toPublicEstablishment({
+    _id: 'legacy',
+    name: 'Local',
+    type: 'restaurant',
+    source: 'APC',
+    certified: true,
+    trustStatus: 'CERTIFIED_APC_BIOTRAB',
+    certificationBody: 'Entidad',
+    certificationDate: '2026-01-01T00:00:00Z',
+    discount: '10% desconto APC',
+  });
+  assert.equal('certified' in record, false);
+  assert.equal('trustStatus' in record, false);
+  assert.equal('certificationBody' in record, false);
+  assert.equal('certificationDate' in record, false);
+  assert.equal(record.discount, undefined);
+  assert.equal(record.sourceType, 'public_source');
 });

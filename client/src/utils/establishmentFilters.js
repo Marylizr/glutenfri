@@ -1,10 +1,10 @@
-import { normalizeTrustStatus, TRUST_STATUS } from './trustStatus.js';
+import { CONFIDENCE_LEVEL } from './trustStatus.js';
 import { distanceKm } from './distance.js';
 
 export const SORT_OPTIONS = Object.freeze({
   DEFAULT: 'default',
   DISTANCE: 'distance',
-  CERTIFICATION: 'certification',
+  SOURCE_STATUS: 'source-status',
   CATEGORY: 'category',
 });
 const VALID_TYPES = new Set(['restaurant', 'bakery', 'store', 'pharmacy', 'supermarket']);
@@ -17,7 +17,7 @@ export function filterEstablishments(
     type,
     query = '',
     language = 'pt-PT',
-    certifiedOnly = false,
+    sourceVerifiedOnly = false,
     discountOnly = false,
     deliveryOnly = false,
     takeawayOnly = false,
@@ -32,14 +32,14 @@ export function filterEstablishments(
     if (!establishment || typeof establishment !== 'object') return false;
     if (type && establishment.type !== type) return false;
     if (
-      certifiedOnly &&
-      normalizeTrustStatus(establishment) !== TRUST_STATUS.CERTIFIED_APC_BIOTRAB
+      sourceVerifiedOnly &&
+      establishment.confidenceLevel !== CONFIDENCE_LEVEL.VERIFIED
     ) {
       return false;
     }
     if (
       discountOnly &&
-      !(establishment.discount && ['APC', 'APC+Google'].includes(establishment.source))
+      !establishment.discount
     ) {
       return false;
     }
@@ -71,11 +71,16 @@ export function sortEstablishments(establishments, sort, userPosition) {
       })
       .map(({ establishment }) => establishment);
   }
-  if (sort === SORT_OPTIONS.CERTIFICATION) {
+  if (sort === SORT_OPTIONS.SOURCE_STATUS) {
+    const confidenceOrder = {
+      [CONFIDENCE_LEVEL.VERIFIED]: 0,
+      [CONFIDENCE_LEVEL.PENDING]: 1,
+      [CONFIDENCE_LEVEL.OUTDATED]: 2,
+    };
     return indexed
       .sort((left, right) => stable(
-        Number(normalizeTrustStatus(right.establishment) === TRUST_STATUS.CERTIFIED_APC_BIOTRAB) -
-          Number(normalizeTrustStatus(left.establishment) === TRUST_STATUS.CERTIFIED_APC_BIOTRAB),
+        (confidenceOrder[left.establishment.confidenceLevel] ?? 3) -
+          (confidenceOrder[right.establishment.confidenceLevel] ?? 3),
         left,
         right
       ))
@@ -100,7 +105,7 @@ export function parseExploreParams(searchParams) {
   return {
     query: searchParams.get('q')?.slice(0, 120) || '',
     type: VALID_TYPES.has(type) ? type : undefined,
-    certifiedOnly: searchParams.get('certificado') === 'true',
+    sourceVerifiedOnly: searchParams.get('fuente_revisada') === 'true',
     discountOnly: searchParams.get('descuento') === 'true',
     deliveryOnly: searchParams.get('entrega') === 'true',
     takeawayOnly: searchParams.get('takeaway') === 'true',
@@ -113,7 +118,7 @@ export function serializeExploreParams(state) {
   const params = new URLSearchParams();
   if (state.query) params.set('q', state.query);
   if (state.type) params.set('categoria', state.type);
-  if (state.certifiedOnly) params.set('certificado', 'true');
+  if (state.sourceVerifiedOnly) params.set('fuente_revisada', 'true');
   if (state.discountOnly) params.set('descuento', 'true');
   if (state.deliveryOnly) params.set('entrega', 'true');
   if (state.takeawayOnly) params.set('takeaway', 'true');
@@ -124,7 +129,7 @@ export function serializeExploreParams(state) {
 
 export function getAdvancedFilterCount(filters = {}) {
   return [
-    filters.certifiedOnly,
+    filters.sourceVerifiedOnly,
     filters.discountOnly,
     filters.deliveryOnly,
     filters.takeawayOnly,

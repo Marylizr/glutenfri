@@ -11,6 +11,7 @@ const {
   sponsoredNow,
 } = require('../src/controllers/businessController');
 const { businessFreshness } = require('../src/utils/businessFreshness');
+const Establishment = require('../src/models/Establishment');
 
 test('la edición comercial aplica allowlist y excluye campos de confianza y comunidad', () => {
   const result = pickBusinessChanges({
@@ -100,4 +101,13 @@ test('los modelos comerciales tienen índices para duplicados, permisos y analí
   assert.ok(EstablishmentManager.schema.indexes().some(([fields, options]) => fields.establishment === 1 && fields.user === 1 && options.unique));
   assert.ok(EstablishmentChangeRequest.schema.indexes().some(([fields]) => fields.establishment === 1 && fields.status === 1));
   assert.ok(EstablishmentAnalyticsEvent.schema.indexes().some(([fields]) => fields.establishment === 1 && fields.occurredAt === -1));
+});
+
+test('el perfil y patrocinio comercial tienen estados propios sin reutilizar confianza', () => {
+  assert.ok(Establishment.schema.path('commercialProfile.status').enumValues.includes('managed'));
+  assert.ok(Establishment.schema.path('commercialProfile.reviewStatus').enumValues.includes('verified'));
+  assert.ok(Establishment.schema.path('commercialProfile.reviewStatus').enumValues.includes('revoked'));
+  assert.ok(Establishment.schema.path('sponsorship.status').enumValues.includes('pending_review'));
+  assert.ok(Establishment.schema.path('sponsorship.status').enumValues.includes('suspended'));
+  assert.equal(Establishment.schema.path('commercialProfile.claimedBy').options.ref, 'User');
 });

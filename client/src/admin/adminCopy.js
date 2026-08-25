@@ -588,6 +588,72 @@ ADMIN_COPY.es = {
   },
 };
 
+ADMIN_COPY['pt-PT'].shell.nav.dataQuality = 'Qualidade de dados';
+ADMIN_COPY.en.shell.nav.dataQuality = 'Data quality';
+ADMIN_COPY.es.shell.nav.dataQuality = 'Calidad de datos';
+
+ADMIN_COPY['pt-PT'].dataQuality = {
+  title: 'Qualidade de dados', subtitle: 'Revê fontes, denúncias, duplicados e estados sem alterar a confiança por motivos comerciais.',
+  auditActive: 'Rastreabilidade ativa', sections: 'Secções de qualidade', tabs: { reports: 'Denúncias de fichas', duplicates: 'Possíveis duplicados', sources: 'Fontes e revisões' },
+  loading: 'A preparar as filas de qualidade…', loadError: 'Não foi possível carregar as filas de qualidade.', saveError: 'Não foi possível registar a decisão.', saved: 'Decisão registada.',
+  reason: 'Motivo da decisão', reasonPlaceholder: 'Indica a evidência consultada e o motivo', reasonRequired: 'Indica um motivo com pelo menos 3 caracteres.',
+  unknownEstablishment: 'Estabelecimento desconhecido', noReports: 'Não há denúncias de fichas por rever.', noDuplicates: 'Não foram encontrados duplicados prováveis.', noSource: 'Fonte ainda não identificada', selectItem: 'Seleciona um elemento para o rever.',
+  filters: 'Filtros da fila de fontes', searchSources: 'Procurar por nome, morada ou fonte…', reviewFilter: 'Revisão', allReviewStatuses: 'Todos os estados de revisão', confidenceFilter: 'Vigência da fonte', allConfidences: 'Todas as vigências', noFilteredSources: 'Não há fontes com estes filtros.',
+  statuses: { pending: 'Pendente', reviewing: 'Em revisão', resolved: 'Resolvido', dismissed: 'Arquivado' }, reviewStatuses: { pending: 'Pendente', in_review: 'Em revisão', reviewed: 'Revisto' },
+  reportReasons: { closed_business: 'Local encerrado', incorrect_address: 'Morada incorreta', incorrect_hours: 'Horário incorreto', incorrect_contact: 'Contacto incorreto', incorrect_certification: 'Certificação incorreta', menu_unavailable: 'Menu indisponível', incorrect_cross_contact: 'Informação de contacto cruzado incorreta', other: 'Outro motivo' },
+  noComment: 'A denúncia não inclui comentário.', noAddress: 'Sem morada', startReview: 'Iniciar revisão', dismiss: 'Arquivar', resolve: 'Resolver', resolveAndClose: 'Resolver e marcar como encerrado',
+  duplicateReasons: { same_name_address: 'mesmo nome e morada', same_name_nearby: 'mesmo nome e localização próxima' }, distance: '{count} m', compareDuplicate: 'Comparar possíveis duplicados', duplicateDisclaimer: 'Esta ação apenas relaciona as fichas. Não elimina nem combina dados automaticamente.', keepFirst: 'Manter a primeira como principal', keepSecond: 'Manter a segunda como principal',
+  category: 'Tipo de informação', sourceType: 'Origem', confidence: 'Estado da fonte', informationStatus: 'Estado do local', sourceName: 'Nome da fonte', sourceUrl: 'URL HTTPS da fonte',
+  categories: { business_declared_gluten_free: 'Informação declarada pelo estabelecimento', specialized_gluten_free_business: 'Negócio especializado — não é certificação', point_of_sale: 'Ponto de venda', retail_store: 'Loja', community_information: 'Informação da comunidade' },
+  sourceTypes: { business_provided: 'Fornecida pelo estabelecimento', public_source: 'Fonte pública consultada', community_experience: 'Experiência da comunidade', source_not_identified: 'Fonte não identificada' },
+  confidences: { source_pending_review: 'Pendente de revisão', source_verified: 'Fonte revista', source_outdated: 'Requer atualização' }, informationStatuses: { active: 'Ativo', closed_or_removed: 'Encerrado ou removido' },
+  certificationNotice: 'Uma certificação externa não pode ser criada neste painel. Exige autorização escrita e um processo institucional separado.', saving: 'A guardar…', saveReview: 'Guardar revisão', history: 'Histórico da ficha', noHistory: 'Ainda não existem ações registadas.', deletedAdmin: 'Conta eliminada',
+  actions: { establishment_created: 'Ficha criada', establishment_updated: 'Ficha atualizada', establishment_quality_reviewed: 'Qualidade revista', establishment_report_reviewed: 'Denúncia revista', establishment_duplicate_marked: 'Duplicado relacionado', establishment_closed: 'Local marcado como encerrado' },
+};
+
+ADMIN_COPY.en.dataQuality = {
+  title: 'Data quality', subtitle: 'Review sources, reports, duplicates and statuses without tying trust to commercial decisions.',
+  auditActive: 'Traceability active', sections: 'Quality sections', tabs: { reports: 'Listing reports', duplicates: 'Possible duplicates', sources: 'Sources and reviews' },
+  loading: 'Preparing quality queues…', loadError: 'We could not load the quality queues.', saveError: 'We could not record the decision.', saved: 'Decision recorded.',
+  reason: 'Decision rationale', reasonPlaceholder: 'Describe the evidence reviewed and rationale', reasonRequired: 'Enter a reason of at least 3 characters.',
+  unknownEstablishment: 'Unknown establishment', noReports: 'There are no listing reports to review.', noDuplicates: 'No likely duplicates were found.', noSource: 'Source not yet identified', selectItem: 'Select an item to review it.',
+  filters: 'Source queue filters', searchSources: 'Search by name, address or source…', reviewFilter: 'Review', allReviewStatuses: 'All review statuses', confidenceFilter: 'Source freshness', allConfidences: 'All freshness states', noFilteredSources: 'No sources match these filters.',
+  statuses: { pending: 'Pending', reviewing: 'In review', resolved: 'Resolved', dismissed: 'Dismissed' }, reviewStatuses: { pending: 'Pending', in_review: 'In review', reviewed: 'Reviewed' },
+  reportReasons: { closed_business: 'Business closed', incorrect_address: 'Incorrect address', incorrect_hours: 'Incorrect hours', incorrect_contact: 'Incorrect contact', incorrect_certification: 'Incorrect certification', menu_unavailable: 'Menu unavailable', incorrect_cross_contact: 'Incorrect cross-contact information', other: 'Other' },
+  noComment: 'The report has no comment.', noAddress: 'No address', startReview: 'Start review', dismiss: 'Dismiss', resolve: 'Resolve', resolveAndClose: 'Resolve and mark closed',
+  duplicateReasons: { same_name_address: 'same name and address', same_name_nearby: 'same name and nearby location' }, distance: '{count} m', compareDuplicate: 'Compare possible duplicates', duplicateDisclaimer: 'This action only links the records. It does not delete or merge data automatically.', keepFirst: 'Keep first as primary', keepSecond: 'Keep second as primary',
+  category: 'Information type', sourceType: 'Source origin', confidence: 'Source status', informationStatus: 'Listing status', sourceName: 'Source name', sourceUrl: 'Source HTTPS URL',
+  categories: { business_declared_gluten_free: 'Information declared by the business', specialized_gluten_free_business: 'Specialist business — not a certification', point_of_sale: 'Point of sale', retail_store: 'Shop', community_information: 'Community information' },
+  sourceTypes: { business_provided: 'Provided by the business', public_source: 'Public source consulted', community_experience: 'Community experience', source_not_identified: 'Source not identified' },
+  confidences: { source_pending_review: 'Pending review', source_verified: 'Source reviewed', source_outdated: 'Update required' }, informationStatuses: { active: 'Active', closed_or_removed: 'Closed or removed' },
+  certificationNotice: 'External certification cannot be created in this panel. It requires written authorisation and a separate institutional process.', saving: 'Saving…', saveReview: 'Save review', history: 'Listing history', noHistory: 'No actions have been recorded yet.', deletedAdmin: 'Deleted account',
+  actions: { establishment_created: 'Listing created', establishment_updated: 'Listing updated', establishment_quality_reviewed: 'Quality reviewed', establishment_report_reviewed: 'Report reviewed', establishment_duplicate_marked: 'Duplicate linked', establishment_closed: 'Listing marked closed' },
+};
+
+ADMIN_COPY.es.dataQuality = {
+  title: 'Calidad de datos', subtitle: 'Revisa fuentes, reportes, duplicados y estados sin vincular la confianza a decisiones comerciales.',
+  auditActive: 'Trazabilidad activa', sections: 'Secciones de calidad', tabs: { reports: 'Reportes de fichas', duplicates: 'Posibles duplicados', sources: 'Fuentes y revisiones' },
+  loading: 'Preparando las colas de calidad…', loadError: 'No pudimos cargar las colas de calidad.', saveError: 'No pudimos registrar la decisión.', saved: 'Decisión registrada.',
+  reason: 'Motivo de la decisión', reasonPlaceholder: 'Indica la evidencia consultada y el motivo', reasonRequired: 'Indica un motivo de al menos 3 caracteres.',
+  unknownEstablishment: 'Establecimiento desconocido', noReports: 'No hay reportes de fichas por revisar.', noDuplicates: 'No se encontraron duplicados probables.', noSource: 'Fuente todavía no identificada', selectItem: 'Selecciona un elemento para revisarlo.',
+  filters: 'Filtros de la cola de fuentes', searchSources: 'Buscar por nombre, dirección o fuente…', reviewFilter: 'Revisión', allReviewStatuses: 'Todos los estados de revisión', confidenceFilter: 'Vigencia de la fuente', allConfidences: 'Todas las vigencias', noFilteredSources: 'No hay fuentes con estos filtros.',
+  statuses: { pending: 'Pendiente', reviewing: 'En revisión', resolved: 'Resuelto', dismissed: 'Descartado' }, reviewStatuses: { pending: 'Pendiente', in_review: 'En revisión', reviewed: 'Revisado' },
+  reportReasons: { closed_business: 'Local cerrado', incorrect_address: 'Dirección incorrecta', incorrect_hours: 'Horario incorrecto', incorrect_contact: 'Contacto incorrecto', incorrect_certification: 'Certificación incorrecta', menu_unavailable: 'Menú no disponible', incorrect_cross_contact: 'Información de contaminación cruzada incorrecta', other: 'Otro motivo' },
+  noComment: 'El reporte no incluye comentario.', noAddress: 'Sin dirección', startReview: 'Iniciar revisión', dismiss: 'Descartar', resolve: 'Resolver', resolveAndClose: 'Resolver y marcar cerrado',
+  duplicateReasons: { same_name_address: 'mismo nombre y dirección', same_name_nearby: 'mismo nombre y ubicación cercana' }, distance: '{count} m', compareDuplicate: 'Comparar posibles duplicados', duplicateDisclaimer: 'Esta acción solo relaciona las fichas. No elimina ni combina datos automáticamente.', keepFirst: 'Mantener la primera como principal', keepSecond: 'Mantener la segunda como principal',
+  category: 'Tipo de información', sourceType: 'Origen', confidence: 'Estado de la fuente', informationStatus: 'Estado del local', sourceName: 'Nombre de la fuente', sourceUrl: 'URL HTTPS de la fuente',
+  categories: { business_declared_gluten_free: 'Información declarada por el establecimiento', specialized_gluten_free_business: 'Negocio especializado — no es certificación', point_of_sale: 'Punto de venta', retail_store: 'Tienda', community_information: 'Información de la comunidad' },
+  sourceTypes: { business_provided: 'Proporcionada por el establecimiento', public_source: 'Fuente pública consultada', community_experience: 'Experiencia de la comunidad', source_not_identified: 'Fuente no identificada' },
+  confidences: { source_pending_review: 'Pendiente de revisión', source_verified: 'Fuente revisada', source_outdated: 'Requiere actualización' }, informationStatuses: { active: 'Activo', closed_or_removed: 'Cerrado o eliminado' },
+  certificationNotice: 'No se puede crear una certificación externa desde este panel. Requiere autorización escrita y un proceso institucional separado.', saving: 'Guardando…', saveReview: 'Guardar revisión', history: 'Historial de la ficha', noHistory: 'Todavía no hay acciones registradas.', deletedAdmin: 'Cuenta eliminada',
+  actions: { establishment_created: 'Ficha creada', establishment_updated: 'Ficha actualizada', establishment_quality_reviewed: 'Calidad revisada', establishment_report_reviewed: 'Reporte revisado', establishment_duplicate_marked: 'Duplicado relacionado', establishment_closed: 'Local marcado como cerrado' },
+};
+
+for (const locale of ['pt-PT', 'en', 'es']) {
+  Object.assign(ADMIN_COPY[locale].dashboard.actionsMap, ADMIN_COPY[locale].dataQuality.actions);
+  Object.assign(ADMIN_COPY[locale].audit.actionsMap, ADMIN_COPY[locale].dataQuality.actions);
+}
+
 export function formatAdminCopy(template, variables = {}) {
   return String(template).replace(/\{(\w+)\}/g, (_, key) => variables[key] ?? `{${key}}`);
 }

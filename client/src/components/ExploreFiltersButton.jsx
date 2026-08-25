@@ -55,7 +55,7 @@ export default function ExploreFiltersButton({
 
   const clear = () => {
     onChange({
-      certifiedOnly: false,
+      sourceVerifiedOnly: false,
       discountOnly: false,
       deliveryOnly: false,
       takeawayOnly: false,
@@ -64,7 +64,7 @@ export default function ExploreFiltersButton({
   };
 
   const options = [
-    ['certifiedOnly', 'certificationFilter', true],
+    ['sourceVerifiedOnly', 'certificationFilter', true],
     ['discountOnly', 'discountFilter', available.discount],
     ['deliveryOnly', 'deliveryFilter', available.delivery],
     ['takeawayOnly', 'takeawayFilter', available.takeaway],
