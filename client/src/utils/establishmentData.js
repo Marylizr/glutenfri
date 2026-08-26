@@ -42,6 +42,26 @@ export function normalizeStringList(value, maxItems = 20) {
     .slice(0, maxItems);
 }
 
+export function getEstablishmentCity(establishment) {
+  const explicitCity = typeof establishment?.city === 'string' ? establishment.city.trim() : '';
+  if (explicitCity) return explicitCity;
+
+  const address = typeof establishment?.address === 'string' ? establishment.address.trim() : '';
+  if (!address) return null;
+
+  const afterPostalCode = address.match(/\b\d{4}-\d{3}\s+([^,]+)/u)?.[1]?.trim();
+  if (afterPostalCode) return afterPostalCode;
+
+  const parts = address
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length < 2) return null;
+  const last = parts.at(-1);
+  const city = /^(portugal|pt)$/iu.test(last) ? parts.at(-2) : last;
+  return city && !/^\d{4}-\d{3}$/u.test(city) ? city : null;
+}
+
 function validTime(value) {
   return typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }

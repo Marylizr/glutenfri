@@ -7,6 +7,7 @@ import { distanceKm, formatDistance } from '../utils/distance';
 import TrustBadge from './TrustBadge.jsx';
 import { Link } from 'react-router-dom';
 import { formatVerificationDate, useLanguage } from '../i18n/index.jsx';
+import { getEstablishmentCity } from '../utils/establishmentData.js';
 
 export function Badge({ establishment }) {
   return <TrustBadge establishment={establishment} />;
@@ -29,6 +30,7 @@ export default function RestaurantCard({
   );
   const hasSource = Boolean(establishment.sourceName);
   const hasTrustMetadata = hasSource || Boolean(lastChecked);
+  const city = getEstablishmentCity(establishment);
 
   return (
     <div
@@ -85,6 +87,13 @@ export default function RestaurantCard({
         >
           {establishment.name}
         </button>
+
+        {city && (
+          <p className="restaurant-card__location" aria-label={`${t('address')}: ${city}`}>
+            <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+            <span>{city}</span>
+          </p>
+        )}
 
         <div
           style={{

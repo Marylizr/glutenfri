@@ -21,6 +21,7 @@ import {
   getBooleanCommunityState,
   getRiskCommunityState,
 } from '../src/utils/communitySignals.js';
+import { getEstablishmentCity } from '../src/utils/establishmentData.js';
 
 test('la normalización aditiva descarta acciones y datos prácticos inválidos', () => {
   const record = normalizeEstablishmentRecord({
@@ -43,6 +44,19 @@ test('la normalización aditiva descarta acciones y datos prácticos inválidos'
   assert.match(record.reservationUrl, /^https:/);
   assert.deepEqual(record.weeklyHours.mon, [{ start: '09:00', end: '18:00' }]);
   assert.deepEqual(record.serviceLanguages, ['Português']);
+});
+
+test('las cards obtienen la ciudad de la dirección sin exponer la calle', () => {
+  assert.equal(
+    getEstablishmentCity({ address: 'Rua de Santa Catarina 184, 4000-442 Porto, Portugal' }),
+    'Porto'
+  );
+  assert.equal(
+    getEstablishmentCity({ address: 'Praça Dona Maria II 734, 4760-111 Vila Nova de Famalicão, Portugal' }),
+    'Vila Nova de Famalicão'
+  );
+  assert.equal(getEstablishmentCity({ city: 'Maia', address: 'Rua de teste' }), 'Maia');
+  assert.equal(getEstablishmentCity({ address: 'Rua sem localidade' }), null);
 });
 
 test('las señales comunitarias conservan afirmativo, negativo y no reportado', () => {
