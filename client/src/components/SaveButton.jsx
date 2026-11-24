@@ -1,11 +1,13 @@
 import { useLanguage } from '../i18n/index.jsx';
 
-export default function SaveButton({ saved, onToggle, size = 34 }) {
+export default function SaveButton({ saved, onToggle, size = 44 }) {
   const { t } = useLanguage();
 
   return (
     <button
       type="button"
+      className="save-button"
+      aria-pressed={Boolean(saved)}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
@@ -16,8 +18,6 @@ export default function SaveButton({ saved, onToggle, size = 34 }) {
         height: size,
         borderRadius: '50%',
         border: 'none',
-        background: 'rgba(255,255,255,0.9)',
-        boxShadow: 'var(--shadow-card)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -26,7 +26,7 @@ export default function SaveButton({ saved, onToggle, size = 34 }) {
         flexShrink: 0,
       }}
     >
-      {saved ? '♥' : '♡'}
+      <span className="material-symbols-outlined" aria-hidden="true">favorite</span>
     </button>
   );
 }

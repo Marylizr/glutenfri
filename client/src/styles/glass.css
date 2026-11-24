@@ -1,0 +1,300 @@
+/* GlutenFri glass material: blur on chrome, readable solid-backed content.
+   No blur on the 72 repeated cards: keep scrolling cheap on mobile devices. */
+:root {
+  --glass-canvas: #edf1ed;
+  --glass-ink: #24382d;
+  --glass-chrome: rgba(255, 255, 255, .76);
+  --glass-control: rgba(255, 255, 255, .86);
+  --glass-sheet: rgba(255, 255, 255, .96);
+  --glass-edge: rgba(255, 255, 255, .95);
+  --glass-control-edge: #788c7e;
+  --glass-shadow: 0 6px 22px rgba(35, 58, 43, .06), inset 0 1px 0 var(--glass-edge);
+  --glass-shadow-raised: 0 18px 48px rgba(35, 58, 43, .14), inset 0 1px 0 var(--glass-edge);
+  --glass-blur: blur(22px) saturate(145%);
+  --radius-card: 24px;
+  --radius-input: 18px;
+}
+
+body,
+.app-shell,
+.onboarding-shell {
+  background: var(--glass-canvas);
+}
+
+.app-shell,
+.onboarding-shell {
+  background-image: linear-gradient(140deg, #e8efea 0%, #f7f5ef 55%, #edf2ee 100%);
+}
+
+.desktop-header {
+  background: var(--glass-sheet);
+  border-bottom-color: var(--glass-edge);
+  box-shadow: 0 4px 24px rgba(35, 58, 43, .05), inset 0 1px 0 var(--glass-edge);
+}
+
+.desktop-header__language,
+.language-picker {
+  background: var(--glass-control);
+  border-color: var(--glass-control-edge);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.desktop-header__link.is-active {
+  background: #dce8df;
+  color: var(--glass-ink);
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 6px rgba(35, 58, 43, .05);
+}
+
+.bottom-nav {
+  position: relative;
+  z-index: 1000;
+  margin: 0 10px max(10px, env(safe-area-inset-bottom, 0px));
+  padding: 5px 4px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 24px;
+  background: var(--glass-sheet);
+  box-shadow: var(--glass-shadow-raised);
+}
+
+.bottom-nav__item {
+  flex: 1;
+  min-width: 0;
+  border-radius: 18px;
+  gap: 3px;
+  color: #556158;
+}
+
+.bottom-nav__item.is-active {
+  color: var(--glass-ink);
+  background: #dce8df;
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.search-bar {
+  min-height: 48px;
+  min-width: 0;
+  background: var(--glass-control);
+  border: 1px solid var(--glass-control-edge);
+  border-radius: var(--radius-input);
+  box-shadow: var(--glass-shadow);
+}
+
+.search-bar input {
+  width: 100%;
+  min-width: 0;
+}
+
+.search-bar input::placeholder {
+  color: #606960;
+  opacity: 1;
+}
+
+.public-page-header__title-row h1 {
+  letter-spacing: -.025em;
+  line-height: 1.16;
+}
+
+.category-chips {
+  padding-block: 5px 9px;
+  scroll-padding-inline: 4px;
+}
+
+.category-chips__item {
+  background: var(--glass-control);
+  border-color: var(--glass-control-edge);
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 5px rgba(35, 58, 43, .035);
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.category-chips__item.is-active {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 3px 8px rgba(35, 58, 43, .12);
+}
+
+.explore-filter__trigger {
+  min-width: 44px;
+  border-radius: 15px;
+  border: 1px solid var(--glass-control-edge);
+  background: var(--glass-control);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+}
+
+.restaurant-card {
+  background: linear-gradient(145deg, #ffffff 55%, #f7faf7 100%);
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+
+.restaurant-card__content {
+  padding: 16px !important;
+}
+
+.restaurant-card__title {
+  line-height: 1.35;
+  letter-spacing: -.015em;
+}
+
+.restaurant-card__metadata {
+  font-size: 12px;
+}
+
+.save-button {
+  background: var(--glass-control);
+  outline: 1px solid var(--glass-edge);
+  box-shadow: 0 3px 12px rgba(35, 58, 43, .10), inset 0 1px 0 var(--glass-edge);
+}
+
+.save-button .material-symbols-outlined {
+  font-size: 22px;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.save-button[aria-pressed="true"] .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.explore-results__count,
+.restaurant-card__location {
+  font-variant-numeric: tabular-nums;
+}
+
+.explore-filter__panel,
+.report-dialog,
+.business-dialog,
+.review-dialog {
+  background: var(--glass-sheet);
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-shadow-raised);
+}
+
+.map-page,
+.public-section-page,
+.business-app {
+  background: transparent;
+}
+
+.account-panel,
+.business-card,
+.business-empty,
+.review-feed-card,
+.legal-page article,
+.commercial-faq article {
+  background: var(--glass-sheet);
+  border-color: var(--glass-edge);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow);
+}
+
+.public-footer {
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Panels and state badges retain their semantic colours and contrast. */
+.admin-app {
+  --admin-cream: var(--glass-canvas);
+}
+
+.admin-topbar {
+  background: var(--glass-sheet);
+}
+
+.brand-logo {
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .desktop-header,
+  .bottom-nav {
+    background: var(--glass-chrome);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  .explore-filter__panel,
+  .save-button {
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    backdrop-filter: blur(14px) saturate(130%);
+  }
+}
+
+@media (hover: hover) {
+  .restaurant-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .category-chips__item:hover:not(.is-active) {
+    background: #fff;
+  }
+}
+
+.category-chips__item:active,
+.save-button:active {
+  transform: scale(.97);
+}
+
+.save-button:focus-visible,
+.bottom-nav__item:focus-visible,
+.category-chips__item:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .explore-filter__trigger {
+    padding-inline: 12px;
+  }
+
+  .desktop-header__nav {
+    flex: 0 1 auto;
+    margin-inline: auto;
+    padding: 4px;
+    gap: 2px;
+    border: 1px solid var(--glass-edge);
+    border-radius: 999px;
+    background: rgba(239, 244, 239, .92);
+  }
+
+  .desktop-header__link {
+    min-height: 38px;
+  }
+
+  .bottom-nav {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root {
+    --glass-chrome: #fff;
+    --glass-control: #fff;
+    --glass-sheet: #fff;
+    --glass-edge: #87968a;
+  }
+
+  .desktop-header,
+  .bottom-nav,
+  .explore-filter__panel,
+  .save-button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #fff;
+  }
+
+  .restaurant-card {
+    background: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restaurant-card,
+  .category-chips__item,
+  .save-button,
+  .bottom-nav__item {
+    transition: none;
+    transform: none;
+  }
+}

@@ -40,9 +40,7 @@ export default function RestaurantCard({
       onClick={() => onSelect?.(establishment)}
       onMouseEnter={() => onHighlight?.(establishment)}
       style={{
-        background: 'var(--color-surface)',
         borderRadius: 'var(--radius-card)',
-        boxShadow: 'var(--shadow-card)',
         overflow: 'hidden',
         flexShrink: 0,
       }}

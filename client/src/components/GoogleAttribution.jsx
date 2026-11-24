@@ -10,7 +10,7 @@ export default function GoogleAttribution({ compact = false }) {
   return (
     <span
       style={{
-        fontSize: compact ? '10px' : '12px',
+        fontSize: compact ? '11px' : '12px',
         color: 'var(--color-text-muted)',
       }}
     >

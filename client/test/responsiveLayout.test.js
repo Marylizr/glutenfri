@@ -26,7 +26,7 @@ test('el header global está presente en todas las rutas y la navegación se ada
   assert.match(css, /\.desktop-header\s*\{[^}]*overflow:\s*hidden/);
   assert.match(
     css,
-    /\.desktop-header \.brand-logo--desktop-header\s*\{[^}]*max-width:\s*104px[^}]*max-height:\s*48px/,
+    /\.desktop-header \.brand-logo--desktop-header\s*\{[^}]*max-width:\s*144px[^}]*max-height:\s*64px/,
   );
   assert.match(css, /\.desktop-header__nav\s*\{\s*display:\s*none/);
   assert.match(css, /@media \(min-width: 768px\)[\s\S]*\.desktop-header\s*\{[\s\S]*display:\s*block/);

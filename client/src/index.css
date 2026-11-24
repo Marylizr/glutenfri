@@ -85,9 +85,9 @@ body {
 }
 
 .desktop-header .brand-logo--desktop-header {
-  width: 104px;
-  max-width: 104px;
-  max-height: 48px;
+  width: 144px;
+  max-width: 144px;
+  max-height: 64px;
   height: auto;
   display: block;
   object-fit: contain;
@@ -791,7 +791,7 @@ button {
   border-radius: var(--radius-pill);
   background: #fffdf7ed;
   color: var(--color-text);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -1909,8 +1909,8 @@ button {
   }
 
   .desktop-header .brand-logo--desktop-header {
-    width: clamp(112px, 12vw, 154px);
-    max-width: 154px;
+    width: clamp(144px, 12vw, 168px);
+    max-width: 168px;
     height: auto;
   }
 

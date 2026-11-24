@@ -115,13 +115,16 @@ test('el logo oficial está centralizado y se muestra en las superficies de marc
   const logo = fs.readFileSync(new URL('../src/components/BrandLogo.jsx', import.meta.url), 'utf8');
   const index = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
-  assert.match(brand, /v\d+\/logo-glutenFri_mxse6m\.webp/);
-  assert.match(brand, /v1784991668\/icon-glutenFri_ilsloa\.webp/);
+  assert.match(brand, /APP_LOGO_URL = '\/brand\/logo-glutenfri\.png'/);
+  assert.match(brand, /APP_ICON_URL = '\/favicon\.svg'/);
   assert.match(logo, /APP_LOGO_URL/);
   assert.match(logo, /onError/);
-  assert.match(index, /type="image\/webp"/);
-  assert.match(index, /rel="icon"[\s\S]*v1784991668\/icon-glutenFri_ilsloa\.webp/);
-  assert.match(index, /property="og:image"[\s\S]*v1784991659\/logo-glutenFri_mxse6m\.webp/);
+  assert.match(index, /type="image\/svg\+xml"/);
+  assert.match(index, /rel="icon"[\s\S]*href="\/favicon\.svg"/);
+  assert.match(index, /property="og:image"[\s\S]*https:\/\/glutenfri\.netlify\.app\/brand\/logo-glutenfri\.png/);
+  assert.doesNotMatch(brand + index, /res\.cloudinary\.com/);
+  assert.match(logo, /width="3300"/);
+  assert.match(logo, /height="1712"/);
 
   for (const file of [
     '../src/components/DesktopHeader.jsx',

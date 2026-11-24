@@ -16,8 +16,8 @@ export default function BrandLogo({ className = '', priority = false }) {
     <img
       className={`brand-logo ${className}`.trim()}
       src={APP_LOGO_URL}
-      width="933"
-      height="427"
+      width="3300"
+      height="1712"
       alt={APP_NAME}
       decoding="async"
       loading={priority ? 'eager' : 'lazy'}

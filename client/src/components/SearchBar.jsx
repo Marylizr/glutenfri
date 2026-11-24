@@ -9,9 +9,6 @@ export default function SearchBar({ value, onChange, placeholder }) {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-input)',
         padding: '10px 14px',
       }}
     >
