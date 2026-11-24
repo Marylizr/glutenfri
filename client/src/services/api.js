@@ -6,6 +6,7 @@ const USER_KEY = 'gf_auth_user';
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glutenfri-shell-v1';
+const CACHE_NAME = 'glutenfri-shell-v2';
 const SHELL = ['/', '/explorar', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
@@ -8,7 +8,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => key.startsWith('glutenfri-shell-') && key !== CACHE_NAME).map((key) => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
@@ -29,8 +29,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy));
+          if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', copy)));
+          }
           return response;
         })
         .catch(() => caches.match('/index.html'))
@@ -41,12 +43,14 @@ self.addEventListener('fetch', (event) => {
   if (['style', 'script', 'image', 'font', 'manifest'].includes(request.destination)) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const fresh = fetch(request).then((response) => {
+        const fresh = fetch(request).then(async (response) => {
           if (response.ok) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(request, response.clone());
           }
           return response;
         });
+        event.waitUntil(fresh.catch(() => undefined));
         return cached || fresh;
       })
     );

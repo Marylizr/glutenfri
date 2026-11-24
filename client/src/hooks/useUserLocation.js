@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
 
-// Centro aproximado del corredor Braga–Porto. Así, sin permiso de ubicación,
-// el mapa representa la cobertura regional en vez de una sola ciudad.
-const DEFAULT_POSITION = { lat: 41.32, lng: -8.55 };
+// Vista nacional sin solicitar ubicación; las islas se incluyen al ajustar
+// el mapa a los establecimientos que tengan coordenadas publicadas.
+const DEFAULT_POSITION = { lat: 39.5, lng: -8 };
 
 export function useUserLocation() {
   const [position, setPosition] = useState(null);

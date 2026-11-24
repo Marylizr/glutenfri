@@ -49,8 +49,11 @@ export function getEstablishmentCity(establishment) {
   const address = typeof establishment?.address === 'string' ? establishment.address.trim() : '';
   if (!address) return null;
 
+  const locality = (value) => value && /\p{L}/u.test(value) && !/\d/u.test(value) &&
+    !/^(?:rua|avenida|av\.|travessa|praça|largo|estrada)\b/iu.test(value) ? value : null;
+
   const afterPostalCode = address.match(/\b\d{4}-\d{3}\s+([^,]+)/u)?.[1]?.trim();
-  if (afterPostalCode) return afterPostalCode;
+  if (afterPostalCode) return locality(afterPostalCode);
 
   const parts = address
     .split(',')
@@ -59,7 +62,7 @@ export function getEstablishmentCity(establishment) {
   if (parts.length < 2) return null;
   const last = parts.at(-1);
   const city = /^(portugal|pt)$/iu.test(last) ? parts.at(-2) : last;
-  return city && !/^\d{4}-\d{3}$/u.test(city) ? city : null;
+  return locality(city);
 }
 
 function validTime(value) {

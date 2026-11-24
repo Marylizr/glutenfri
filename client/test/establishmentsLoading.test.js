@@ -87,6 +87,38 @@ test('distingue cancelación, HTTP, respuesta inválida y red', () => {
   assert.equal(classifyEstablishmentError(new Error('Network Error')), 'network');
 });
 
+test('el directorio nacional carga todas las páginas y deduplica IDs', async () => {
+  const calls = [];
+  const loader = createEstablishmentsLoader(async (params) => {
+    calls.push(params);
+    const page = params.page || 1;
+    return { data: page === 1 ? [{ _id: '1', name: 'Norte' }] : [
+      { _id: '1', name: 'Norte' }, { _id: String(page), name: `Região ${page}` },
+    ], page, limit: 100, totalPages: 3 };
+  });
+  const list = await loader();
+  assert.deepEqual(list.map((item) => item._id), ['1', '2', '3']);
+  assert.equal(calls.length, 3);
+});
+
+test('si una página nacional falla no devuelve un directorio parcial como completo', async () => {
+  const loader = createEstablishmentsLoader(async ({ page }) => {
+    if (page === 2) throw new Error('offline');
+    return { data: [{ _id: '1', name: 'Local' }], page: 1, totalPages: 2 };
+  });
+  await assert.rejects(loader(), /offline/);
+});
+
+test('una página explícita no dispara la descarga de todo el catálogo', async () => {
+  let count = 0;
+  const loader = createEstablishmentsLoader(async () => {
+    count++;
+    return { data: [{ _id: '2', name: 'Local' }], page: 2, totalPages: 10 };
+  });
+  assert.equal((await loader({ page: 2 })).length, 1);
+  assert.equal(count, 1);
+});
+
 test('una respuesta anterior no puede sobrescribir la solicitud vigente', () => {
   const gate = createRequestGate();
   const older = gate.next();
@@ -101,6 +133,9 @@ test('los marcadores ignoran registros o coordenadas defectuosas sin lanzar exce
   const result = getMappableEstablishments([
     null,
     { name: 'Sin coordenadas' },
+      { name: 'Coordenadas nulas', lat: null, lng: null },
+      { name: 'Coordenadas vacías', lat: '', lng: '' },
+      { name: 'Fuera de rango', lat: 200, lng: -8 },
     { name: 'Inválido', lat: 'norte', lng: -8.6 },
     { name: 'Válido heredado', lat: '41.55', lng: '-8.42', trustStatus: null },
   ]);
@@ -205,7 +240,9 @@ test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async ()
     assert.match(html, /Fonte pendente de revisão/);
     assert.doesNotMatch(html, /Fonte não indicada/);
     assert.doesNotMatch(html, /Data de verificação indisponível/);
-    assert.match(html, /restaurant\.jpg/);
+    assert.match(html, /restaurant-v2\.jpg/);
+    assert.match(html, /Imagem ilustrativa/);
+    assert.match(html, /class="place-photo--illustrative"/);
   } finally {
     await vite.close();
   }

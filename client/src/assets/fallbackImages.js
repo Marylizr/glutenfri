@@ -1,8 +1,8 @@
-import restaurantFallback from './fallbacks/restaurant.jpg';
-import bakeryFallback from './fallbacks/bakery.jpg';
-import storeFallback from './fallbacks/store.jpg';
+import restaurantFallback from './fallbacks/restaurant-v2.jpg';
+import bakeryFallback from './fallbacks/bakery-v2.jpg';
+import storeFallback from './fallbacks/store-v2.jpg';
 import pharmacyFallback from './fallbacks/pharmacy.jpg';
-import generalFallback from './fallbacks/default.jpg';
+const generalFallback = storeFallback;
 
 export const fallbackByType = Object.freeze({
   restaurant: restaurantFallback,

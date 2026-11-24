@@ -46,23 +46,18 @@ export default function PhotoPlaceholder({ type, establishmentId, hasPhoto, name
 
   if (!fallbackFailed) {
     return (
-      <img
-        src={fallbackImage}
-        alt=""
-        onError={() => setFallbackFailed(true)}
-        loading={height >= 200 ? 'eager' : 'lazy'}
-        decoding="async"
-        width="1000"
-        height="562"
-        style={{
-          height,
-          width: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center',
-          borderRadius: 'var(--radius-card) var(--radius-card) 0 0',
-          display: 'block',
-        }}
-      />
+      <div className="place-photo--illustrative">
+        <img
+          src={fallbackImage}
+          alt=""
+          onError={() => setFallbackFailed(true)}
+          loading={height >= 200 ? 'eager' : 'lazy'}
+          decoding="async"
+          width="1200"
+          height="675"
+        />
+        <span className="place-photo__illustration-label">{t('illustrativeImage')}</span>
+      </div>
     );
   }
 

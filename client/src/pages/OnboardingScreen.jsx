@@ -1,6 +1,7 @@
 import HamburgerAssembly from '../components/HamburgerAssembly';
 import { useLanguage } from '../i18n/index.jsx';
 import { recordCommercialAnalyticsEvent } from '../utils/commercialAnalytics.js';
+import PublicFooter from '../components/PublicFooter.jsx';
 
 export default function OnboardingScreen({ onStart, onOwner }) {
   const { t } = useLanguage();
@@ -15,15 +16,19 @@ export default function OnboardingScreen({ onStart, onOwner }) {
 
         <div className="onboarding-screen__copy">
           <h1>
-            {t('heroTitle')}
-            <span>{t('heroAccent')}</span>
+            <span className="onboarding-title__lead">{t('heroTitle')}</span>
+            <span className="onboarding-title__accent">{t('heroAccent')}</span>
           </h1>
           <p className="onboarding-screen__description">{t('heroDescription')}</p>
 
           <div className="onboarding-screen__features">
-            {features.map((feature) => (
-              <div key={feature}>
-                <span aria-hidden="true">✓</span>
+            {features.map((feature, index) => (
+              <div key={feature} style={{ '--feature-index': index }}>
+                <span aria-hidden="true">
+                  <svg className="onboarding-feature__check" viewBox="0 0 16 16" fill="none">
+                    <path d="m3.5 8 3 3 6-6" pathLength="1" />
+                  </svg>
+                </span>
                 <span>{feature}</span>
               </div>
             ))}
@@ -39,6 +44,7 @@ export default function OnboardingScreen({ onStart, onOwner }) {
           </div>
         </div>
       </div>
+      <PublicFooter />
     </div>
   );
 }

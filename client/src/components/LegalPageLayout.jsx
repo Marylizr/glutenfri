@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LANGUAGES, useLanguage } from '../i18n/index.jsx';
 import PublicFooter from './PublicFooter.jsx';
+import { LEGAL_CONFIG } from '../config/legal.js';
 
 export default function LegalPageLayout({ title, children }) {
   const { language, setLanguage, t } = useLanguage();
@@ -17,6 +18,7 @@ export default function LegalPageLayout({ title, children }) {
       </header>
       <article>
         <h1>{title}</h1>
+        <p>{t('footerOperator', { operator: LEGAL_CONFIG.operatorName })}</p>
         {children}
       </article>
       <PublicFooter />

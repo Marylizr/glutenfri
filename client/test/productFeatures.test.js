@@ -46,6 +46,17 @@ test('la normalización aditiva descarta acciones y datos prácticos inválidos'
   assert.deepEqual(record.serviceLanguages, ['Português']);
 });
 
+test('la búsqueda encuentra nombres y ciudades escritos sin acentos', () => {
+  const places = [
+    { _id: '1', name: 'Padaria São João', city: 'Vila Nova de Famalicão', type: 'bakery' },
+    { _id: '2', name: 'Outro local', address: 'Rua QA, Porto', type: 'store' },
+  ];
+  assert.deepEqual(filterEstablishments(places, { query: 'famalicao' }).map((p) => p._id), ['1']);
+  assert.deepEqual(filterEstablishments(places, { query: 'sao joao' }).map((p) => p._id), ['1']);
+  assert.deepEqual(filterEstablishments(places, { query: 'PORTO' }).map((p) => p._id), ['2']);
+  assert.equal(filterEstablishments(places, { query: 'famalicao', type: 'store' }).length, 0);
+});
+
 test('las cards obtienen la ciudad de la dirección sin exponer la calle', () => {
   assert.equal(
     getEstablishmentCity({ address: 'Rua de Santa Catarina 184, 4000-442 Porto, Portugal' }),
@@ -57,6 +68,8 @@ test('las cards obtienen la ciudad de la dirección sin exponer la calle', () =>
   );
   assert.equal(getEstablishmentCity({ city: 'Maia', address: 'Rua de teste' }), 'Maia');
   assert.equal(getEstablishmentCity({ address: 'Rua sem localidade' }), null);
+  assert.equal(getEstablishmentCity({ address: 'Rua de teste, 24' }), null);
+  assert.equal(getEstablishmentCity({ address: 'Loja QA, Rua de teste 24' }), null);
 });
 
 test('las señales comunitarias conservan afirmativo, negativo y no reportado', () => {

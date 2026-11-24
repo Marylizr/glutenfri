@@ -1,7 +1,7 @@
 {
   "name": "GlutenFri",
   "short_name": "GlutenFri",
-  "description": "Información clara sobre opciones sin gluten en el norte de Portugal.",
+  "description": "Informação clara sobre opções sem glúten em Portugal.",
   "start_url": "/explorar",
   "scope": "/",
   "display": "standalone",

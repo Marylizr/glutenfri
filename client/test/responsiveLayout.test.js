@@ -216,7 +216,44 @@ test('el footer acredita una sola vez a PixelTrend Studio con enlace externo seg
   const footer = read('../src/components/PublicFooter.jsx');
 
   assert.equal(footer.match(/https:\/\/pixeltrendstudio\.com\//g)?.length, 1);
-  assert.equal(footer.match(/PixelTrend Studio/g)?.length, 1);
+  assert.equal(footer.match(/LEGAL_CONFIG\.operatorName/g)?.length, 1);
   assert.match(footer, /target="_blank"/);
   assert.match(footer, /rel="noopener noreferrer"/);
+});
+
+test('el pie equilibra tres columnas en escritorio sin amontonar enlaces legales', () => {
+  const css = read('../src/index.css');
+  const footer = read('../src/components/PublicFooter.jsx');
+  assert.match(css, /grid-template-columns: minmax\(0, 1\.1fr\) minmax\(0, \.8fr\) minmax\(0, 1\.1fr\)/);
+  assert.match(css, /\.public-footer__navigation\s*\{\s*display: contents/);
+  const project = footer.match(/<nav className="public-footer__project"[\s\S]*?<\/nav>/)[0];
+  assert.match(project, /to="\/proyecto"/);
+  assert.match(project, /to="\/servicios-digitales"/);
+  assert.match(project, /to="\/informacion-sin-gluten"/);
+  const legal = footer.match(/<nav aria-label=\{t\('footerLegal'\)\}>[\s\S]*?<\/nav>/)[0];
+  assert.equal([...legal.matchAll(/<Link /g)].length, 5);
+});
+
+test('el pie usa textura local ligera y mantiene contraste incluso en el grano más oscuro', () => {
+  const css = read('../src/index.css');
+  const tokens = read('../src/styles/tokens.css');
+  const texture = read('../public/images/footer-paper.svg');
+  assert.match(css, /background-color: var\(--color-footer-bg\)/);
+  assert.match(css, /background-image: url\('\/images\/footer-paper\.svg'\)/);
+  assert.match(css, /\.public-footer a:focus-visible\s*\{[^}]*outline: 3px solid/);
+  assert.match(texture, /feTurbulence/);
+  assert.match(texture, /stitchTiles="stitch"/);
+  assert.doesNotMatch(texture, /<script|<image|https?:\/\/(?!www\.w3\.org)/);
+  assert.ok(Buffer.byteLength(texture) < 1024);
+
+  const rgb = (name) => tokens.match(new RegExp(`--color-footer-${name}: #([a-f0-9]{6})`))[1]
+    .match(/../g).map((channel) => Number.parseInt(channel, 16) / 255);
+  const luminance = (channels) => channels.map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+  const opacity = Number(texture.match(/opacity="([\d.]+)"/)[1]);
+  const darkestPaper = rgb('bg').map((channel) => channel * (1 - opacity));
+  for (const foreground of ['text', 'link']) {
+    const contrast = (luminance(darkestPaper) + 0.05) / (luminance(rgb(foreground)) + 0.05);
+    assert.ok(contrast >= 4.5, `${foreground}: contraste mínimo ${contrast}`);
+  }
 });

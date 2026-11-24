@@ -35,7 +35,7 @@ export default function EstablishmentSeo({ establishment }) {
     const canonicalUrl = getCanonicalPlaceUrl(establishment._id);
     const description = t('placeMetaDescription', {
       name: establishment.name,
-      location: establishment.address || t('northernPortugal'),
+      location: establishment.address || t('portugal'),
     });
     document.title = `${establishment.name} · GlutenFri`;
     setMeta('meta[name="description"]', 'content', description);

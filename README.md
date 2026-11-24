@@ -1,7 +1,7 @@
 # glutenfri
 
 Guía comunitaria de establecimientos con información sobre oferta sin gluten
-en Braga, Porto, Maia, Matosinhos y el norte de Portugal.
+en Portugal continental, Madeira y Açores.
 
 ## Gestión comercial (Prioridad 2)
 

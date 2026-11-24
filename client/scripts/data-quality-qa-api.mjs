@@ -1,7 +1,13 @@
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
 
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.QA_API_PORT || 4174);
+const CLIENT_ORIGIN = process.env.QA_CLIENT_ORIGIN || 'http://127.0.0.1:5173';
+const nationalReferences = process.env.QA_DIRECTORY === 'apc'
+  ? JSON.parse(readFileSync(new URL('../../server/data/apc-portugal.json', import.meta.url), 'utf8'))
+    .establishments.map((place, index) => ({ ...place, _id: `apc-reference-${index + 1}` }))
+  : null;
 const ADMIN = {
   _id: 'qa-admin-local',
   name: 'Admin QA Local',
@@ -82,7 +88,7 @@ const duplicateCandidates = () => establishments.some((item) => item._id === 'es
 function json(res, status, payload) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': 'http://127.0.0.1:5173',
+    'Access-Control-Allow-Origin': CLIENT_ORIGIN,
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
   });
@@ -99,6 +105,21 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return json(res, 204, {});
   const url = new URL(req.url, `http://${HOST}:${PORT}`);
 
+  // QA defaults to synthetic data; optional APC mode uses only the local public snapshot.
+  if (req.method === 'GET' && url.pathname === '/api/establishments') {
+    const list = nationalReferences || establishments;
+    const limit = 100;
+    const page = Math.max(1, Number.parseInt(url.searchParams.get('page'), 10) || 1);
+    return json(res, 200, { data: list.slice((page - 1) * limit, page * limit), page, limit,
+      total: list.length, totalPages: Math.ceil(list.length / limit) });
+  }
+  const publicReviewsMatch = url.pathname.match(/^\/api\/establishments\/([^/]+)\/reviews$/);
+  if (req.method === 'GET' && publicReviewsMatch) return json(res, 200, []);
+  const publicPlaceMatch = url.pathname.match(/^\/api\/establishments\/([^/]+)$/);
+  if (req.method === 'GET' && publicPlaceMatch) {
+    const place = (nationalReferences || establishments).find((item) => item._id === publicPlaceMatch[1]);
+    return json(res, place ? 200 : 404, place || { error: 'QA place not found' });
+  }
   if (req.method === 'POST' && url.pathname === '/api/auth/login') {
     const body = await readBody(req);
     if (body.email !== ADMIN.email || body.password !== 'LocalQA-Only-2026!') {

@@ -200,8 +200,8 @@ export function getMappableEstablishments(establishments) {
   return establishments.filter(
     (establishment) =>
       establishment &&
-      Number.isFinite(Number(establishment.lat)) &&
-      Number.isFinite(Number(establishment.lng))
+      normalizeCoordinate(establishment.lat, -90, 90) !== null &&
+      normalizeCoordinate(establishment.lng, -180, 180) !== null
   );
 }
 

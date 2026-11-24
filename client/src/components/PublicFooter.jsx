@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/index.jsx';
 import BrandLogo from './BrandLogo.jsx';
+import { LEGAL_CONFIG } from '../config/legal.js';
 
 export default function PublicFooter() {
   const { t } = useLanguage();
@@ -12,6 +13,11 @@ export default function PublicFooter() {
         <div className="public-footer__brand">
           <BrandLogo className="brand-logo--footer" />
           <p>{t('footerDescription')}</p>
+          <nav className="public-footer__project" aria-label={t('about')}>
+            <Link to="/proyecto">{t('about')}</Link>
+            <Link to="/servicios-digitales">{t('footerServices')}</Link>
+            <Link to="/informacion-sin-gluten">{t('footerSafety')}</Link>
+          </nav>
         </div>
 
         <div className="public-footer__navigation">
@@ -25,26 +31,25 @@ export default function PublicFooter() {
 
           <nav aria-label={t('footerLegal')}>
             <strong>{t('footerLegal')}</strong>
-            <Link to="/informacion-sin-gluten">{t('safetyPageTitle')}</Link>
+            <Link to="/legal">{t('legalCenter')}</Link>
             <Link to="/privacidad">{t('privacy')}</Link>
             <Link to="/terminos">{t('terms')}</Link>
+            <Link to="/eliminacion-de-datos">{t('dataDeletion')}</Link>
             <Link to="/contacto">{t('contact')}</Link>
-            <Link to="/proyecto">{t('about')}</Link>
-            <Link to="/servicios-digitales">{t('digitalServices')}</Link>
           </nav>
         </div>
 
         <div className="public-footer__bottom">
           <p>{t('footerDisclaimer')}</p>
           <small>
-            © {year} GlutenFri ·{' '}
+            {t('footerCopyright', { year })}{' '}
             <a
               className="public-footer__credit"
               href="https://pixeltrendstudio.com/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              PixelTrend Studio
+              {t('footerOperator', { operator: LEGAL_CONFIG.operatorName })}
             </a>
           </small>
         </div>

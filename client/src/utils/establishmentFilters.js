@@ -26,7 +26,11 @@ export function filterEstablishments(
   } = {}
 ) {
   if (!Array.isArray(establishments)) return [];
-  const normalizedQuery = String(query).trim().toLocaleLowerCase(language);
+  const normalizeSearch = (value) => String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase(language);
+  const normalizedQuery = normalizeSearch(query).trim();
 
   return establishments.filter((establishment) => {
     if (!establishment || typeof establishment !== 'object') return false;
@@ -47,8 +51,9 @@ export function filterEstablishments(
     if (takeawayOnly && establishment.takeaway !== true) return false;
     if (openNowOnly && openStatusById[establishment._id] !== 'open') return false;
     if (normalizedQuery) {
-      const searchable = `${establishment.name || ''} ${establishment.address || ''}`
-        .toLocaleLowerCase(language);
+      const searchable = normalizeSearch(
+        `${establishment.name || ''} ${establishment.address || ''} ${establishment.city || ''}`
+      );
       if (!searchable.includes(normalizedQuery)) return false;
     }
     return true;

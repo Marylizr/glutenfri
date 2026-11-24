@@ -6,6 +6,8 @@ const STATIC_PATHS = [
   '/proyecto',
   '/servicios-digitales',
   '/contacto',
+  '/legal',
+  '/eliminacion-de-datos',
   '/privacidad',
   '/terminos',
 ];

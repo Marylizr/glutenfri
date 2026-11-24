@@ -10,7 +10,20 @@ const expressHandler = createServerlessHandler(app);
 
 async function handler(event, context) {
   context.callbackWaitsForEmptyEventLoop = false;
-  await connectDB();
+  try {
+    await connectDB();
+  } catch {
+    // Never return the driver error: it can contain hostnames or credentials.
+    return {
+      statusCode: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        'Retry-After': '30',
+      },
+      body: JSON.stringify({ error: 'Service temporarily unavailable', code: 'DATABASE_UNAVAILABLE' }),
+    };
+  }
   return expressHandler(event, context);
 }
 

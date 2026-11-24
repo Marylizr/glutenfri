@@ -5,7 +5,7 @@
   --admin-line: #ddd8cb;
   --admin-sage: #3d5a45;
   --admin-sage-soft: #e8eee4;
-  --admin-orange: #c94f2c;
+  --admin-orange: var(--color-brand);
   --admin-orange-soft: #fae8df;
   --admin-amber: #76500b;
   --admin-amber-soft: #fff2d8;
@@ -19,7 +19,7 @@
   overflow: hidden;
   background: var(--admin-cream);
   color: var(--admin-text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
 }
 
 .admin-app,
@@ -81,7 +81,8 @@
 }
 
 .admin-brand strong {
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
+  font-weight: 600;
   font-size: 31px;
   line-height: 1;
   letter-spacing: .08em;
@@ -256,9 +257,9 @@
 .admin-page-header h1 {
   overflow-wrap: anywhere;
   color: var(--admin-text);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 38px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -.025em;
 }
 
@@ -396,9 +397,9 @@
 .admin-section-title {
   margin: 0 0 16px;
   color: var(--admin-text);
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 22px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .admin-panel {
@@ -577,9 +578,9 @@
 }
 
 .admin-drawer-header h2 {
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .admin-drawer-header p {
@@ -797,9 +798,9 @@
 }
 
 .admin-review-detail h2 {
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .admin-review-copy {
@@ -980,9 +981,9 @@
 }
 
 .admin-refresh-detail h2 {
-  font-family: Georgia, serif;
+  font-family: var(--font-display);
   font-size: 21px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .admin-refresh-detail > div > p {

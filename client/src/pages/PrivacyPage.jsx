@@ -1,6 +1,8 @@
 import LegalPageLayout from '../components/LegalPageLayout.jsx';
 import { LEGAL_CONFIG } from '../config/legal.js';
 import { useLanguage } from '../i18n/index.jsx';
+import { Link } from 'react-router-dom';
+import { LEGAL_COPY } from '../config/legalCopy.js';
 
 const sections = {
   'pt-PT': [
@@ -31,11 +33,16 @@ const sections = {
 
 export default function PrivacyPage() {
   const { language, t } = useLanguage();
+  const copy = LEGAL_COPY[language];
   return (
     <LegalPageLayout title={t('privacy')}>
       {sections[language].map(([title, body]) => (
         <section key={title}><h2>{title}</h2><p>{body}</p></section>
       ))}
+      <section><h2>{copy.privacyExtraTitle}</h2><p>{copy.privacyExtra}</p></section>
+      <section><h2>{copy.providersTitle}</h2><p>{copy.providers}</p></section>
+      <p><Link to="/eliminacion-de-datos">{copy.deletionLink}</Link></p>
+      {LEGAL_CONFIG.detailsNeedFormalConfirmation && <p className="institutional-notice">{copy.confirmation}</p>}
       <p className="institutional-notice">{t('footerDisclaimer')}</p>
     </LegalPageLayout>
   );

@@ -9,8 +9,14 @@
 
   --color-accent: #3d5a45;       /* verde salvia — acciones y navegación activa */
   --color-accent-soft: #e3ead9;  /* fondo de badge verde */
-  --color-warn: #c1502e;         /* terracota — badges de riesgo/alerta */
+  --color-brand: #7d2e1b;        /* acento cálido aprobado */
+  --color-focus: var(--color-brand);
+  --color-warn: var(--color-brand);
   --color-warn-soft: #f5ddd2;
+  --color-footer-bg: #e0e8dc;
+  --color-footer-text: #354638;
+  --color-footer-link: #2f4a37;
+  --color-footer-border: #b8c7b2;
 
   --radius-card: 16px;
   --radius-pill: 999px;
@@ -26,6 +32,6 @@
   --app-header-height: var(--app-header-height-mobile);
   --bottom-nav-height-mobile: 4rem;
 
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }

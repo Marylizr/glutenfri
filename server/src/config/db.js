@@ -9,7 +9,7 @@ async function connectDB() {
   if (!uri) throw new Error('Falta MONGODB_URI');
 
   if (!connectionPromise) {
-    connectionPromise = mongoose.connect(uri);
+    connectionPromise = mongoose.connect(uri, { serverSelectionTimeoutMS: 8000 });
   }
 
   const pendingConnection = connectionPromise;

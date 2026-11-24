@@ -16,10 +16,12 @@ const LAYERS = [
   { key: 'panBottom', src: IMAGES.panBottom, x: 13, y: 180, width: 431, height: 95, delay: 0, duration: 0.58 },
   { key: 'salsa', src: IMAGES.salsa, x: 11.25, y: 172, width: 430, height: 97, delay: 0.1, duration: 0.58 },
   { key: 'carne', src: IMAGES.carne, x: 10, y: 151, width: 432, height: 103, delay: 0.2, duration: 0.58 },
-  { key: 'queso', src: IMAGES.queso, x: 12, y: 118, width: 432, height: 127, delay: 0.3, duration: 0.6 },
-  { key: 'tomate', src: IMAGES.tomate, x: 8.75, y: 96, width: 431, height: 140.5, delay: 0.4, duration: 0.6 },
-  { key: 'rucula', src: IMAGES.rucula, x: 9.5, y: 81, width: 432, height: 131.5, delay: 0.5, duration: 0.6 },
-  { key: 'pan', src: IMAGES.pan, x: 10.25, y: 0, width: 432, height: 185.5, delay: 0.6, duration: 0.62 },
+  // Los PNG incluyen margen transparente: se compacta todo el bloque superior
+  // para que el queso repose en la carne sin separar tomate, rúcula y pan.
+  { key: 'queso', src: IMAGES.queso, x: 12, y: 128, width: 432, height: 127, delay: 0.3, duration: 0.6 },
+  { key: 'tomate', src: IMAGES.tomate, x: 8.75, y: 106, width: 431, height: 140.5, delay: 0.4, duration: 0.6 },
+  { key: 'rucula', src: IMAGES.rucula, x: 9.5, y: 91, width: 432, height: 131.5, delay: 0.5, duration: 0.6 },
+  { key: 'pan', src: IMAGES.pan, x: 10.25, y: 10, width: 432, height: 185.5, delay: 0.6, duration: 0.62 },
 ];
 
 export default function HamburgerAssembly({
@@ -116,9 +118,14 @@ const CSS = `
   position: absolute;
   z-index: 2;
   bottom: 13%;
-  left: 7%;
+  left: 50%;
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 14px;
   border-radius: 999px;
@@ -127,13 +134,14 @@ const CSS = `
   box-shadow: 0 6px 16px rgba(38, 65, 46, 0.28);
   font-size: 13px;
   font-weight: 700;
-  white-space: nowrap;
+  text-align: center;
   opacity: 0;
   animation: gfBurgerBadgeIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 1.3s both;
 }
 
 .gf-burger-badge span {
   display: grid;
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
   place-items: center;

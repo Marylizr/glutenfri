@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { divIcon } from 'leaflet';
 import { isGoogleSourced } from '../utils/googlePlaces';
 import {
@@ -8,6 +9,17 @@ import {
 } from '../utils/trustStatus.js';
 import { useLanguage } from '../i18n/index.jsx';
 import 'leaflet/dist/leaflet.css';
+
+function FitDirectoryBounds({ establishments }) {
+  const map = useMap();
+  // A value key prevents repeated fitting when only the parent rerenders.
+  const coordinates = JSON.stringify(establishments.map((place) => [Number(place.lat), Number(place.lng)]));
+  useEffect(() => {
+    const points = JSON.parse(coordinates);
+    if (points.length) map.fitBounds(points, { padding: [24, 24], maxZoom: 12 });
+  }, [map, coordinates]);
+  return null;
+}
 
 function pinIcon(status, selected = false) {
   const color = {
@@ -48,9 +60,10 @@ export default function MapView({
   return (
     <MapContainer
       center={[center.lat, center.lng]}
-      zoom={10}
+      zoom={6}
       style={{ height: '100%', width: '100%' }}
     >
+      <FitDirectoryBounds establishments={withCoords} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution={attribution}

@@ -1,18 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ExplorePage from './pages/ExplorePage';
-import HomePage from './pages/HomePage'; // vista mapa (Fase 2, ya existente)
-import EstablishmentDetailRoute from './pages/EstablishmentDetailRoute';
-import ProfilePage from './pages/ProfilePage';
-import SavedPage from './pages/SavedPage';
-import ReviewsPage from './pages/ReviewsPage';
 import OnboardingScreen from './pages/OnboardingScreen';
-import PrivacyPage from './pages/PrivacyPage';
-import SafetyInformationPage from './pages/SafetyInformationPage.jsx';
-import TermsPage from './pages/TermsPage.jsx';
-import ContactPage from './pages/ContactPage.jsx';
-import AboutPage from './pages/AboutPage.jsx';
-import ServicesPage from './pages/ServicesPage.jsx';
+import RouteBoundary from './components/RouteBoundary.jsx';
 import BottomNav from './components/BottomNav';
 import DesktopHeader from './components/DesktopHeader';
 import { useAuth } from './hooks/useAuth';
@@ -22,6 +12,19 @@ import './index.css';
 
 const AdminShell = lazy(() => import('./admin/AdminShell'));
 const BusinessShell = lazy(() => import('./business/BusinessShell'));
+const HomePage = lazy(() => import('./pages/HomePage'));
+const EstablishmentDetailRoute = lazy(() => import('./pages/EstablishmentDetailRoute'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SavedPage = lazy(() => import('./pages/SavedPage'));
+const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const SafetyInformationPage = lazy(() => import('./pages/SafetyInformationPage.jsx'));
+const TermsPage = lazy(() => import('./pages/TermsPage.jsx'));
+const ContactPage = lazy(() => import('./pages/ContactPage.jsx'));
+const AboutPage = lazy(() => import('./pages/AboutPage.jsx'));
+const ServicesPage = lazy(() => import('./pages/ServicesPage.jsx'));
+const LegalHubPage = lazy(() => import('./pages/LegalHubPage.jsx'));
+const DataDeletionPage = lazy(() => import('./pages/DataDeletionPage.jsx'));
 
 function App() {
   const location = useLocation();
@@ -62,6 +65,8 @@ function App() {
   }, [auth.sessionExpired, navigate]);
 
   const publicInformationRoutes = [
+    '/legal',
+    '/eliminacion-de-datos',
     '/privacidad',
     '/terminos',
     '/contacto',
@@ -79,6 +84,8 @@ function App() {
     <div className={`app-shell${isAdminRoute ? ' app-shell--admin' : ''}`}>
       <DesktopHeader />
       <div className="app-shell__content">
+        <RouteBoundary message={t('loadNetworkError')}>
+        <Suspense fallback={<div className="establishment-detail-state" role="status">{t('loading')}</div>}>
         <Routes location={backgroundLocation || location}>
           <Route
             path="/"
@@ -133,6 +140,8 @@ function App() {
           />
           <Route path="/perfil" element={<ProfilePage auth={auth} />} />
           <Route path="/privacidad" element={<PrivacyPage />} />
+          <Route path="/legal" element={<LegalHubPage />} />
+          <Route path="/eliminacion-de-datos" element={<DataDeletionPage />} />
           <Route path="/terminos" element={<TermsPage />} />
           <Route path="/contacto" element={<ContactPage />} />
           <Route path="/proyecto" element={<AboutPage />} />
@@ -201,6 +210,8 @@ function App() {
             </Routes>
           </div>
         )}
+        </Suspense>
+        </RouteBoundary>
       </div>
       {!isDetailRoute &&
         !isAdminRoute &&
