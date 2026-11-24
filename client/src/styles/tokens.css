@@ -13,10 +13,10 @@
   --color-focus: var(--color-brand);
   --color-warn: var(--color-brand);
   --color-warn-soft: #f5ddd2;
-  --color-footer-bg: #e0e8dc;
-  --color-footer-text: #354638;
-  --color-footer-link: #2f4a37;
-  --color-footer-border: #b8c7b2;
+  --color-footer-bg: #ffffff;
+  --color-footer-text: var(--color-text);
+  --color-footer-link: var(--color-brand);
+  --color-footer-border: var(--color-border);
 
   --radius-card: 16px;
   --radius-pill: 999px;

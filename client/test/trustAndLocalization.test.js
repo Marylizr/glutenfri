@@ -44,7 +44,11 @@ test('las rutas públicas, el disclaimer y los fallbacks visuales están conecta
   for (const route of ['/privacidad', '/terminos', '/contacto', '/proyecto', '/informacion-sin-gluten', '/servicios-digitales']) {
     assert.match(app, new RegExp(route.replaceAll('/', '\\/')));
   }
-  assert.match(footer, /footerDisclaimer/);
+  assert.match(footer, /footerShortDisclaimer/);
+  const translations = fs.readFileSync(new URL('../src/i18n/index.jsx', import.meta.url), 'utf8');
+  assert.match(translations, /footerShortDisclaimer: 'Projeto independente[^']*não certifica estabelecimentos/);
+  assert.match(translations, /footerShortDisclaimer: 'An independent[^']*does not certify establishments/);
+  assert.match(translations, /footerShortDisclaimer: 'Proyecto independiente[^']*no certifica establecimientos/);
   assert.match(photo, /onError/);
   assert.match(photo, /photoFallback/);
   assert.match(animation, /onError/);

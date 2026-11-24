@@ -234,7 +234,7 @@ test('el pie equilibra tres columnas en escritorio sin amontonar enlaces legales
   assert.equal([...legal.matchAll(/<Link /g)].length, 5);
 });
 
-test('el pie usa textura local ligera y mantiene contraste incluso en el grano más oscuro', () => {
+test('el pie es blanco con contraste y el fondo beige conserva textura local ligera', () => {
   const css = read('../src/index.css');
   const tokens = read('../src/styles/tokens.css');
   const texture = read('../public/images/footer-paper.svg');
@@ -246,14 +246,28 @@ test('el pie usa textura local ligera y mantiene contraste incluso en el grano m
   assert.doesNotMatch(texture, /<script|<image|https?:\/\/(?!www\.w3\.org)/);
   assert.ok(Buffer.byteLength(texture) < 1024);
 
-  const rgb = (name) => tokens.match(new RegExp(`--color-footer-${name}: #([a-f0-9]{6})`))[1]
+  assert.match(tokens, /--color-footer-bg: #ffffff/);
+  assert.match(css, /\.public-footer\s*\{[^}]*background-image: none/);
+  const rgb = (name) => tokens.match(new RegExp(`--color-${name}: #([a-f0-9]{6})`))[1]
     .match(/../g).map((channel) => Number.parseInt(channel, 16) / 255);
   const luminance = (channels) => channels.map((c) => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
     .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
   const opacity = Number(texture.match(/opacity="([\d.]+)"/)[1]);
   const darkestPaper = rgb('bg').map((channel) => channel * (1 - opacity));
-  for (const foreground of ['text', 'link']) {
+  for (const foreground of ['text', 'brand']) {
     const contrast = (luminance(darkestPaper) + 0.05) / (luminance(rgb(foreground)) + 0.05);
     assert.ok(contrast >= 4.5, `${foreground}: contraste mínimo ${contrast}`);
   }
+});
+
+test('el pie compacto conserva enlaces legales y cookies y evita repetir la navegación móvil', () => {
+  const css = read('../src/styles/glass.css');
+  const footer = read('../src/components/PublicFooter.jsx');
+  assert.match(css, /\.public-footer\s*\{[^}]*padding: 16px/);
+  assert.match(css, /\.public-footer nav\s*\{[^}]*flex-direction: row;[^}]*flex-wrap: wrap/);
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.public-footer__navigation > nav:first-child \{ display: none; \}/);
+  for (const path of ['/legal', '/privacidad', '/terminos', '/eliminacion-de-datos', '/contacto']) {
+    assert.ok(footer.includes(`to="${path}"`));
+  }
+  assert.match(footer, /COOKIE_NOTICE_OPEN/);
 });

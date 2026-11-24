@@ -25,25 +25,17 @@ test('Roboto usa cuerpo normal y titulares semibold también en administración'
   assert.match(admin, /--admin-orange: var\(--color-brand\)/);
 });
 
-test('cada beneficio termina de caer y dibujar su check antes del siguiente', () => {
+test('el titular conserva su entrada escalonada y respeta movimiento reducido', () => {
   const css = read('../src/index.css');
-  const ms = (name) => Number(css.match(new RegExp(`--${name}: (\\d+)ms`))[1]);
-  const start = ms('feature-start');
-  const step = ms('feature-step');
-  const fall = ms('feature-fall-duration');
-  const check = ms('feature-check-duration');
-  assert.ok(start > 280 + 620, 'Los titulares terminan antes del primer beneficio');
-  assert.ok(step > fall + check, 'El check termina antes de iniciar la siguiente caída');
-  assert.match(css, /var\(--feature-index\) \* var\(--feature-step\)/);
-  assert.match(css, /calc\(var\(--feature-delay\) \+ var\(--feature-fall-duration\)\)/);
-  assert.match(css, /@keyframes onboardingCheckDraw[\s\S]*?from \{ stroke-dashoffset: 1; \}[\s\S]*?to \{ stroke-dashoffset: 0; \}/);
+  assert.match(css, /animation: onboardingTitleIn 620ms/);
+  assert.match(css, /animation-delay: 80ms/);
+  assert.match(css, /animation-delay: 280ms/);
   const reduced = css.match(/@media \(prefers-reduced-motion: reduce\) \{\s+\.onboarding-screen__copy[\s\S]*?\n\}/)[0];
   assert.match(reduced, /animation: none/);
   assert.match(reduced, /opacity: 1/);
-  assert.match(reduced, /stroke-dashoffset: 0/);
 });
 
-test('la portada renderiza los tres beneficios y checks SVG decorativos en secuencia', async () => {
+test('la intro muestra solo titular corto, ilustración y explorar, sin pie ni textos secundarios', async () => {
   const previousStorage = globalThis.localStorage;
   globalThis.localStorage = { getItem: () => null, setItem: () => {} };
   const vite = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' });
@@ -51,13 +43,19 @@ test('la portada renderiza los tres beneficios y checks SVG decorativos en secue
     const { default: OnboardingScreen } = await vite.ssrLoadModule('/src/pages/OnboardingScreen.jsx');
     const { LanguageProvider } = await vite.ssrLoadModule('/src/i18n/index.jsx');
     const html = renderToStaticMarkup(createElement(MemoryRouter, null, createElement(LanguageProvider, null, createElement(OnboardingScreen))));
-    for (const index of [0, 1, 2]) assert.match(html, new RegExp(`--feature-index:${index}`));
-    assert.equal([...html.matchAll(/class="onboarding-feature__check"/g)].length, 3);
-    assert.equal([...html.matchAll(/pathLength="1"/g)].length, 3);
-    assert.match(html, /<span aria-hidden="true"><svg class="onboarding-feature__check"/);
+    assert.doesNotMatch(html, /onboarding-feature|onboarding-screen__description|public-footer|onboarding-login/);
+    assert.match(html, /class="gf-burger-badge"/);
+    assert.match(html, /Informação sobre opções sem glúten/);
+    assert.match(html, /Encontra locais<\/span>/);
     assert.match(html, /class="onboarding-title__lead"/);
     assert.match(html, /class="onboarding-title__accent"/);
     assert.match(html, /Explorar locais/);
+    const { default: LanguageSelector } = await vite.ssrLoadModule('/src/components/LanguageSelector.jsx');
+    const selector = renderToStaticMarkup(createElement(LanguageProvider, null, createElement(LanguageSelector)));
+    assert.match(selector, /aria-label="Idioma" title="Português"/);
+    assert.match(selector, /aria-label="Português" selected="">PT<\/option>/);
+    assert.match(selector, /aria-label="Español">ES<\/option>/);
+    assert.match(selector, /aria-label="English">EN<\/option>/);
   } finally {
     await vite.close();
     if (previousStorage === undefined) delete globalThis.localStorage;

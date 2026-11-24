@@ -1503,7 +1503,9 @@ button {
   flex-direction: column;
   overflow-y: auto;
   padding: 10px 30px 24px;
-  background: #fffbed;
+  background-color: var(--color-bg);
+  background-image: url('/images/footer-paper.svg');
+  background-size: 160px 160px;
 }
 
 .onboarding-screen__header {
@@ -1713,8 +1715,7 @@ button {
   border: 1px solid var(--color-footer-border);
   border-radius: var(--radius-card);
   background-color: var(--color-footer-bg);
-  background-image: url('/images/footer-paper.svg');
-  background-size: 160px 160px;
+  background-image: none;
   color: var(--color-footer-text);
   font-size: 12px;
   line-height: 1.5;
@@ -1818,6 +1819,48 @@ button {
   align-items: center;
   font-weight: 700;
 }
+
+.public-footer__cookies {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-footer-link);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.public-footer__cookies:focus-visible,
+.cookie-notice a:focus-visible,
+.cookie-notice button:focus-visible,
+.onboarding-primary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.cookie-notice {
+  z-index: 1100;
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding: 14px var(--page-gutter) max(14px, env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  color: var(--color-text);
+  box-shadow: 0 -6px 24px rgba(43, 38, 32, .08);
+}
+
+.cookie-notice__copy { flex: 1 1 360px; }
+.cookie-notice h2 { margin: 0 0 5px; font-size: 16px; line-height: 1.3; }
+.cookie-notice p { max-width: 65ch; margin: 0; font-size: 16px; line-height: 1.45; }
+.cookie-notice__actions { display: flex; align-items: center; gap: 20px; }
+.cookie-notice a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-brand); font-size: 14px; }
+.cookie-notice button { min-height: 44px; padding: 10px 22px; border: 0; border-radius: 999px; background: var(--color-brand); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
 
 .legal-page {
   height: 100%;

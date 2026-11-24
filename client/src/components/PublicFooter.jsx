@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../i18n/index.jsx';
 import BrandLogo from './BrandLogo.jsx';
 import { LEGAL_CONFIG } from '../config/legal.js';
+import { COOKIE_NOTICE_OPEN } from '../utils/cookieNotice.js';
 
 export default function PublicFooter() {
   const { t } = useLanguage();
@@ -36,11 +37,12 @@ export default function PublicFooter() {
             <Link to="/terminos">{t('terms')}</Link>
             <Link to="/eliminacion-de-datos">{t('dataDeletion')}</Link>
             <Link to="/contacto">{t('contact')}</Link>
+            <button type="button" className="public-footer__cookies" onClick={() => window.dispatchEvent(new Event(COOKIE_NOTICE_OPEN))}>{t('cookieSettings')}</button>
           </nav>
         </div>
 
         <div className="public-footer__bottom">
-          <p>{t('footerDisclaimer')}</p>
+          <p>{t('footerShortDisclaimer')}</p>
           <small>
             {t('footerCopyright', { year })}{' '}
             <a

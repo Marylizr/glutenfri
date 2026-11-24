@@ -1,7 +1,7 @@
 /* GlutenFri glass material: blur on chrome, readable solid-backed content.
    No blur on the 72 repeated cards: keep scrolling cheap on mobile devices. */
 :root {
-  --glass-canvas: #edf1ed;
+  --glass-canvas: var(--color-bg);
   --glass-ink: #24382d;
   --glass-chrome: rgba(255, 255, 255, .76);
   --glass-control: rgba(255, 255, 255, .86);
@@ -23,7 +23,8 @@ body,
 
 .app-shell,
 .onboarding-shell {
-  background-image: linear-gradient(140deg, #e8efea 0%, #f7f5ef 55%, #edf2ee 100%);
+  background-image: url('/images/footer-paper.svg');
+  background-size: 160px 160px;
 }
 
 .desktop-header {
@@ -38,6 +39,9 @@ body,
   border-color: var(--glass-control-edge);
   box-shadow: inset 0 1px 0 var(--glass-edge);
 }
+
+.desktop-header .brand-logo--desktop-header { max-width: min(144px, 38vw); }
+.language-picker select { min-width: 0; min-height: 32px; }
 
 .desktop-header__link.is-active {
   background: #dce8df;
@@ -190,6 +194,94 @@ body,
 .public-footer {
   border-color: var(--glass-edge);
   box-shadow: var(--glass-shadow);
+  padding: 16px;
+}
+
+.public-footer__brand p { display: none; }
+.public-footer .brand-logo--footer { width: 72px; margin: 0; }
+.public-footer nav.public-footer__project { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px; margin-top: 4px; }
+.public-footer__navigation { display: contents; }
+.public-footer nav { flex-direction: row; flex-wrap: wrap; gap: 0 14px; }
+.public-footer nav strong { display: none; }
+.public-footer__bottom { margin-top: 8px; padding-top: 8px; gap: 4px; border-top: 0; }
+.public-footer__credit { min-height: 44px; }
+
+@media (max-width: 767px) {
+  /* The four exploration destinations are already in the persistent bottom nav. */
+  .public-footer__navigation > nav:first-child { display: none; }
+}
+
+/* A single-screen introduction. Flexible artwork yields space to the title,
+   CTA and in-flow cookie notice; zoom/short windows retain accessible scrolling. */
+.onboarding-screen {
+  padding: 16px var(--page-gutter) max(24px, env(safe-area-inset-bottom, 0px));
+}
+
+.onboarding-screen__layout {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  width: min(100%, 1180px);
+  height: 100%;
+  min-height: 350px;
+  margin: 0 auto;
+  gap: 20px;
+  justify-content: center;
+}
+
+.onboarding-screen__visual {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  width: 100%;
+  aspect-ratio: 460 / 326;
+  max-height: min(50dvh, 400px);
+}
+
+.onboarding-screen .gf-hamburger-animation {
+  width: 100%;
+  max-width: 620px;
+  height: 100%;
+  max-height: 460px;
+  min-height: 0;
+  margin: 0;
+  aspect-ratio: auto;
+}
+
+.onboarding-screen__copy {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+.onboarding-screen__copy h1 {
+  margin: 0 0 24px;
+  font-size: clamp(26px, 6.8vw, 36px);
+  line-height: 1.12;
+  text-align: center;
+}
+
+.onboarding-screen__copy h1 > .onboarding-title__accent {
+  color: var(--color-text);
+}
+
+.onboarding-screen__actions { display: block; }
+.onboarding-primary { width: 100%; max-width: 360px; min-height: 52px; margin: 0 auto; display: block; box-shadow: none; }
+
+@media (min-width: 900px) {
+  .onboarding-screen__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 48px;
+  }
+  .onboarding-screen__visual { height: 100%; min-height: 0; max-height: none; aspect-ratio: auto; }
+  .onboarding-screen__copy { padding: 0; }
+  .onboarding-screen__copy h1 { font-size: clamp(36px, 3.5vw, 50px); text-align: left; }
+  .onboarding-primary { margin: 0; width: auto; }
 }
 
 /* Panels and state badges retain their semantic colours and contrast. */

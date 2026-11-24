@@ -5,6 +5,7 @@ import OnboardingScreen from './pages/OnboardingScreen';
 import RouteBoundary from './components/RouteBoundary.jsx';
 import BottomNav from './components/BottomNav';
 import DesktopHeader from './components/DesktopHeader';
+import CookieNotice from './components/CookieNotice.jsx';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
 import { useLanguage } from './i18n';
@@ -92,7 +93,6 @@ function App() {
             element={
               <OnboardingScreen
                 onStart={() => navigate('/explorar')}
-                onOwner={() => navigate('/servicios-digitales')}
               />
             }
           />
@@ -218,6 +218,7 @@ function App() {
         !isBusinessRoute &&
         location.pathname !== '/' &&
         !isInformationRoute && <BottomNav />}
+      <CookieNotice />
     </div>
   );
 }

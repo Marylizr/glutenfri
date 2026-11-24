@@ -37,7 +37,7 @@ export default function HamburgerAssembly({
         role="img"
         aria-label={alt}
       >
-        <circle cx="230" cy="158" r="145" fill="#dfeadd" />
+        <circle cx="230" cy="158" r="145" fill="#ffffff" />
         <circle cx="175" cy="218" r="62" fill="#f3e1d8" opacity="0.72" />
 
         <g>
@@ -78,10 +78,10 @@ export default function HamburgerAssembly({
         </g>
       </svg>
 
-      <div className="gf-burger-badge" aria-hidden="true">
+      {badge && <div className="gf-burger-badge" aria-hidden="true">
         <span>✓</span>
         {badge}
-      </div>
+      </div>}
     </div>
   );
 }
