@@ -31,8 +31,11 @@ test('la hamburguesa compacta el bloque superior sin cambiar la base ni el orden
     ]);
     assert.match(html, /role="img" aria-label="Hamburguesa por capas"/);
     assert.match(html, /Información sobre opciones sin gluten/);
-    // El centrado independiente no se pierde cuando los keyframes animan transform.
-    assert.match(html, /left: 50%;\s+translate: -50% 0;/);
+    // El dibujo ancla el plato al final del SVG y la píldora va en el flujo
+    // posterior: puede ocupar dos líneas sin superponerse a la hamburguesa.
+    assert.match(html, /preserveAspectRatio="xMidYMax meet"/);
+    assert.match(html, /\.gf-burger-badge \{\s+position: relative;\s+z-index: 2;\s+flex: 0 0 auto;\s+margin: 4px auto 0;/);
+    assert.match(html, /flex-direction: column/);
     assert.match(html, /max-width: calc\(100% - 24px\)/);
     assert.match(html, /prefers-reduced-motion: reduce/);
   } finally {

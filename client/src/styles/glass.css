@@ -98,6 +98,13 @@ body,
   line-height: 1.16;
 }
 
+.explore-page__header .public-page-header__title-row h1 {
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+}
+
 .category-chips {
   padding-block: 5px 9px;
   scroll-padding-inline: 4px;
@@ -236,7 +243,7 @@ body,
   justify-content: center;
   min-height: 140px;
   width: 100%;
-  aspect-ratio: 460 / 326;
+  aspect-ratio: 460 / 366;
   max-height: min(50dvh, 400px);
 }
 

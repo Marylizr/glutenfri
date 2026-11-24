@@ -34,6 +34,7 @@ export default function HamburgerAssembly({
       <svg
         className="gf-hamburger-stage"
         viewBox="0 0 460 326"
+        preserveAspectRatio="xMidYMax meet"
         role="img"
         aria-label={alt}
       >
@@ -89,6 +90,8 @@ export default function HamburgerAssembly({
 const CSS = `
 .gf-hamburger-animation {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: calc(100% + 20px);
   height: clamp(240px, 34dvh, 320px);
   margin: 0 -10px 2px;
@@ -98,6 +101,8 @@ const CSS = `
 
 .gf-hamburger-stage {
   display: block;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   height: 100%;
 }
@@ -115,11 +120,10 @@ const CSS = `
 }
 
 .gf-burger-badge {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  bottom: 13%;
-  left: 50%;
-  translate: -50% 0;
+  flex: 0 0 auto;
+  margin: 4px auto 0;
   width: max-content;
   max-width: calc(100% - 24px);
   box-sizing: border-box;

@@ -1,0 +1,21 @@
+.masonry-grid {
+  --masonry-gap: 16px;
+  --masonry-min-column: 250px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--masonry-min-column)), 1fr));
+  gap: var(--masonry-gap);
+  grid-column: 1 / -1;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.masonry-grid__item { min-width: 0; }
+
+.masonry-grid[data-masonry-ready='true'] { display: block; }
+
+.masonry-grid[data-masonry-ready='true'] > .masonry-grid__item {
+  position: absolute;
+  width: calc((100% - (var(--masonry-columns) - 1) * var(--masonry-gap)) / var(--masonry-columns));
+}

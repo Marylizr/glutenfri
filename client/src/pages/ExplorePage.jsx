@@ -4,6 +4,7 @@ import SearchBar from '../components/SearchBar';
 import CategoryChips from '../components/CategoryChips';
 import PublicPageHeader from '../components/PublicPageHeader';
 import RestaurantCard from '../components/RestaurantCard';
+import MasonryGrid from '../components/MasonryGrid.jsx';
 import ErrorState from '../components/ErrorState';
 import { useUserLocation } from '../hooks/useUserLocation';
 import { useLanguage } from '../i18n/index.jsx';
@@ -126,7 +127,7 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
             </div>
           )}
 
-          {filtered.map((e) => (
+          {filtered.length > 0 && <MasonryGrid>{filtered.map((e) => (
             <RestaurantCard
               key={e._id || e.name}
               establishment={e}
@@ -135,7 +136,7 @@ export default function ExplorePage({ onSelectEstablishment, savedIds, onToggleS
               saved={savedIds?.has(e._id)}
               onToggleSaved={onToggleSaved}
             />
-          ))}
+          ))}</MasonryGrid>}
           {!loading && !error && <PublicFooter />}
         </main>
       </div>
