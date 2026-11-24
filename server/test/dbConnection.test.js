@@ -48,6 +48,7 @@ test('un fallo de conexión permite un nuevo intento posterior', async (t) => {
 test('Functions responde 503 sin filtrar el error del driver y recupera health', async (t) => {
   configureTestEnv(t);
   const sensitiveError = 'mongodb://private-user:private-password@private-host/db';
+  const logger = t.mock.method(console, 'error', () => {});
   t.mock.method(mongoose, 'connect', async () => { throw new Error(sensitiveError); });
   const { handler } = require('../netlify/netlifyHandler');
   const event = {
@@ -61,6 +62,12 @@ test('Functions responde 503 sin filtrar el error del driver y recupera health',
   assert.equal(response.headers['Retry-After'], '30');
   assert.equal(JSON.parse(response.body).code, 'DATABASE_UNAVAILABLE');
   assert.ok(!JSON.stringify(response).includes('private-'));
+  assert.equal(logger.mock.callCount(), 1);
+  assert.deepEqual(logger.mock.calls[0].arguments, [
+    'GLUTENFRI_DATABASE_CONNECTION_FAILURE',
+    JSON.stringify({ category: 'unknown', code: 'UNCLASSIFIED_CONNECTION_FAILURE' }),
+  ]);
+  assert.ok(!JSON.stringify(logger.mock.calls).includes('private-'));
   t.mock.restoreAll();
   t.mock.method(mongoose, 'connect', async () => mongoose);
   const recovered = await handler(event, {});
