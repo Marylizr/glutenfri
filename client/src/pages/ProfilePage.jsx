@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import BlockedAuthors from '../components/BlockedAuthors.jsx';
 import { Link } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/auth';
 import { deleteMyAccount, exportMyData } from '../services/users';
@@ -6,6 +7,9 @@ import ConfirmModal from '../components/ConfirmModal';
 import PublicPageHeader from '../components/PublicPageHeader';
 import PublicFooter from '../components/PublicFooter.jsx';
 import { useLanguage } from '../i18n/index.jsx';
+import { downloadAccountExport } from '../native/exportData.js';
+import PasswordRecovery from '../components/PasswordRecovery.jsx';
+import { authErrorKey, consumeResetToken } from '../utils/authReliability.js';
 
 const PROFILE_COPY = {
   'pt-PT': {
@@ -51,7 +55,7 @@ const inputStyle = {
   border: '1px solid var(--color-border)',
   borderRadius: 'var(--radius-input)',
   padding: '12px 14px',
-  fontSize: '15px',
+  fontSize: '16px',
   marginBottom: '10px',
 };
 
@@ -69,13 +73,7 @@ function AccountPanel({ auth }) {
     setExportError(null);
     try {
       const data = await exportMyData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `mis-datos-glutenfri-${new Date().toISOString().slice(0, 10)}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
+      await downloadAccountExport(data);
     } catch {
       setExportError(copy.exportError);
     } finally {
@@ -99,6 +97,7 @@ function AccountPanel({ auth }) {
   return (
     <div className="account-panel" style={{ padding: '24px 16px' }}>
       <h1 style={{ fontSize: '22px', marginBottom: '4px' }}>{auth.user.name}</h1>
+      <BlockedAuthors />
       <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '20px' }}>
         {auth.user.email}
       </p>
@@ -203,7 +202,12 @@ function AccountPanel({ auth }) {
 export default function ProfilePage({ auth }) {
   const { language, t } = useLanguage();
   const copy = PROFILE_COPY[language];
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [resetToken, setResetToken] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const value = new URLSearchParams(window.location.hash.slice(1)).get('reset');
+    return value ? (/^[a-f0-9]{64}$/.test(value) ? value : 'invalid') : '';
+  });
+  const [mode, setMode] = useState(resetToken ? 'recovery' : 'login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -211,6 +215,10 @@ export default function ProfilePage({ auth }) {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const submittingRef = useRef(false);
+  useEffect(() => {
+    if (resetToken) consumeResetToken(window.location, window.history);
+  }, [resetToken]);
 
   if (auth.user) {
     return (
@@ -226,6 +234,8 @@ export default function ProfilePage({ auth }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setError(null);
     setSubmitting(true);
     try {
@@ -236,9 +246,10 @@ export default function ProfilePage({ auth }) {
           : { name, email, password, privacyAccepted: acceptedPrivacy };
       const data = await action(payload);
       auth.setSession(data);
-    } catch {
-      setError(copy.genericError);
+    } catch (failure) {
+      setError(authErrorKey(failure));
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -262,11 +273,13 @@ export default function ProfilePage({ auth }) {
         </div>
       )}
 
+      {mode === 'recovery' ? <PasswordRecovery token={resetToken} onBack={() => { setResetToken(''); setMode('login'); setError(null); }} /> : <>
       <h1 style={{ fontSize: '22px', marginBottom: '20px' }}>
         {mode === 'login' ? copy.login : copy.register}
       </h1>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} aria-busy={submitting}>
+        <fieldset disabled={submitting} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
         {mode === 'register' && (
           <input
             style={inputStyle}
@@ -348,8 +361,8 @@ export default function ProfilePage({ auth }) {
         )}
 
         {error && (
-          <div style={{ color: 'var(--color-warn)', fontSize: '13px', marginBottom: '12px' }}>
-            {error}
+          <div role="alert" style={{ color: 'var(--color-warn)', fontSize: '13px', marginBottom: '12px' }}>
+            {t(error)}
           </div>
         )}
 
@@ -370,10 +383,14 @@ export default function ProfilePage({ auth }) {
         >
           {submitting ? copy.sending : mode === 'login' ? copy.enter : copy.register}
         </button>
+        </fieldset>
       </form>
 
+      {mode === 'login' && <button type="button" className="auth-recovery-link" disabled={submitting} onClick={() => { setError(null); setMode('recovery'); }}>{t('authForgot')}</button>}
+
       <button
-        onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+        disabled={submitting}
+        onClick={() => { setError(null); setMode(mode === 'login' ? 'register' : 'login'); }}
         style={{
           background: 'none',
           border: 'none',
@@ -383,6 +400,7 @@ export default function ProfilePage({ auth }) {
       >
         {mode === 'login' ? copy.noAccount : copy.hasAccount}
       </button>
+      </>}
 
       <div style={{ marginTop: '24px' }}>
         <Link to="/privacidad" style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>

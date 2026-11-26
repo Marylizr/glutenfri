@@ -1,9 +1,10 @@
 const express = require('express');
 const { body, param, query } = require('express-validator');
 const router = express.Router();
-const { listRecentReviews, reportReview } = require('../controllers/reviewsController');
+const { listRecentReviews, reportReview, blockReviewAuthor } = require('../controllers/reviewsController');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+router.post('/:id/block-author', requireAuth, [param('id').isMongoId()], validate, blockReviewAuthor);
 
 router.get(
   '/recent',

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ExplorePage from './pages/ExplorePage';
 import OnboardingScreen from './pages/OnboardingScreen';
@@ -6,6 +6,7 @@ import RouteBoundary from './components/RouteBoundary.jsx';
 import BottomNav from './components/BottomNav';
 import DesktopHeader from './components/DesktopHeader';
 import CookieNotice from './components/CookieNotice.jsx';
+import NativeNavigation from './native/NativeNavigation.jsx';
 import { useAuth } from './hooks/useAuth';
 import { useSaved } from './hooks/useSaved';
 import { useLanguage } from './i18n';
@@ -59,8 +60,11 @@ function App() {
   // 'gf:session-expired' desde services/api.js) — acá mandamos a la
   // pantalla de login con el mensaje que muestra ProfilePage. `replace`
   // para no dejar en el historial una pantalla que ya no puede usarse.
+  const handledExpiredSession = useRef(false);
   useEffect(() => {
-    if (auth.sessionExpired) {
+    if (!auth.sessionExpired) handledExpiredSession.current = false;
+    if (auth.sessionExpired && !handledExpiredSession.current) {
+      handledExpiredSession.current = true;
       navigate('/perfil', { replace: true });
     }
   }, [auth.sessionExpired, navigate]);
@@ -83,6 +87,7 @@ function App() {
 
   return (
     <div className={`app-shell${isAdminRoute ? ' app-shell--admin' : ''}`}>
+      <NativeNavigation />
       <DesktopHeader />
       <div className="app-shell__content">
         <RouteBoundary message={t('loadNetworkError')}>

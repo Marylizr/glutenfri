@@ -6,6 +6,7 @@ import { LEGAL_COPY } from '../config/legalCopy.js';
 
 const sections = {
   'pt-PT': [
+    ['Bloqueios e moderação', 'A lista privada de autores bloqueados é guardada na tua conta, pode ser consultada e alterada no Perfil, é incluída na exportação e eliminada com a conta. O autor não recebe uma notificação. Comentários e fotografias novos aguardam revisão humana antes da publicação; os motivos internos e a identidade de quem denuncia não são publicados.'],
     ['Responsável', `O responsável indicado no projeto é ${LEGAL_CONFIG.dataControllerName}. Contacto: ${LEGAL_CONFIG.contactEmail}.`],
     ['Dados tratados', 'Conta: nome, email, hash da palavra-passe e data de registo. Atividade: locais guardados, avaliações, respostas comunitárias e denúncias. Não solicitamos diagnósticos ou historial clínico.'],
     ['Localização', 'Com autorização, a localização é utilizada apenas no dispositivo para centrar o mapa e calcular distâncias. Não é enviada para a API nem associada à conta.'],
@@ -14,6 +15,7 @@ const sections = {
     ['Conservação e segurança', 'Conta, guardados e avaliações são mantidos enquanto a conta existir, sem prejuízo de cópias técnicas limitadas do fornecedor. Utilizamos HTTPS, hashing de palavras-passe, validação, controlo de acesso e limitação de pedidos.'],
   ],
   en: [
+    ['Blocking and moderation', 'Your private list of blocked authors is stored in your account, can be viewed and changed in Profile, is included in exports and is deleted with your account. Authors are not notified. New comments and photos await human review before publication; internal reasons and reporter identities are not published.'],
     ['Controller', `The controller currently identified by the project is ${LEGAL_CONFIG.dataControllerName}. Contact: ${LEGAL_CONFIG.contactEmail}.`],
     ['Data processed', 'Account: name, email, password hash and registration date. Activity: saved places, reviews, community answers and reports. We do not request diagnoses or medical histories.'],
     ['Location', 'With permission, location is used only on the device to centre the map and calculate distances. It is not sent to the API or linked to the account.'],
@@ -22,6 +24,7 @@ const sections = {
     ['Retention and security', 'Account, saved places and reviews are retained while the account exists, subject to limited technical provider backups. We use HTTPS, password hashing, validation, access control and request rate limiting.'],
   ],
   es: [
+    ['Bloqueos y moderación', 'Tu lista privada de autores bloqueados se guarda en la cuenta, se puede consultar y modificar en Perfil, se incluye en la exportación y se elimina con la cuenta. No se notifica al autor. Los comentarios y fotografías nuevos esperan revisión humana antes de publicarse; los motivos internos y la identidad de quien reporta no se publican.'],
     ['Responsable', `La persona responsable indicada actualmente por el proyecto es ${LEGAL_CONFIG.dataControllerName}. Contacto: ${LEGAL_CONFIG.contactEmail}.`],
     ['Datos tratados', 'Cuenta: nombre, email, hash de contraseña y fecha de registro. Actividad: lugares guardados, reseñas, respuestas comunitarias y reportes. No solicitamos diagnósticos ni historiales médicos.'],
     ['Ubicación', 'Con permiso, la ubicación se usa únicamente en el dispositivo para centrar el mapa y calcular distancias. No se envía a la API ni se asocia a la cuenta.'],

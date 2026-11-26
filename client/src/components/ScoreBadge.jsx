@@ -1,12 +1,14 @@
-// Badge circular de puntuación — estilo "safety score" del mockup.
-export default function ScoreBadge({ rating, size = 40 }) {
-  if (!rating) return null;
+// General rating only; never a food-safety score.
+export default function ScoreBadge({ rating, size = 40, label }) {
+  if (!Number.isFinite(rating) || rating <= 0) return null;
 
   const color = rating >= 4.5 ? 'var(--color-accent)' : 'var(--color-warn)';
   const softColor = rating >= 4.5 ? 'var(--color-accent-soft)' : 'var(--color-warn-soft)';
 
   return (
     <div
+      aria-label={label ? `${label}: ${rating.toFixed(1)}` : undefined}
+      title={label}
       style={{
         width: size,
         height: size,

@@ -74,12 +74,13 @@ export function normalizeWeeklyHours(value) {
   const normalized = {};
   for (const day of WEEK_DAYS) {
     if (!Array.isArray(value[day])) continue;
+    if (!value[day].every((interval) => interval && validTime(interval.start) && validTime(interval.end) && interval.start !== interval.end)) continue;
     normalized[day] = value[day]
       .filter((interval) => interval && validTime(interval.start) && validTime(interval.end))
       .map(({ start, end }) => ({ start, end }))
       .slice(0, 4);
   }
-  return Object.values(normalized).some((intervals) => intervals.length) ? normalized : null;
+  return Object.keys(normalized).length ? normalized : null;
 }
 
 export function validTimeZone(value) {

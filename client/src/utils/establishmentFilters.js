@@ -10,11 +10,16 @@ export const SORT_OPTIONS = Object.freeze({
 const VALID_TYPES = new Set(['restaurant', 'bakery', 'store', 'pharmacy', 'supermarket']);
 const VALID_SORTS = new Set(Object.values(SORT_OPTIONS));
 const CATEGORY_ORDER = ['bakery', 'restaurant', 'store', 'supermarket', 'pharmacy'];
+export const INTENT_TYPES = Object.freeze({ eat: ['restaurant'], bakery: ['bakery'], shop: ['store', 'supermarket', 'pharmacy'] });
+export function clearRefinements(state) {
+  return { ...state, type: undefined, intent: undefined, sourceVerifiedOnly: false, discountOnly: false, deliveryOnly: false, takeawayOnly: false, openNowOnly: false };
+}
 
 export function filterEstablishments(
   establishments,
   {
     type,
+    intent,
     query = '',
     language = 'pt-PT',
     sourceVerifiedOnly = false,
@@ -35,6 +40,7 @@ export function filterEstablishments(
   return establishments.filter((establishment) => {
     if (!establishment || typeof establishment !== 'object') return false;
     if (type && establishment.type !== type) return false;
+    if (Object.hasOwn(INTENT_TYPES, intent) && !INTENT_TYPES[intent].includes(establishment.type)) return false;
     if (
       sourceVerifiedOnly &&
       establishment.confidenceLevel !== CONFIDENCE_LEVEL.VERIFIED
@@ -110,6 +116,7 @@ export function parseExploreParams(searchParams) {
   return {
     query: searchParams.get('q')?.slice(0, 120) || '',
     type: VALID_TYPES.has(type) ? type : undefined,
+    intent: Object.hasOwn(INTENT_TYPES, searchParams.get('intencion')) ? searchParams.get('intencion') : undefined,
     sourceVerifiedOnly: searchParams.get('fuente_revisada') === 'true',
     discountOnly: searchParams.get('descuento') === 'true',
     deliveryOnly: searchParams.get('entrega') === 'true',
@@ -123,6 +130,7 @@ export function serializeExploreParams(state) {
   const params = new URLSearchParams();
   if (state.query) params.set('q', state.query);
   if (state.type) params.set('categoria', state.type);
+  if (Object.hasOwn(INTENT_TYPES, state.intent)) params.set('intencion', state.intent);
   if (state.sourceVerifiedOnly) params.set('fuente_revisada', 'true');
   if (state.discountOnly) params.set('descuento', 'true');
   if (state.deliveryOnly) params.set('entrega', 'true');

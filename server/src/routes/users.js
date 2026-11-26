@@ -3,6 +3,9 @@ const { param, query } = require('express-validator');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
+const { listBlockedAuthors, unblockAuthor } = require('../controllers/usersController');
+router.get('/me/blocked-authors', requireAuth, listBlockedAuthors);
+router.delete('/me/blocked-authors/:id', requireAuth, [param('id').isMongoId()], validate, unblockAuthor);
 const {
   listSaved,
   saveEstablishment,

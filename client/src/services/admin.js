@@ -12,8 +12,8 @@ export const getReportedReviews = (params = {}) =>
 export const hideReview = (reviewId, reason) =>
   api.patch(`/admin/reviews/${reviewId}/hide`, { reason }).then((response) => response.data);
 
-export const restoreReview = (reviewId, reason) =>
-  api.patch(`/admin/reviews/${reviewId}/unhide`, { reason }).then((response) => response.data);
+export const restoreReview = (reviewId, reason, expectedUpdatedAt) =>
+  api.patch(`/admin/reviews/${reviewId}/unhide`, { reason, expectedUpdatedAt }).then((response) => response.data);
 
 export const getUsers = (params = {}) =>
   api

@@ -197,7 +197,7 @@ test('el contador avanzado ignora la categoría y cuenta el estado de fuente', (
   assert.equal(getAdvancedFilterCount({ sourceVerifiedOnly: true, type: 'restaurant' }), 1);
 });
 
-test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async () => {
+test('una tarjeta heredada muestra desconocidos explícitos y conserva fotografía ilustrativa', async () => {
   globalThis.localStorage = {
     getItem: () => null,
     setItem: () => {},
@@ -238,8 +238,9 @@ test('una tarjeta heredada se renderiza sin ruido de metadata ausente', async ()
 
     assert.match(html, /Restaurante legado/);
     assert.match(html, /Fonte pendente de revisão/);
-    assert.doesNotMatch(html, /Fonte não indicada/);
-    assert.doesNotMatch(html, /Data de verificação indisponível/);
+    assert.match(html, /Fonte não indicada/);
+    assert.match(html, /Data de verificação indisponível/);
+    assert.match(html, /Localidade não informada/);
     assert.match(html, /restaurant-v2\.jpg/);
     assert.match(html, /Imagem ilustrativa/);
     assert.match(html, /class="place-photo--illustrative"/);

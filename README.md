@@ -59,7 +59,7 @@ gluten-free-app/
 ├── client/          React + Vite (web, y base para el wrap Capacitor)
 ├── server/          Node/Express + MongoDB
 │   └── data/        merged_dataset.json (semilla APC + Google Places)
-└── capacitor.config.json   (placeholder — Fase 4 del roadmap)
+└── client/capacitor.config.json   (iOS/Android; assets en dist-native)
 ```
 
 ## Ejecutar en local
@@ -130,7 +130,7 @@ npm run dev                 # http://localhost:5173
 - [x] **Moderación y administración** — panel `/admin` para revisar reportes, ocultar/restaurar reseñas y gestionar roles; ver sección dedicada abajo
 - [x] **Backoffice de escritorio** — dashboard operativo, CRUD de establecimientos, buscador y filtros, motivos de reporte, suspensión de usuarios, auditoría de acciones y estado/refresco de API, Atlas y Google Places
 - [x] **Pruebas automatizadas** — `npm test` en `server/`: seguridad de proxy, CORS, health, validación de rutas, privacidad y visibilidad de reseñas
-- [ ] Wrap Capacitor (Fase 4) — `capacitor.config.json` es solo placeholder
+- [x] Base Capacitor iOS/Android local — ver [preparación de tiendas](docs/mobile-store-preparation.md). Firma, QA en dispositivos y envío siguen pendientes; no implica aprobación ni publicación.
 
 ## ✅ Google Places: compliance de caché — RESUELTO (2026-07-24)
 

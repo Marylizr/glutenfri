@@ -11,6 +11,8 @@ import ErrorState from '../components/ErrorState';
 import ReportButton from '../components/ReportButton';
 import { getReviews } from '../services/establishments';
 import TrustDetails from '../components/TrustDetails.jsx';
+import PlaceDecisionSummary from '../components/PlaceDecisionSummary.jsx';
+import BlockAuthorButton from '../components/BlockAuthorButton.jsx';
 import { useLanguage } from '../i18n/index.jsx';
 import SharePlaceButton from '../components/SharePlaceButton.jsx';
 import BusinessClaimDialog from '../components/BusinessClaimDialog.jsx';
@@ -179,7 +181,8 @@ function CommunityExperienceSignals({ establishment, copy }) {
   );
 }
 
-function ReviewItem({ review, auth, copy }) {
+function ReviewItem({ review, auth, copy, onBlocked }) {
+  const { t } = useLanguage();
   return (
     <div
       style={{
@@ -206,6 +209,7 @@ function ReviewItem({ review, auth, copy }) {
           “{review.comment}”
         </p>
       )}
+      {review.hidden && <p role="status">{t('moderationPending')}</p>}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
         {copy.staff[review.staffUnderstanding] && (
           <span style={{ fontSize: '11px', background: 'var(--color-accent-soft)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>
@@ -230,6 +234,7 @@ function ReviewItem({ review, auth, copy }) {
       </div>
       <div style={{ marginTop: '10px', textAlign: 'right' }}>
         <ReportButton reviewId={review._id} auth={auth} />
+        <BlockAuthorButton review={review} auth={auth} onBlocked={onBlocked} />
       </div>
     </div>
   );
@@ -370,7 +375,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
           </div>
           {establishment.avgRating && (
             <div style={{ position: 'absolute', bottom: -18, left: 16 }}>
-              <ScoreBadge rating={establishment.avgRating} size={44} />
+              <ScoreBadge rating={establishment.avgRating} size={44} label={t('generalRating')} />
             </div>
           )}
         </div>
@@ -399,6 +404,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             </div>
           )}
 
+          <PlaceDecisionSummary establishment={establishment} />
           <TrustDetails establishment={establishment} />
           {(establishment.websiteUrl || establishment.menuUrl || establishment.reservationUrl ||
             establishment.orderUrl || establishment.whatsapp) && (
@@ -478,7 +484,7 @@ export default function EstablishmentDetailPage({ establishment, onBack, saved, 
             </div>
           )}
           {reviews.map((r) => (
-            <ReviewItem key={r._id} review={r} auth={auth} copy={copy} />
+            <ReviewItem key={r._id} review={r} auth={auth} copy={copy} onBlocked={(authorId) => setReviews((items) => items.filter((item) => String(item.user?._id) !== String(authorId)))} />
           ))}
         </div>
       </div>

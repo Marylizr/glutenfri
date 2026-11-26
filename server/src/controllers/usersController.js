@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Establishment = require('../models/Establishment');
 const Review = require('../models/Review');
 const { parsePagination, toPublicReview } = require('../utils/reviewFormatting');
+const { refreshCommunitySummary } = require('../services/communitySummary');
 const BusinessClaim = require('../models/BusinessClaim');
 const EstablishmentManager = require('../models/EstablishmentManager');
 const EstablishmentChangeRequest = require('../models/EstablishmentChangeRequest');
@@ -38,6 +39,7 @@ async function deleteUserData(userId) {
 
   await Promise.all([
     Review.deleteMany({ user: userId }),
+    User.updateMany({ blockedAuthors: userId }, { $pull: { blockedAuthors: userId } }),
     Review.updateMany({ reportedBy: userId }, { $pull: { reportedBy: userId } }),
     Review.updateMany(
       { 'reports.reporter': userId },
@@ -70,15 +72,7 @@ async function deleteUserData(userId) {
   await User.findByIdAndDelete(userId);
 
   await Promise.all(
-    affectedEstablishmentIds.map(async (estId) => {
-      const agg = await Review.aggregate([
-        { $match: { establishment: new mongoose.Types.ObjectId(estId) } },
-        { $group: { _id: '$establishment', avg: { $avg: '$rating' } } },
-      ]);
-      await Establishment.findByIdAndUpdate(estId, {
-        avgRating: agg.length ? Math.round(agg[0].avg * 10) / 10 : null,
-      });
-    })
+    affectedEstablishmentIds.map((estId) => refreshCommunitySummary(new mongoose.Types.ObjectId(estId)))
   );
 }
 
@@ -102,8 +96,8 @@ async function exportData(req, res) {
     businessAudit,
     adminAudit,
   ] = await Promise.all([
-    User.findById(userId).select('-passwordHash').lean(),
-    Review.find({ user: userId }).sort('-createdAt').lean(),
+    User.findById(userId).select('-passwordHash +blockedAuthors').lean(),
+    Review.find({ user: userId }).select('-reports -reportedBy').sort('-createdAt').lean(),
     BusinessClaim.find({ claimant: userId })
       .select('-activeKey -reviewedBy')
       .sort('-createdAt')
@@ -166,7 +160,18 @@ async function listMyReviews(req, res) {
   });
 }
 
+async function listBlockedAuthors(req, res) {
+  const account = await User.findById(req.user.id).select('+blockedAuthors').populate('blockedAuthors', 'name').lean();
+  res.json((account.blockedAuthors || []).filter(Boolean).map((author) => ({ _id: author._id, name: String(author.name).split(' ')[0] })));
+}
+async function unblockAuthor(req, res) {
+  await User.findByIdAndUpdate(req.user.id, { $pull: { blockedAuthors: req.params.id } });
+  res.status(204).end();
+}
+
 module.exports = {
+  listBlockedAuthors,
+  unblockAuthor,
   listSaved,
   saveEstablishment,
   unsaveEstablishment,

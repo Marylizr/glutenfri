@@ -10,7 +10,7 @@ test('la auditoría reproducible de i18n no detecta huecos ni literales administ
     encoding: 'utf8',
   });
   const report = JSON.parse(output);
-  assert.deepEqual(report.mainCatalogKeys, { 'pt-PT': 173, en: 173, es: 173 });
+  assert.deepEqual(report.mainCatalogKeys, { 'pt-PT': 239, en: 239, es: 239 });
   assert.equal(report.adminCatalogLeaves['pt-PT'], report.adminCatalogLeaves.en);
   assert.equal(report.adminCatalogLeaves['pt-PT'], report.adminCatalogLeaves.es);
   assert.equal(report.hardcodedAdminCandidates, 0);

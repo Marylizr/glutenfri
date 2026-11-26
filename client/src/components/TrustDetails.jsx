@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { formatVerificationDate, useLanguage } from '../i18n/index.jsx';
 import TrustBadge from './TrustBadge.jsx';
+import { decisionFacts } from '../utils/placeDecision.js';
 
 export default function TrustDetails({ establishment }) {
   const { language, t } = useLanguage();
+  const facts = decisionFacts(establishment);
   const date = formatVerificationDate(
-    establishment.informationUpdatedAt || establishment.lastInformationUpdate || establishment.lastVerifiedAt,
+    facts.sourceReviewedAt,
     language
   );
   const source = establishment.sourceName || t('sourceMissing');
@@ -35,9 +37,10 @@ export default function TrustDetails({ establishment }) {
           </dd>
         </div>
         <div>
-          <dt>{t('lastInformationUpdate')}</dt>
+          <dt>{t('sourceReviewDate')}</dt>
           <dd>{date || t('dateMissing')}</dd>
         </div>
+        <div><dt>{t('businessUpdateDate')}</dt><dd>{formatVerificationDate(facts.businessUpdatedAt, language) || t('factUnknown')}</dd></div>
         <div>
           <dt>{t('informationStatus')}</dt>
           <dd>{t(`informationStatus_${establishment.informationStatus}`)}</dd>

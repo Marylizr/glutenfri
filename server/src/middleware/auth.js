@@ -23,9 +23,12 @@ async function requireAuth(req, res, next) {
   // al olvido). Confirmamos que el usuario siga existiendo antes de dejar
   // pasar la request, para no dejar operar con una identidad borrada.
   const account = await User.findById(payload.id)
-    .select('isAdmin suspendedAt suspendedUntil suspensionReason')
+    .select('isAdmin suspendedAt suspendedUntil suspensionReason +sessionVersion +blockedAuthors')
     .lean();
   if (!account) return res.status(401).json({ error: 'No autenticado' });
+  if ((payload.sv ?? 0) !== (account.sessionVersion ?? 0)) {
+    return res.status(401).json({ error: 'Sesión expirada', code: 'SESSION_EXPIRED' });
+  }
   if (isSuspended(account)) {
     return res.status(403).json({
       error: 'Cuenta suspendida',
@@ -51,9 +54,12 @@ async function optionalAuth(req, res, next) {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const account = await User.findById(payload.id)
-      .select('suspendedAt suspendedUntil')
+      .select('suspendedAt suspendedUntil +sessionVersion +blockedAuthors')
       .lean();
-    if (account && !isSuspended(account)) req.user = payload;
+    if (account && !isSuspended(account) && (payload.sv ?? 0) === (account.sessionVersion ?? 0)) {
+      req.user = payload;
+      req.account = account;
+    }
   } catch (err) {
     // token inválido/vencido — seguimos como anónimo, no es un error acá.
   }

@@ -5,6 +5,19 @@ const { register, login, me } = require('../controllers/authController');
 const { validate } = require('../middleware/validate');
 const { authLimiter } = require('../middleware/rateLimiters');
 const { requireAuth } = require('../middleware/auth');
+const { rateLimit } = require('express-rate-limit');
+const recovery = require('../services/passwordRecovery');
+const recoveryLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 5,
+  standardHeaders: true, legacyHeaders: false, message: { code: 'RATE_LIMITED' } });
+
+router.get('/recovery-status', (req, res) => res.set('Cache-Control', 'no-store').json({ available: Boolean(recovery.available(req)) }));
+router.post('/forgot-password', recoveryLimiter,
+  [body('email').isEmail().normalizeEmail()], validate, recovery.requestReset);
+router.post('/reset-password', recoveryLimiter, [
+  body('token').isString().matches(/^[a-f0-9]{64}$/),
+  body('password').isString().isLength({ min: 12 }).custom(value => Buffer.byteLength(value, 'utf8') <= 72),
+  body('confirmation').custom((value, { req }) => value === req.body.password),
+], validate, recovery.completeReset);
 
 router.get('/me', requireAuth, me);
 

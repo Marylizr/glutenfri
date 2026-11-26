@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef } from 'react';
 import { useLanguage } from '../i18n/index.jsx';
 
 export default function ConfirmModal({
@@ -11,6 +12,41 @@ export default function ConfirmModal({
   children,
 }) {
   const { language } = useLanguage();
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef(null);
+  const cancelRef = useRef(null);
+  const cancelAction = useRef(onCancel);
+  const busy = useRef(confirming);
+  useEffect(() => {
+    cancelAction.current = onCancel;
+    busy.current = confirming;
+  }, [onCancel, confirming]);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    cancelRef.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (!busy.current) cancelAction.current();
+      }
+      if (event.key !== 'Tab') return;
+      const controls = [...dialogRef.current.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')];
+      if (!controls.length) { event.preventDefault(); dialogRef.current.focus(); return; }
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = overflow;
+      previous?.focus?.();
+    };
+  }, []);
   const labels = {
     'pt-PT': { cancel: 'Cancelar', wait: 'Um momento…' },
     en: { cancel: 'Cancel', wait: 'One moment…' },
@@ -30,6 +66,12 @@ export default function ConfirmModal({
       }}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        tabIndex={-1}
         style={{
           background: 'var(--color-surface)',
           borderRadius: 'var(--radius-card)',
@@ -39,13 +81,14 @@ export default function ConfirmModal({
           width: '100%',
         }}
       >
-        <h2 style={{ fontSize: '18px', marginBottom: '8px' }}>{title}</h2>
-        <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
+        <h2 id={titleId} style={{ fontSize: '18px', marginBottom: '8px' }}>{title}</h2>
+        <p id={descriptionId} style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginBottom: '20px', lineHeight: 1.5 }}>
           {message}
         </p>
         {children}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
+            ref={cancelRef}
             onClick={onCancel}
             disabled={confirming}
             style={{

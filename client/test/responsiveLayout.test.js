@@ -38,7 +38,8 @@ test('Explorar presenta los resultados filtrados sin duplicar el mapa', () => {
   const explore = read('../src/pages/ExplorePage.jsx');
   const css = read('../src/index.css');
 
-  assert.match(explore, /filterEstablishments\(establishments/);
+  assert.match(explore, /useDiscovery\(\)/);
+  assert.match(read('../src/hooks/useDiscovery.js'), /filterEstablishments\(list.establishments/);
   assert.match(explore, /filtered\.map/);
   assert.doesNotMatch(explore, /LazyMapView/);
   assert.match(explore, /<CategoryChips/);
@@ -51,7 +52,8 @@ test('Explorar presenta los resultados filtrados sin duplicar el mapa', () => {
 test('Mapa conserva una única estructura filtrada para marcadores y tarjetas', () => {
   const page = read('../src/pages/HomePage.jsx');
 
-  assert.match(page, /filterEstablishments\(establishments, filters\)/);
+  assert.match(page, /useDiscovery\(\)/);
+  assert.doesNotMatch(page, /useState\(\{\}\)/);
   assert.match(page, /<LazyMapView[\s\S]*establishments=\{filtered\}/);
   assert.match(page, /filtered\.map/);
 });
@@ -263,8 +265,11 @@ test('el pie es blanco con contraste y el fondo beige conserva textura local lig
 test('el pie compacto conserva enlaces legales y cookies y evita repetir la navegación móvil', () => {
   const css = read('../src/styles/glass.css');
   const footer = read('../src/components/PublicFooter.jsx');
-  assert.match(css, /\.public-footer\s*\{[^}]*padding: 16px/);
-  assert.match(css, /\.public-footer nav\s*\{[^}]*flex-direction: row;[^}]*flex-wrap: wrap/);
+  assert.match(css, /\.public-footer\s*\{[^}]*padding: 12px 16px/);
+  assert.match(css, /\.public-footer nav\s*\{[^}]*display: inline/);
+  assert.match(css, /\.public-footer nav\.public-footer__project\s*\{[^}]*display: inline[^}]*margin: 0/);
+  assert.match(css, /\.public-footer nav a,[\s\S]*?\.public-footer__cookies\s*\{[^}]*min-height: 24px[^}]*margin: 0 10px 0 0/);
+  assert.match(css, /\.public-footer__credit\s*\{[^}]*display: inline;[^}]*min-height: 0/);
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.public-footer__navigation > nav:first-child \{ display: none; \}/);
   for (const path of ['/legal', '/privacidad', '/terminos', '/eliminacion-de-datos', '/contacto']) {
     assert.ok(footer.includes(`to="${path}"`));

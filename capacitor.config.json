@@ -1,9 +1,0 @@
-{
-  "appId": "pt.pixeltrendstudio.glutenfreeapp",
-  "appName": "glutenfri",
-  "webDir": "client/dist",
-  "bundledWebRuntime": false,
-  "server": {
-    "androidScheme": "https"
-  }
-}

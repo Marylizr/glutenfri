@@ -10,11 +10,12 @@ import {
 } from '../../services/admin';
 import { useLanguage } from '../../i18n';
 import { ADMIN_COPY, formatAdminCopy } from '../adminCopy';
+import { editorialQueue, editorialIssues, loadEditorialCatalogue } from '../../utils/editorialQueue.js';
 
 const TABS = ['reports', 'duplicates', 'sources'];
 
 export default function DataQualityView() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const copy = ADMIN_COPY[language].dataQuality;
   const [tab, setTab] = useState('reports');
   const [reports, setReports] = useState([]);
@@ -37,11 +38,11 @@ export default function DataQualityView() {
       const [nextReports, nextDuplicates, nextEstablishments] = await Promise.all([
         getEstablishmentReports(),
         getDuplicateCandidates(),
-        getAdminEstablishments({ limit: 100 }),
+        loadEditorialCatalogue(getAdminEstablishments),
       ]);
       setReports(nextReports);
       setDuplicates(nextDuplicates);
-      setEstablishments(nextEstablishments.data);
+      setEstablishments(nextEstablishments);
     } catch {
       setMessage(copy.loadError);
     } finally {
@@ -57,14 +58,14 @@ export default function DataQualityView() {
   );
   const visibleEstablishments = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase(language);
-    return establishments.filter((establishment) => {
+    return editorialQueue(establishments, reports).map(({ place }) => place).filter((establishment) => {
       const matchesSearch = !normalizedSearch || [establishment.name, establishment.address, establishment.sourceName]
         .some((value) => String(value || '').toLocaleLowerCase(language).includes(normalizedSearch));
       const matchesReview = !reviewStatus || (establishment.qualityReviewStatus || 'pending') === reviewStatus;
       const matchesConfidence = !confidence || (establishment.confidenceLevel || 'source_pending_review') === confidence;
       return matchesSearch && matchesReview && matchesConfidence;
     });
-  }, [confidence, establishments, language, reviewStatus, search]);
+  }, [confidence, establishments, language, reviewStatus, search, reports]);
 
   const chooseEstablishment = async (establishment) => {
     setSelected({ ...establishment });
@@ -127,6 +128,7 @@ export default function DataQualityView() {
         informationStatus: selected.informationStatus || 'active',
         sourceName: selected.sourceName || null,
         sourceUrl: selected.sourceUrl || null,
+        nextReviewDueAt: selected.nextReviewDueAt || null,
         qualityReviewStatus: 'reviewed',
         reason: reason.trim(),
       });
@@ -207,7 +209,7 @@ export default function DataQualityView() {
             {tab === 'sources' && (visibleEstablishments.length ? visibleEstablishments.map((establishment) => (
               <button key={establishment._id} type="button" className={`admin-quality-row ${selected?._id === establishment._id ? 'is-selected' : ''}`} onClick={() => chooseEstablishment(establishment)}>
                 <Database size={20} />
-                <span><strong>{establishment.name}</strong><small>{establishment.sourceName || copy.noSource}</small></span>
+                <span><strong>{establishment.name}</strong><small>{establishment.sourceName || copy.noSource}</small><small>{editorialIssues(establishment, reports).map((key) => t(key)).join(' · ')}</small></span>
                 <span className={`admin-status-pill ${establishment.qualityReviewStatus === 'reviewed' ? '' : 'is-warning'}`}>{copy.reviewStatuses[establishment.qualityReviewStatus || 'pending']}</span>
               </button>
             )) : <Empty icon={CheckCircle} text={copy.noFilteredSources} />)}
@@ -218,6 +220,7 @@ export default function DataQualityView() {
               <>
                 <h2>{tab === 'duplicates' ? copy.compareDuplicate : selected.establishment?.name || selected.name}</h2>
                 {tab === 'reports' && <ReportDetail report={selected} copy={copy} reason={reason} setReason={setReason} saving={saving} resolve={resolveReport} />}
+                {tab === 'sources' && <label className="admin-form-field"><span>{t('nextReviewDate')}</span><input type="date" value={selected.nextReviewDueAt?.slice(0, 10) || ''} onChange={(event) => setSelected((current) => ({ ...current, nextReviewDueAt: event.target.value ? `${event.target.value}T23:59:59.999Z` : null }))} /></label>}
                 {tab === 'duplicates' && <DuplicateDetail candidate={selected} copy={copy} reason={reason} setReason={setReason} saving={saving} mark={markDuplicate} />}
                 {tab === 'sources' && <SourceDetail value={selected} setValue={setSelected} copy={copy} reason={reason} setReason={setReason} saving={saving} save={saveSourceReview} history={history} language={language} />}
               </>

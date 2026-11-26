@@ -466,9 +466,20 @@ test(
         );
         assert.equal(sponsored.response.status, 200);
         const publicPlace = await jsonRequest(baseUrl, `/api/establishments/${placeA._id}`);
+        assert.equal(publicPlace.response.status, 200);
         assert.equal(publicPlace.body.sponsorship.status, 'active');
-        assert.equal(publicPlace.body.certified, false);
+        // The public contract deliberately omits legacy certification fields.
+        // Sponsorship must neither expose them nor upgrade source/confidence.
+        assert.equal(Object.hasOwn(publicPlace.body, 'certified'), false);
+        assert.equal(Object.hasOwn(publicPlace.body, 'trustStatus'), false);
+        assert.equal(publicPlace.body.informationCategory, 'community_information');
+        assert.equal(publicPlace.body.sourceType, 'community_experience');
+        assert.equal(publicPlace.body.confidenceLevel, 'source_pending_review');
         assert.equal(publicPlace.body.riskLevel, 'moderate');
+        const sponsoredRecord = await Establishment.findById(placeA._id).lean();
+        assert.equal(sponsoredRecord.certified, false);
+        assert.equal(sponsoredRecord.trustStatus, 'COMMUNITY_REPORTED');
+        assert.equal(sponsoredRecord.riskLevel, 'moderate');
 
         const promotion = await jsonRequest(
           baseUrl,

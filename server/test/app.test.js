@@ -51,6 +51,32 @@ test('CORS autoriza solo los orígenes configurados', async () => {
   });
 });
 
+test('CORS nativo permite solo los orígenes exactos de GlutenFri en producción', async () => {
+  const app = createApp({
+    corsOrigins: 'https://glutenfri.netlify.app,capacitor://localhost,https://localhost',
+    environment: 'production',
+  });
+  await withServer(app, async (baseUrl) => {
+    for (const origin of ['https://glutenfri.netlify.app', 'capacitor://localhost', 'https://localhost']) {
+      const response = await fetch(`${baseUrl}/api/health`, { headers: { Origin: origin } });
+      assert.equal(response.headers.get('access-control-allow-origin'), origin);
+      assert.equal(response.headers.get('access-control-allow-credentials'), null);
+      const preflight = await fetch(`${baseUrl}/api/establishments`, {
+        method: 'OPTIONS',
+        headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' },
+      });
+      assert.equal(preflight.status, 204);
+      assert.equal(preflight.headers.get('access-control-allow-origin'), origin);
+      assert.match(preflight.headers.get('access-control-allow-methods'), /POST/);
+      assert.match(preflight.headers.get('access-control-allow-headers'), /Authorization/i);
+    }
+    for (const origin of ['null', 'http://localhost', 'https://localhost:444', 'https://localhost.evil.test', 'capacitor://localhost.evil.test', 'https://other-project.netlify.app']) {
+      const response = await fetch(`${baseUrl}/api/health`, { headers: { Origin: origin } });
+      assert.equal(response.headers.get('access-control-allow-origin'), null);
+    }
+  });
+});
+
 test('CORS admite puertos loopback variables solo durante desarrollo', async () => {
   assert.equal(isDevelopmentLoopbackOrigin('http://localhost:5174'), true);
   assert.equal(isDevelopmentLoopbackOrigin('http://127.0.0.1:4173'), true);

@@ -49,7 +49,7 @@ test('la taxonomía pública separa categoría, fuente, confianza y estado', () 
   assert.deepEqual(current, {
     informationCategory: 'retail_store',
     sourceType: 'public_source',
-    confidenceLevel: 'source_verified',
+    confidenceLevel: 'source_pending_review',
     informationStatus: 'active',
     informationUpdatedAt: '2026-08-01T00:00:00Z',
   });

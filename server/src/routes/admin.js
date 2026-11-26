@@ -263,6 +263,7 @@ router.patch(
   '/reviews/:id/unhide',
   [
     param('id').isMongoId().withMessage('id inválido'),
+    body('expectedUpdatedAt').optional().isISO8601({ strict: true }),
     body('reason').optional().isString().isLength({ max: 500 }),
   ],
   validate,
@@ -374,9 +375,10 @@ router.patch(
     body('sourceName').optional({ nullable: true }).trim().isLength({ max: 200 }),
     body('sourceUrl').optional({ nullable: true }).isURL({ protocols: ['https'], require_protocol: true }),
     body('duplicateOf').optional({ nullable: true }).isMongoId(),
+    body('nextReviewDueAt').optional({ nullable: true }).isISO8601({ strict: true }),
     body('reason').trim().isLength({ min: 3, max: 1000 }),
     body().custom((value) => {
-      const editable = ['informationCategory', 'sourceType', 'confidenceLevel', 'informationStatus', 'qualityReviewStatus', 'sourceName', 'sourceUrl', 'duplicateOf'];
+      const editable = ['informationCategory', 'sourceType', 'confidenceLevel', 'informationStatus', 'qualityReviewStatus', 'sourceName', 'sourceUrl', 'duplicateOf', 'nextReviewDueAt'];
       if (!editable.some((field) => value[field] !== undefined)) throw new Error('Indica al menos un campo de calidad');
       return true;
     }),

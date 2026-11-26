@@ -3,6 +3,7 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import LoginRequiredState from '../components/LoginRequiredState';
 import ReportButton from '../components/ReportButton';
+import BlockAuthorButton from '../components/BlockAuthorButton.jsx';
 import PublicPageHeader from '../components/PublicPageHeader';
 import PublicFooter from '../components/PublicFooter.jsx';
 import { getEstablishmentById } from '../services/establishments';
@@ -67,7 +68,8 @@ function RiskBadge({ level, labels }) {
   );
 }
 
-function ReviewFeedCard({ review, onOpenEstablishment, auth, copy, language }) {
+function ReviewFeedCard({ review, onOpenEstablishment, auth, copy, language, onBlocked }) {
+  const { t } = useLanguage();
   const est = review.establishment;
   return (
     <div
@@ -135,10 +137,12 @@ function ReviewFeedCard({ review, onOpenEstablishment, auth, copy, language }) {
           {review.comment}
         </p>
       )}
+      {review.hidden && <p role="status">{t('moderationPending')}</p>}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <RiskBadge level={review.riskLevel} labels={copy.risk} />
         <ReportButton reviewId={review._id} auth={auth} />
+        <BlockAuthorButton review={review} auth={auth} onBlocked={onBlocked} />
       </div>
     </div>
   );
@@ -261,6 +265,7 @@ export default function ReviewsPage({ auth, onSelectEstablishment, onGoToProfile
               <div className="reviews-page__grid">
               {reviews.map((r) => (
                 <ReviewFeedCard
+                  onBlocked={(authorId) => setReviews((items) => items.filter((item) => String(item.user?._id) !== String(authorId)))}
                   key={r._id}
                   review={r}
                   onOpenEstablishment={handleOpenEstablishment}

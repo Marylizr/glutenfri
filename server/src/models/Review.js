@@ -22,6 +22,7 @@ const reviewSchema = new mongoose.Schema(
     // misma reseña más de una vez (ver reportReview). hidden la saca de los
     // feeds públicos sin borrarla — el autor la sigue viendo/editando.
     hidden: { type: Boolean, default: false },
+    moderationFlags: { type: [String], default: undefined, select: false },
     reportedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     reports: [
       {

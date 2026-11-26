@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { isSuspended } = require('../middleware/auth');
+const DUMMY_HASH = bcrypt.hashSync('non-account-timing-placeholder', 10);
 
 function publicUser(user) {
   return {
@@ -24,7 +25,7 @@ async function register(req, res) {
   // Sin refresh token todavía — expiresIn corto acota la ventana de un
   // token comprometido. Deuda técnica: si la app escala, agregar refresh
   // tokens y volver a subir expiresIn para no forzar logins frecuentes.
-  const token = jwt.sign({ id: user._id, name: user.name }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id, name: user.name, sv: user.sessionVersion || 0 }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
   res.status(201).json({ token, user: publicUser(user) });
@@ -32,23 +33,22 @@ async function register(req, res) {
 
 async function login(req, res) {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
+  const user = await User.findOne({ email }).select('+sessionVersion');
+  const valid = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
+  if (!user || !valid) return res.status(401).json({ error: 'Credenciales inválidas', code: 'CREDENTIALS_INVALID' });
   if (isSuspended(user)) {
     return res.status(403).json({
       error: 'Cuenta suspendida',
+      code: 'ACCOUNT_SUSPENDED',
       suspendedUntil: user.suspendedUntil,
       reason: user.suspensionReason,
     });
   }
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return res.status(401).json({ error: 'Credenciales inválidas' });
-
   // Sin refresh token todavía — expiresIn corto acota la ventana de un
   // token comprometido. Deuda técnica: si la app escala, agregar refresh
   // tokens y volver a subir expiresIn para no forzar logins frecuentes.
-  const token = jwt.sign({ id: user._id, name: user.name }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ id: user._id, name: user.name, sv: user.sessionVersion || 0 }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
   res.json({ token, user: publicUser(user) });

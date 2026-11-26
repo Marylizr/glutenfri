@@ -9,6 +9,8 @@ const {
 } = require('../utils/trustStatus');
 const { EstablishmentReport } = require('../models/EstablishmentReport');
 const { sponsoredNow } = require('./businessController');
+const { screenReview } = require('../utils/contentModeration');
+const { refreshCommunitySummary } = require('../services/communitySummary');
 
 function toPublicEstablishment(establishment) {
   const normalized = normalizeEstablishmentTrust(establishment);
@@ -89,7 +91,7 @@ async function getEstablishment(req, res) {
 }
 
 async function listReviews(req, res) {
-  const query = visibilityFilter({ establishment: req.params.id }, req.user?.id);
+  const query = visibilityFilter({ establishment: req.params.id }, req.user?.id, req.account?.blockedAuthors);
   const reviews = await Review.find(query)
     .populate('user', 'name')
     .sort('-createdAt')
@@ -112,6 +114,8 @@ async function createReview(req, res) {
   // si ya tenía una, la actualiza en vez de rechazar — la gente cambia de
   // opinión sobre un lugar, no tiene sentido bloquearla.
   const existing = await Review.findOne({ establishment: req.params.id, user: req.user.id });
+  const flags = screenReview({ comment, photos });
+  const held = existing?.hidden === true || flags.length > 0;
 
   const review = await Review.findOneAndUpdate(
     { establishment: req.params.id, user: req.user.id },
@@ -123,30 +127,18 @@ async function createReview(req, res) {
       hasDedicatedMenu,
       dedicatedKitchen,
       riskLevel,
+      // Authors may hold their own new text, but must never unhide a review,
+      // including when a moderator hid it after the initial read.
+      ...(held ? { hidden: true } : {}),
+      moderationFlags: flags,
     },
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
   );
 
-  // Recalcular avgRating del establecimiento — corre igual al crear, editar
-  // o (en deleteAccount) borrar una reseña, siempre sobre lo que quedó.
-  const agg = await Review.aggregate([
-    { $match: { establishment: review.establishment } },
-    { $group: { _id: '$establishment', avg: { $avg: '$rating' } } },
-  ]);
+  if (!review.hidden || existing?.hidden === false) await refreshCommunitySummary(review.establishment);
 
-  // Señales comunitarias: la reseña más reciente sobrescribe los campos
-  // del establecimiento (decisión de producto — no se promedia entre reseñas).
-  // staffTrained se deriva de staffUnderstanding: solo "excellent" cuenta como
-  // personal capacitado.
-  await Establishment.findByIdAndUpdate(review.establishment, {
-    ...(agg.length ? { avgRating: Math.round(agg[0].avg * 10) / 10 } : {}),
-    dedicatedGlutenFreeMenu: hasDedicatedMenu,
-    dedicatedKitchen,
-    staffTrained: staffUnderstanding === 'excellent',
-    riskLevel,
-  });
-
-  res.status(existing ? 200 : 201).json(review);
+  const { reports: _reports, reportedBy: _reportedBy, moderationFlags: _flags, ...ownReview } = review.toObject();
+  res.status(existing ? 200 : 201).json(ownReview);
 }
 
 async function createInformationReport(req, res) {

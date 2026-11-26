@@ -5,6 +5,13 @@ export function classifyEstablishmentError(error) {
   return 'network';
 }
 
+export function establishmentErrorKey(error) {
+  if (error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT') return 'authTimeout';
+  if (error?.response?.status === 429) return 'authRateLimited';
+  if (error?.response?.status >= 500) return 'authUnavailable';
+  return { http: 'loadHttpError', invalid: 'loadDataError', network: 'loadNetworkError' }[classifyEstablishmentError(error)];
+}
+
 export function createRequestGate() {
   let current = 0;
   return {

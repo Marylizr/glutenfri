@@ -63,15 +63,16 @@ function deriveSourceType(record = {}) {
 
 function deriveConfidenceLevel(record = {}) {
   if (Object.values(CONFIDENCE_LEVEL).includes(record.confidenceLevel)) {
+    if (record.confidenceLevel === CONFIDENCE_LEVEL.VERIFIED && (!record.sourceName || !/^https:\/\//i.test(record.sourceUrl || ''))) return CONFIDENCE_LEVEL.PENDING;
     return record.confidenceLevel;
   }
-  const rawDate = record.informationUpdatedAt || record.lastInformationUpdate || record.lastVerifiedAt;
+  const rawDate = record.sourceReviewedAt || record.lastVerifiedAt;
   if (!rawDate) return CONFIDENCE_LEVEL.PENDING;
   const date = new Date(rawDate);
   if (Number.isNaN(date.getTime())) return CONFIDENCE_LEVEL.PENDING;
   return Date.now() - date.getTime() > 365 * 86_400_000
     ? CONFIDENCE_LEVEL.OUTDATED
-    : CONFIDENCE_LEVEL.VERIFIED;
+    : CONFIDENCE_LEVEL.PENDING;
 }
 
 export function normalizeTrustStatus(establishment = {}) {
@@ -152,6 +153,7 @@ export function normalizeEstablishmentRecord(record) {
     orderUrl: validHttpUrl(record.orderUrl),
     timezone: validTimeZone(record.timezone),
     weeklyHours: normalizeWeeklyHours(record.weeklyHours),
+    specialHours: Array.isArray(record.specialHours) ? record.specialHours.filter((entry) => entry && typeof entry.date === 'string') : undefined,
     dedicatedKitchen:
       typeof record.dedicatedKitchen === 'boolean' ? record.dedicatedKitchen : null,
     dedicatedGlutenFreeMenu:

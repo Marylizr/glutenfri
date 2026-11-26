@@ -24,7 +24,7 @@ export default function SearchBar({ value, onChange, placeholder }) {
           outline: 'none',
           background: 'transparent',
           flex: 1,
-          fontSize: '15px',
+          fontSize: '16px',
           color: 'var(--color-text)',
         }}
       />

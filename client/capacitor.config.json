@@ -1,0 +1,14 @@
+{
+  "appId": "pt.pixeltrendstudio.glutenfreeapp",
+  "appName": "GlutenFri",
+  "webDir": "dist-native",
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "plugins": {
+    "CapacitorHttp": { "enabled": false },
+    "CapacitorCookies": { "enabled": false }
+  }
+}

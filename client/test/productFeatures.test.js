@@ -42,7 +42,8 @@ test('la normalización aditiva descarta acciones y datos prácticos inválidos'
   assert.equal(record.phone, null);
   assert.equal(record.menuUrl, null);
   assert.match(record.reservationUrl, /^https:/);
-  assert.deepEqual(record.weeklyHours.mon, [{ start: '09:00', end: '18:00' }]);
+  assert.equal(record.weeklyHours, null);
+  assert.equal(getOpenStatus(record, new Date('2026-11-23T20:00:00Z')).status, 'unavailable');
   assert.deepEqual(record.serviceLanguages, ['Português']);
 });
 

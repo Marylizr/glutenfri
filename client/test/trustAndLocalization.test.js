@@ -55,15 +55,16 @@ test('las rutas públicas, el disclaimer y los fallbacks visuales están conecta
   assert.match(css, /prefers-reduced-motion/);
 });
 
-test('las tarjetas omiten metadata ausente y el detalle conserva los fallbacks informativos', () => {
+test('las tarjetas y el detalle hacen explícitas fuente y fechas desconocidas sin inventarlas', () => {
   const card = fs.readFileSync(new URL('../src/components/RestaurantCard.jsx', import.meta.url), 'utf8');
   const details = fs.readFileSync(new URL('../src/components/TrustDetails.jsx', import.meta.url), 'utf8');
   const translations = fs.readFileSync(new URL('../src/i18n/index.jsx', import.meta.url), 'utf8');
 
   assert.match(card, /hasTrustMetadata/);
   assert.match(card, /hasSource &&/);
-  assert.match(card, /lastChecked &&/);
-  assert.doesNotMatch(card, /sourceMissing/);
+  assert.match(card, /lastChecked \|\| t\('dateMissing'\)/);
+  assert.match(card, /sourceMissing/);
+  assert.match(card, /facts.sourceReviewedAt/);
   assert.match(details, /sourceName \|\| t\('sourceMissing'\)/);
   assert.match(details, /date \|\| t\('dateMissing'\)/);
   assert.match(translations, /Data de verificação indisponível/);
@@ -140,7 +141,10 @@ test('el logo oficial está centralizado y se muestra en las superficies de marc
 
   const publicHeader = fs.readFileSync(new URL('../src/components/PublicPageHeader.jsx', import.meta.url), 'utf8');
   assert.doesNotMatch(publicHeader, /BrandLogo/);
-  assert.match(publicHeader, /REGION_NAME/);
+  assert.doesNotMatch(publicHeader, /REGION_NAME|public-brand-line/);
+  const globalHeader = fs.readFileSync(new URL('../src/components/DesktopHeader.jsx', import.meta.url), 'utf8');
+  assert.match(globalHeader, /desktop-header__identity[\s\S]*BrandLogo[\s\S]*desktop-header__region[\s\S]*REGION_NAME/);
+  assert.match(globalHeader, /aria-hidden="true">distance/);
   for (const file of [
     '../src/pages/ExplorePage.jsx',
     '../src/pages/HomePage.jsx',

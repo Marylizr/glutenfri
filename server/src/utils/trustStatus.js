@@ -107,13 +107,14 @@ function deriveSourceType(establishment = {}) {
 
 function deriveConfidenceLevel(establishment = {}, now = new Date()) {
   const explicit = validValue(establishment.confidenceLevel, CONFIDENCE_LEVELS);
+  if (explicit === 'source_verified' && (!establishment.sourceName || !/^https:\/\//i.test(establishment.sourceUrl || ''))) return 'source_pending_review';
   if (explicit) return explicit;
-  const checkedAt = establishment.lastInformationUpdate || establishment.lastVerifiedAt;
+  const checkedAt = establishment.sourceReviewedAt || establishment.lastVerifiedAt;
   if (!checkedAt) return 'source_pending_review';
   const parsed = new Date(checkedAt);
   if (Number.isNaN(parsed.getTime())) return 'source_pending_review';
   const ageDays = (now.getTime() - parsed.getTime()) / 86_400_000;
-  return ageDays > 365 ? 'source_outdated' : 'source_verified';
+  return ageDays > 365 ? 'source_outdated' : 'source_pending_review';
 }
 
 function normalizePublicInformation(establishment = {}, now = new Date()) {

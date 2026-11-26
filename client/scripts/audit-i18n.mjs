@@ -87,6 +87,12 @@ function compareCatalog(name, catalog) {
 
 const i18nSource = fs.readFileSync(path.join(sourceRoot, 'i18n/index.jsx'), 'utf8');
 const messages = Object.fromEntries(locales.map((locale) => [locale, flatMessageEntries(extractLocaleBlock(i18nSource, locale))]));
+const utilitySource = i18nSource.slice(i18nSource.indexOf('const utilityMessages ='));
+for (const locale of locales) {
+  // Static, repository-owned object literal, no imports or application runtime.
+  const entries = Function(`"use strict"; return ({${extractLocaleBlock(utilitySource, locale)}});`)();
+  Object.assign(messages[locale], entries);
+}
 const messageCounts = compareCatalog('messages', messages);
 const adminCounts = compareCatalog('admin', ADMIN_COPY);
 

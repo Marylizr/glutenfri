@@ -3,9 +3,10 @@
 // envolver cada controller en try/catch.
 //
 // Nunca exponemos stack traces ni mensajes crudos de Mongo/Mongoose al
-// cliente; eso queda solo en el log del servidor.
+// cliente ni a los logs del servidor. Solo se registran etiquetas fijas.
 function errorHandler(err, req, res, _next) {
-  console.error(err);
+  // Fixed labels only: driver/validator errors can carry credentials or tokens.
+  console.error('GLUTENFRI_REQUEST_FAILED', ['ValidationError', 'CastError', 'JsonWebTokenError', 'TokenExpiredError'].includes(err.name) ? err.name : 'INTERNAL_ERROR');
 
   if (err.name === 'ValidationError') {
     return res.status(400).json({ error: 'Datos inválidos' });

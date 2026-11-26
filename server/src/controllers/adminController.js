@@ -8,6 +8,7 @@ const EstablishmentAuditLog = require('../models/EstablishmentAuditLog');
 const { EstablishmentReport } = require('../models/EstablishmentReport');
 const { recordAdminAction } = require('../services/adminAudit');
 const { findDuplicateCandidates } = require('../utils/dataQuality');
+const { refreshCommunitySummary } = require('../services/communitySummary');
 const { deleteUserData } = require('./usersController');
 const {
   claimGooglePlacesRefresh,
@@ -37,7 +38,7 @@ function activeSuspensionQuery() {
 
 async function dashboard(req, res) {
   const reportQuery = {
-    $or: [{ 'reports.0': { $exists: true } }, { 'reportedBy.0': { $exists: true } }],
+    $or: [{ 'reports.0': { $exists: true } }, { 'reportedBy.0': { $exists: true } }, { 'moderationFlags.0': { $exists: true } }],
   };
   const [users, reviews, establishments, reviewReportsPending, establishmentReportsPending, suspendedUsers, recentActions] =
     await Promise.all([
@@ -68,13 +69,14 @@ async function dashboard(req, res) {
 
 async function listReportedReviews(req, res) {
   const query = {
-    $or: [{ 'reports.0': { $exists: true } }, { 'reportedBy.0': { $exists: true } }],
+    $or: [{ 'reports.0': { $exists: true } }, { 'reportedBy.0': { $exists: true } }, { 'moderationFlags.0': { $exists: true } }],
   };
   if (req.query.status === 'visible') query.hidden = false;
   if (req.query.status === 'hidden') query.hidden = true;
   if (req.query.reason) query['reports.reason'] = req.query.reason;
 
   const reviews = await Review.find(query)
+    .select('+moderationFlags')
     .sort('-updatedAt')
     .limit(200)
     .populate('establishment', 'name type address riskLevel certified')
@@ -105,10 +107,11 @@ async function listReportedReviews(req, res) {
 }
 
 async function hideReview(req, res) {
-  const review = await Review.findByIdAndUpdate(req.params.id, { hidden: true }, { new: true })
+  const review = await Review.findByIdAndUpdate(req.params.id, { $set: { hidden: true }, $unset: { moderationFlags: 1 } }, { returnDocument: 'after' })
     .populate('establishment', 'name')
     .lean();
   if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+  if (review.establishment?._id) await refreshCommunitySummary(review.establishment._id);
   await recordAdminAction({
     actorId: req.user.id,
     action: 'review_hidden',
@@ -121,10 +124,12 @@ async function hideReview(req, res) {
 }
 
 async function unhideReview(req, res) {
-  const review = await Review.findByIdAndUpdate(req.params.id, { hidden: false }, { new: true })
+  if (!req.body.expectedUpdatedAt) return res.status(409).json({ code: 'REVIEW_CHANGED', error: 'Recarga y revisa la versión actual antes de publicarla' });
+  const review = await Review.findOneAndUpdate({ _id: req.params.id, updatedAt: new Date(req.body.expectedUpdatedAt) }, { $set: { hidden: false }, $unset: { moderationFlags: 1 } }, { returnDocument: 'after' })
     .populate('establishment', 'name')
     .lean();
-  if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+  if (!review) return res.status(409).json({ code: 'REVIEW_CHANGED', error: 'La reseña cambió. Recarga y revísala de nuevo' });
+  if (review.establishment?._id) await refreshCommunitySummary(review.establishment._id);
   await recordAdminAction({
     actorId: req.user.id,
     action: 'review_restored',
@@ -437,6 +442,7 @@ const QUALITY_FIELDS = [
   'sourceUrl',
   'qualityReviewStatus',
   'duplicateOf',
+  'nextReviewDueAt',
 ];
 
 function valueForAudit(value) {
@@ -469,6 +475,10 @@ async function reviewEstablishmentQuality(req, res) {
   const payload = Object.fromEntries(
     QUALITY_FIELDS.filter((field) => req.body[field] !== undefined).map((field) => [field, req.body[field]])
   );
+  const effective = { ...establishment.toObject(), ...payload };
+  if (effective.confidenceLevel === 'source_verified' && (!effective.sourceName || !/^https:\/\//i.test(effective.sourceUrl || ''))) {
+    return res.status(400).json({ code: 'SOURCE_EVIDENCE_REQUIRED', error: 'Una fuente revisada necesita nombre y enlace de evidencia' });
+  }
   if (payload.informationCategory === 'external_certification' && !establishment.externalCertificationAuthorized) {
     return res.status(409).json({
       error: 'La certificación externa requiere una autorización escrita registrada previamente',

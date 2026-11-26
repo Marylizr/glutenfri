@@ -1,9 +1,10 @@
 const Review = require('../models/Review');
+const User = require('../models/User');
 const { parsePagination, toPublicReview, visibilityFilter } = require('../utils/reviewFormatting');
 
 async function listRecentReviews(req, res) {
   const { page, limit, skip } = parsePagination(req);
-  const query = visibilityFilter({}, req.user?.id);
+  const query = visibilityFilter({}, req.user?.id, req.account?.blockedAuthors);
 
   const [data, total] = await Promise.all([
     Review.find(query)
@@ -50,4 +51,12 @@ async function reportReview(req, res) {
   res.json({ reported: true, reportsCount: review.reports.length });
 }
 
-module.exports = { listRecentReviews, reportReview };
+async function blockReviewAuthor(req, res) {
+  const review = await Review.findById(req.params.id).select('user').lean();
+  if (!review) return res.status(404).json({ code: 'REVIEW_NOT_FOUND' });
+  if (String(review.user) === req.user.id) return res.status(400).json({ code: 'CANNOT_BLOCK_SELF' });
+  await User.findByIdAndUpdate(req.user.id, { $addToSet: { blockedAuthors: review.user } });
+  res.status(204).end();
+}
+
+module.exports = { listRecentReviews, reportReview, blockReviewAuthor };

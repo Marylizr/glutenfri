@@ -19,7 +19,7 @@ import { useLanguage } from '../../i18n';
 import { ADMIN_COPY } from '../adminCopy';
 
 export default function ModerationView() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const copy = ADMIN_COPY[language].moderation;
   const common = ADMIN_COPY[language].common;
   const riskLabels = ADMIN_COPY[language].establishments.risks;
@@ -56,9 +56,9 @@ export default function ModerationView() {
     setError(null);
     try {
       const updated = selected.hidden
-        ? await restoreReview(selected._id, decisionNote || copy.restoredReason)
+        ? await restoreReview(selected._id, decisionNote || copy.restoredReason, selected.updatedAt)
         : await hideReview(selected._id, decisionNote || copy.hiddenReason);
-      const next = { ...selected, hidden: updated.hidden };
+      const next = { ...selected, hidden: updated.hidden, updatedAt: updated.updatedAt };
       setSelected(next);
       setReviews((current) => current.map((item) => item._id === next._id ? next : item));
       setDecisionNote('');
@@ -160,6 +160,7 @@ export default function ModerationView() {
               <div className="admin-review-copy">
                 {selected.comment || copy.noComment}
               </div>
+              {selected.moderationFlags?.length > 0 && <p role="status">{t('moderationPending')}</p>}
 
               <div className="admin-safety-summary">
                 <span><strong>{copy.staff}</strong>{copy.staffLevels[selected.staffUnderstanding] || selected.staffUnderstanding}</span>

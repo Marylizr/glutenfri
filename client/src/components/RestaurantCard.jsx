@@ -8,6 +8,7 @@ import TrustBadge from './TrustBadge.jsx';
 import { Link } from 'react-router-dom';
 import { formatVerificationDate, useLanguage } from '../i18n/index.jsx';
 import { getEstablishmentCity } from '../utils/establishmentData.js';
+import { decisionFacts } from '../utils/placeDecision.js';
 
 export function Badge({ establishment }) {
   return <TrustBadge establishment={establishment} />;
@@ -24,8 +25,9 @@ export default function RestaurantCard({
 }) {
   const { language, t } = useLanguage();
   const km = distanceKm(userPosition, establishment);
+  const facts = decisionFacts(establishment);
   const lastChecked = formatVerificationDate(
-    establishment.informationUpdatedAt || establishment.lastInformationUpdate || establishment.lastVerifiedAt,
+    facts.sourceReviewedAt,
     language
   );
   const hasSource = Boolean(establishment.sourceName);
@@ -60,9 +62,9 @@ export default function RestaurantCard({
             <SaveButton saved={saved} onToggle={() => onToggleSaved(establishment._id)} />
           </div>
         )}
-        {establishment.avgRating && (
+        {Number.isFinite(establishment.avgRating) && establishment.avgRating > 0 && (
           <div style={{ position: 'absolute', bottom: 10, left: 10 }}>
-            <ScoreBadge rating={establishment.avgRating} size={36} />
+            <ScoreBadge rating={establishment.avgRating} size={36} label={t('generalRating')} />
           </div>
         )}
       </div>
@@ -92,6 +94,9 @@ export default function RestaurantCard({
             <span>{city}</span>
           </p>
         )}
+        {!city && <p>{t('cityUnknown')}</p>}
+        <p className="restaurant-card__offer">{facts.offer || t(`category_${establishment.informationCategory || 'community_information'}`)}</p>
+        {facts.closed && <p className="place-unavailable">{t('placeUnavailable')}</p>}
 
         <div
           style={{
@@ -106,7 +111,7 @@ export default function RestaurantCard({
           {establishment.discount && (
             <>
               {km != null && <span>·</span>}
-              <span style={{ color: 'var(--color-accent)' }}>{establishment.discount}</span>
+              <span style={{ color: 'var(--color-accent)' }}>{t('commercialDiscount')}: {establishment.discount}</span>
             </>
           )}
         </div>
@@ -119,9 +124,11 @@ export default function RestaurantCard({
         {hasTrustMetadata && (
           <div className="restaurant-card__metadata">
             {hasSource && <div><strong>{t('source')}:</strong> {establishment.sourceName}</div>}
-            {lastChecked && <div><strong>{t('lastInformationUpdate')}:</strong> {lastChecked}</div>}
+            <div><strong>{t('sourceReviewDate')}:</strong> {lastChecked || t('dateMissing')}</div>
           </div>
         )}
+        {!hasTrustMetadata && <p className="restaurant-card__metadata">{t('sourceMissing')} · {t('dateMissing')}</p>}
+        <button className="place-open" type="button" onClick={(event) => { event.stopPropagation(); onSelect?.(establishment); }}>{t('openPlace')}</button>
         <Link
           to="/informacion-sin-gluten"
           onClick={(event) => event.stopPropagation()}

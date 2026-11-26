@@ -29,7 +29,8 @@ api.interceptors.response.use(
   (error) => {
     const hadToken = !!localStorage.getItem(TOKEN_KEY);
     const suspended = error.response?.status === 403 && error.response?.data?.error === 'Cuenta suspendida';
-    if ((error.response?.status === 401 || suspended) && hadToken) {
+    const submittingCredentials = /\/auth\/(?:login|register|forgot-password|reset-password)$/.test(error.config?.url || '');
+    if ((error.response?.status === 401 || suspended) && hadToken && !submittingCredentials) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
       window.dispatchEvent(

@@ -1,5 +1,9 @@
-export function getCanonicalPlaceUrl(id, origin = window.location.origin) {
-  return `${origin.replace(/\/$/, '')}/lugar/${encodeURIComponent(id)}`;
+import { isNativeRuntime } from '../native/platform.js';
+import { PUBLIC_SITE_ORIGIN } from '../native/config.js';
+
+export function getCanonicalPlaceUrl(id, origin = window.location.origin, native = isNativeRuntime()) {
+  const publicOrigin = native ? PUBLIC_SITE_ORIGIN : origin;
+  return `${publicOrigin.replace(/\/$/, '')}/lugar/${encodeURIComponent(id)}`;
 }
 
 export async function copyText(text, environment = { navigator, document }) {
@@ -20,7 +24,18 @@ export async function copyText(text, environment = { navigator, document }) {
 }
 
 export async function sharePlace({ id, name, text }, environment = { navigator, document, location }) {
-  const url = getCanonicalPlaceUrl(id, environment.location.origin);
+  const native = environment.native ?? isNativeRuntime();
+  const url = getCanonicalPlaceUrl(id, environment.location.origin, native);
+  if (native) {
+    const { Share } = await (environment.loadNativeShare || (() => import('@capacitor/share')))();
+    try { await Share.share({ title: name, text, url }); }
+    catch (error) {
+      // Both installed native implementations use this exact cancellation message.
+      if (error?.message === 'Share canceled') throw Object.assign(new Error('Share canceled'), { name: 'AbortError' });
+      throw error;
+    }
+    return { method: 'share', url };
+  }
   if (environment.navigator?.share) {
     await environment.navigator.share({ title: name, text, url });
     return { method: 'share', url };

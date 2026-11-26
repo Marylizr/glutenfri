@@ -62,12 +62,15 @@ function createApp({
   environment = process.env.NODE_ENV || 'development',
   corsOrigins = process.env.CORS_ORIGINS,
   trustProxyHops = process.env.TRUST_PROXY_HOPS,
+  passwordRecovery = null,
 } = {}) {
   if (!corsOrigins) {
     throw new Error('CORS_ORIGINS no está configurado en .env; es obligatorio y no tiene un valor abierto por defecto.');
   }
 
   const app = express();
+  // No production transport configured: local QA injects an isolated mailbox.
+  app.locals.passwordRecovery = environment !== 'production' ? passwordRecovery : null;
   app.set('trust proxy', resolveTrustProxy(environment, trustProxyHops));
 
   // La API y las fotos se consumen desde el origen del frontend. CORP no
@@ -76,7 +79,7 @@ function createApp({
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   // Evita persistir IP y User-Agent en los logs del proveedor. El rate
   // limiter usa la IP en memoria durante su ventana, pero no la escribe.
-  app.use(morgan(environment === 'production' ? ':method :url :status :response-time ms' : 'dev'));
+  app.use(morgan(':method :status :response-time ms', { skip: req => req.path.startsWith('/api/auth') }));
   app.use(
     cors(buildCorsOptions(corsOrigins, environment))
   );

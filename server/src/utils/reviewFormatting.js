@@ -14,8 +14,9 @@ function parsePagination(req) {
 // establecimiento). Si el criterio de privacidad cambia, se cambia acá
 // una sola vez.
 function toPublicReview(review) {
+  const { reportedBy: _reportedBy, reports: _reports, moderationFlags: _moderationFlags, ...publicReview } = review;
   return {
-    ...review,
+    ...publicReview,
     user: review.user ? { _id: review.user._id, name: review.user.name.split(' ')[0] } : null,
   };
 }
@@ -24,9 +25,9 @@ function toPublicReview(review) {
 // feed público, EXCEPTO para su propio autor (sigue viendo/editando la
 // suya aunque esté oculta para el resto). userId viene de optionalAuth —
 // puede no haber sesión, en cuyo caso solo se ven las no ocultas.
-function visibilityFilter(baseQuery, userId) {
+function visibilityFilter(baseQuery, userId, blockedAuthors = []) {
   if (!userId) return { ...baseQuery, hidden: false };
-  return { ...baseQuery, $or: [{ hidden: false }, { user: userId }] };
+  return { ...baseQuery, ...(blockedAuthors.length ? { user: { $nin: blockedAuthors } } : {}), $or: [{ hidden: false }, { user: userId }] };
 }
 
 module.exports = { parsePagination, toPublicReview, visibilityFilter };
